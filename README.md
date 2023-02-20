@@ -1,8 +1,8 @@
 # Rune SDK - Yet another (object-oriented) JavaScript game engine
 
-Rune (SDK) is an (**FREE**) *object-oriented* (Adobe Flash / Adobe AIR inspired) *framework* 
-for creating two-dimensional (raster-based) *applications* and/or *games* with *JavaScript*, and is 
-primarily developed to be executed within [Electron](https://www.electronjs.org).
+Rune (SDK) is a **free**, *object-oriented* framework (inspired by *Adobe Flash* / *Adobe AIR*) for creating raster-based, two-dimensional applications and/or games using JavaScript. It is primarily developed to be executed within [Electron](https://www.electronjs.org/).
+
+For more information, see the full [reference manual](https://vectorpanic.github.io/rune-docs/).
 
 ## File structure
 

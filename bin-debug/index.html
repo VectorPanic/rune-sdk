@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html>
+
+    <head>
+        
+        <title>Rune (bin-debug)</title>
+        
+        <link rel="stylesheet" type="text/css" href="./../bin/style.css">
+        
+        <!-- SOFTWARE DEVELOPMENT KIT -->
+        <script src="../src/scope/Manifest.js"></script>
+        <script src="../src/util/Executable.js"></script>
+        <script src="../src/util/Filter.js"></script>
+        <script src="../src/util/Math.js"></script>
+        <script src="../src/util/Palette.js"></script>
+        <script src="../src/util/Path.js"></script>
+        <script src="../src/util/Paths.js"></script>
+        <script src="../src/util/Stack.js"></script>
+        <script src="../src/util/URL.js"></script>
+        <script src="../src/net/URLResponse.js"></script>
+        <script src="../src/net/URLRequest.js"></script>
+        <script src="../src/net/URLLoader.js"></script>
+        <script src="../src/color/ColorComponent.js"></script>
+        <script src="../src/color/Color24.js"></script>
+        <script src="../src/color/Color32.js"></script>
+        <script src="../src/timer/TimerOptions.js"></script>
+        <script src="../src/timer/Timer.js"></script>
+        <script src="../src/timer/Timers.js"></script>
+        <script src="../src/tween/transition/Sine.js"></script>
+        <script src="../src/tween/TweenValue.js"></script>
+        <script src="../src/tween/Tween.js"></script>
+        <script src="../src/tween/Tweens.js"></script>
+        <script src="../src/geom/Point.js"></script>
+        <script src="../src/geom/Vector2D.js"></script>
+        <script src="../src/geom/Rectangle.js"></script>
+        <script src="../src/physics/Velocity.js"></script>
+        <script src="../src/physics/Space.js"></script>
+        <script src="../src/input/keyboard/KeyboardOptions.js"></script>
+        <script src="../src/input/keyboard/KeyboardKey.js"></script>
+        <script src="../src/input/keyboard/Keyboard.js"></script>
+        <script src="../src/input/gamepad/GamepadsOptions.js"></script>
+        <script src="../src/input/gamepad/Gamepad.js"></script>
+        <script src="../src/input/gamepad/Gamepads.js"></script>
+        <script src="../src/input/Inputs.js"></script>
+        <script src="../src/resource/Request.js"></script>
+        <script src="../src/resource/Requests.js"></script>
+        <script src="../src/resource/Resource.js"></script>
+        <script src="../src/resource/Resources.js"></script>
+        <script src="../src/resource/RequesterOptions.js"></script>
+        <script src="../src/resource/Requester.js"></script>
+        <script src="../src/state/State.js"></script>
+        <script src="../src/state/States.js"></script>
+        <script src="../src/animation/AnimationScripts.js"></script>
+        <script src="../src/animation/Animation.js"></script>
+        <script src="../src/animation/Animations.js"></script>
+        <script src="../src/display/Quadtree.js"></script>
+        <script src="../src/display/DisplayGroup.js"></script>
+        <script src="../src/display/DisplayGroups.js"></script>
+        <script src="../src/display/Frame.js"></script>
+        <script src="../src/display/Hitbox.js"></script>
+        <script src="../src/display/InteractiveObject.js"></script>
+        <script src="../src/display/Canvas.js"></script>
+        <script src="../src/display/Flicker.js"></script>
+        <script src="../src/display/DisplayObject.js"></script>
+        <script src="../src/display/Artboard.js"></script>
+        <script src="../src/display/DisplayObjectContainer.js"></script>
+        <script src="../src/display/Graphics.js"></script>
+        <script src="../src/display/Texture.js"></script>
+        <script src="../src/display/Graphic.js"></script>
+        <script src="../src/display/Sprite.js"></script>
+        <script src="../src/display/Stage.js"></script>
+        <script src="../src/display/Screen.js"></script>
+        <script src="../src/tilemap/Block.js"></script>
+        <script src="../src/tilemap/Tile.js"></script>
+        <script src="../src/tilemap/TilemapLayer.js"></script>
+        <script src="../src/tilemap/Tilemap.js"></script>
+        <script src="../src/text/bitmapfont/BitmapFormat.js"></script>
+        <script src="../src/text/bitmapfont/BitmapField.js"></script>
+        <script src="../src/debug/Master.js"></script>
+        <script src="../src/debug/Sound.js"></script>
+        <script src="../src/debug/Music.js"></script>
+        <script src="../src/debug/Sound.js"></script>
+        <script src="../src/debug/Memory.js"></script>
+        <script src="../src/debug/Render.js"></script>
+        <script src="../src/debug/Update.js"></script>
+        <script src="../src/debug/Histogram.js"></script>
+        <script src="../src/debug/Framerate.js"></script>
+        <script src="../src/debug/Debugger.js"></script>
+        <script src="../src/console/ConsoleCommand.js"></script>
+        <script src="../src/console/ConsoleCommands.js"></script>
+        <script src="../src/console/ConsoleHistory.js"></script>
+        <script src="../src/console/ConsoleCursor.js"></script>
+        <script src="../src/console/ConsoleOutput.js"></script>
+        <script src="../src/console/ConsoleInput.js"></script>
+        <script src="../src/console/Console.js"></script>
+        <script src="../src/console/ConsoleManager.js"></script>
+        <script src="../src/camera/CameraViewport.js"></script>
+        <script src="../src/camera/CameraTargets.js"></script>
+        <script src="../src/camera/CameraTint.js"></script>
+        <script src="../src/camera/CameraTintTween.js"></script>
+        <script src="../src/camera/CameraFlash.js"></script>
+        <script src="../src/camera/CameraFade.js"></script>
+        <script src="../src/camera/CameraShake.js"></script>
+        <script src="../src/camera/Camera.js"></script>
+        <script src="../src/camera/Cameras.js"></script>
+        <script src="../src/scene/Scene.js"></script>
+        <script src="../src/scene/Scenes.js"></script>
+        <script src="../src/ui/counter/CounterDigit.js"></script>
+        <script src="../src/ui/counter/Counter.js"></script>
+        <script src="../src/ui/progressbar/Progressbar.js"></script>
+        <script src="../src/ui/list/VTListElement.js"></script>
+        <script src="../src/ui/list/VTList.js"></script>
+        <script src="../src/ui/menu/VTMenuPointer.js"></script>
+        <script src="../src/ui/menu/VTMenu.js"></script>
+        <script src="../src/media/sound/Sound.js"></script>
+        <script src="../src/media/sound/SoundChannel.js"></script>
+        <script src="../src/media/sound/Sounds.js"></script>
+        <script src="../src/data/highscore/Highscores.js"></script>
+        <script src="../src/data/graphics/Logo.js"></script>
+        <script src="../src/data/resource/Requests.js"></script>
+        <script src="../src/data/scene/Loader.js"></script>
+        <script src="../src/data/scene/LoaderDebug.js"></script>
+        <script src="../src/system/Time.js"></script>
+        <script src="../src/system/Config.js"></script>
+        <script src="../src/system/Application.js"></script>
+        <script src="../src/scope/Alias.js"></script>
+        
+        <!-- DEMO APPLICATION SOURCE CODE -->
+        <script src="../demo/scope/Manifest.js"></script>
+        <script src="../demo/data/resource/Requests.js"></script>
+        <script src="../demo/entity/astronaut/Astronaut.js"></script>
+        <script src="../demo/entity/astronaut/Astronauts.js"></script>
+        <script src="../demo/entity/controller/ControllerButton.js"></script>
+        <script src="../demo/entity/controller/Controller.js"></script>
+        <script src="../demo/scene/Scene000.js"></script>
+        <script src="../demo/scene/Scene001.js"></script>
+        <script src="../demo/scene/Scene002.js"></script>
+        <script src="../demo/scene/Scene003.js"></script>
+        <script src="../demo/system/Application.js"></script>
+        <script src="../demo/scope/Alias.js"></script>
+        
+        <!-- BOOTSTRAP -->
+        <script>
+            
+            var app = new demo.system.Application();
+                app.start();
+            
+        </script>
+        
+    </head>
+    
+</html>

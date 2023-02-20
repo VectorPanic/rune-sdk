@@ -1,0 +1,30 @@
+{
+  "name": "Rune-SDK",
+  "version": "2.0.0",
+  "description": "Yet another (object-oriented) JavaScript game engine.",
+  "keywords": [
+    "javascript",
+    "object-oriented",
+    "oop",
+    "ecmascript 5",
+    "es5",
+    "game",
+    "2d",
+    "canvas",
+    "display list",
+    "tween",
+    "tilemap"
+  ],
+  "main": "",
+  "scripts": {
+    "test": "electron ./bin-debug/bootstrap.js",
+    "start": "electron ./bin/bootstrap.js"
+  },
+  "author": "Henrik Andersen <henrik@vectorpanic.com> (http://www.vectorpanic.com)",
+  "license": "MIT",
+  "devDependencies": {
+    "google-closure-compiler": "*",
+    "jsdoc": "*",
+    "electron": "*"
+  }
+}

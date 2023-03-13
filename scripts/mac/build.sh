@@ -24,6 +24,13 @@ npx google-closure-compiler \
 --js "./../../src/timer/TimerOptions.js" \
 --js "./../../src/timer/Timer.js" \
 --js "./../../src/timer/Timers.js" \
+--js "./../../src/tween/transition/Circular.js" \
+--js "./../../src/tween/transition/Cubic.js" \
+--js "./../../src/tween/transition/Expo.js" \
+--js "./../../src/tween/transition/Linear.js" \
+--js "./../../src/tween/transition/Quad.js" \
+--js "./../../src/tween/transition/Quart.js" \
+--js "./../../src/tween/transition/Quint.js" \
 --js "./../../src/tween/transition/Sine.js" \
 --js "./../../src/tween/TweenValue.js" \
 --js "./../../src/tween/Tween.js" \

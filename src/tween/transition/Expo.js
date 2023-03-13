@@ -3,31 +3,19 @@
 //------------------------------------------------------------------------------
 
 /** 
- * Creates a new instance of Sine.
+ * Creates a new instance of Expo.
  * 
  * @constructor
  *
  * @class
  * @classdesc
  * 
- * The Sine class provides three easing functions that enable the 
+ * The Expo class provides three easing functions that enable the 
  * implementation of smooth motion in Rune animations.
  */
-rune.tween.Sine = function() {
-	console.warn("This class is not meant to be instantiated; all content is static.");
+rune.tween.Expo = function() {
+    console.warn("This class is not meant to be instantiated; all content is static.");
 };
-
-//------------------------------------------------------------------------------
-// Private static constants
-//------------------------------------------------------------------------------
-
-/**
- * The value of Pi divided into two.
- *
- * @const {number}
- * @private
- */
-rune.tween.Sine.HALF_PI = Math.PI * 0.5;
 
 //------------------------------------------------------------------------------
 // Public static methods
@@ -43,8 +31,8 @@ rune.tween.Sine.HALF_PI = Math.PI * 0.5;
  *
  * @returns {number} The value of the interpolated property at the specified time.
  */
-rune.tween.Sine.easeIn = function(t, b, c, d) {
-	return -c * Math.cos(t / d * rune.tween.Sine.HALF_PI) + c + b;
+rune.tween.Expo.easeIn = function(t, b, c, d) {
+    return (t == 0) ? b : c * Math.pow(2, 10 * (t / d - 1)) + b - c * 0.001;
 };
 
 /**
@@ -57,8 +45,8 @@ rune.tween.Sine.easeIn = function(t, b, c, d) {
  *
  * @returns {number}
  */
-rune.tween.Sine.easeOut = function(t, b, c, d) {
-	return c * Math.sin(t / d * rune.tween.Sine.HALF_PI) + b;
+rune.tween.Expo.easeOut = function(t, b, c, d) {
+    return (t == d) ? b + c : c * (-Math.pow(2, -10 * t / d) + 1) + b;
 };
 
 /**
@@ -71,6 +59,9 @@ rune.tween.Sine.easeOut = function(t, b, c, d) {
  *
  * @returns {number}
  */
-rune.tween.Sine.easeInOut = function(t, b, c, d) {
-	return -c * 0.5 * (Math.cos(Math.PI * t / d) - 1) + b;
+rune.tween.Expo.easeInOut = function(t, b, c, d) {
+    if (t == 0) return b;
+    if (t == d) return b + c;
+    if ((t /= d * 0.5) < 1) return c * 0.5 * Math.pow(2, 10 * (t - 1)) + b;
+    return c * 0.5 * (-Math.pow(2, -10 * --t) + 2) + b;
 };

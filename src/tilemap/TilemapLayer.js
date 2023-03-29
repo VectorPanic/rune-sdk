@@ -723,7 +723,7 @@ rune.tilemap.TilemapLayer.prototype.m_constructData = function() {
     if (this.m_data == null) {
         this.clear();
     } else {
-        if (this.m_data.length !== this.m_map['numTiles']) {
+        if ((this.m_data.length > 0) && (this.m_data.length !== this.m_map['numTiles'])) {
             throw new Error("Invalid map data.");
         }
     }    

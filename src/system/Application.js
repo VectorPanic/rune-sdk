@@ -180,6 +180,24 @@ Object.defineProperty(rune.system.Application.prototype, "hash", {
 });
 
 /**
+ * This refers to the native height of the application, measured in pixels.
+ *
+ * @member {number} height
+ * @memberof rune.system.Application
+ * @instance
+ * @readonly
+ */
+Object.defineProperty(rune.system.Application.prototype, "height", {
+    /**
+     * @this rune.system.Application
+     * @ignore
+     */
+    get : function() {
+        return this.m_config.screenResolutionY;
+    }
+});
+
+/**
  * Used to save local highscores.
  *
  * @member {rune.data.Highscores} highscores
@@ -325,6 +343,24 @@ Object.defineProperty(rune.system.Application.prototype, "time", {
      */
     get : function() {
         return this.m_time;
+    }
+});
+
+/**
+ * This refers to the native width of the application, measured in pixels.
+ *
+ * @member {number} width
+ * @memberof rune.system.Application
+ * @instance
+ * @readonly
+ */
+Object.defineProperty(rune.system.Application.prototype, "width", {
+    /**
+     * @this rune.system.Application
+     * @ignore
+     */
+    get : function() {
+        return this.m_config.screenResolutionX;
     }
 });
 

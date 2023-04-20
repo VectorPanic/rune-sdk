@@ -88,6 +88,7 @@ demo.scene.Scene001.prototype.m_initMenu = function() {
     this.m_menu.onSelect(this.m_onMenuSelect, this);
     this.m_menu.add("Scene001");
     this.m_menu.add("Scene002");
+    this.m_menu.add("Scene003");
     this.m_menu.center = this.cameras.getCameraAt(0).viewport.center;
     this.stage.addChild(this.m_menu);
 };
@@ -135,5 +136,9 @@ demo.scene.Scene001.prototype.m_onMenuSelect = function(element) {
         case "Scene002":
             this.application.scenes.select(2);
             break;
+            
+        case "Scene003":
+        this.application.scenes.select(3);
+        break;
     }
 };

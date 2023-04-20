@@ -72,6 +72,7 @@ npx google-closure-compiler \
 --js "./../../src/display/DisplayObjectContainer.js" \
 --js "./../../src/display/Texture.js" \
 --js "./../../src/display/Graphic.js" \
+--js "./../../src/display/RepeatedGraphic.js" \
 --js "./../../src/display/Sprite.js" \
 --js "./../../src/display/Stage.js" \
 --js "./../../src/display/Screen.js" \

@@ -45,6 +45,7 @@ demo.scene.Scene000.prototype.onSelect = function() {
     this.application.scenes.load([
         new demo.scene.Scene001(),
         new demo.scene.Scene002(),
-        new demo.scene.Scene003()
+        new demo.scene.Scene003(),
+        new demo.scene.Scene004()
     ]);
 };

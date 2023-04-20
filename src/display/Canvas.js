@@ -340,7 +340,7 @@ rune.display.Canvas.prototype.drawImageFill = function(img, x, y, w, h) {
 	this.m_context.save();
 	this.m_context.fillStyle = this.m_context.createPattern(img, "repeat");
 	this.m_context.translate(-x, -y);
-	this.m_context.fillRect(0, 0, w + x, h + y);
+	this.m_context.fillRect(x, y, w, h);
 	this.m_context.restore();
 };
 

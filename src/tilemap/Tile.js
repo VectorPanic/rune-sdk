@@ -72,7 +72,7 @@ rune.tilemap.Tile.prototype.constructor = rune.tilemap.Tile;
  * be changed at runtime. This value can thus be read, but not changed. 
  * Changing the value has no effect and does not cause runtime errors.
  *
- * @member {boolean} allowCollisions
+ * @member {number} allowCollisions
  * @memberof rune.tilemap.Tile
  * @instance
  */
@@ -80,6 +80,7 @@ Object.defineProperty(rune.tilemap.Tile.prototype, "allowCollisions", {
     /**
      * @this rune.tilemap.Tile
      * @ignore
+     * @suppress {accessControls}
      */
     get : function() {
         return this.m_allowCollisions;

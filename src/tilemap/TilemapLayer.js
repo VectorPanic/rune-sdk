@@ -419,11 +419,11 @@ rune.tilemap.TilemapLayer.prototype.getTileValueOfPoint = function(p) {
  * @returns {boolean}
  */
 rune.tilemap.TilemapLayer.prototype.hitTest = function(obj, callback, scope) {
-    if      (obj instanceof rune.display.DisplayObjectContainer) return this.hitTestChildrenOf(obj, callback, scope);
-    else if (obj instanceof rune.display.InteractiveObject)      return this.hitTestObject(obj, callback, scope);
-    else if (obj instanceof rune.display.DisplayGroup)           return this.hitTestGroup(obj, callback, scope);
-    else if (obj instanceof rune.geom.Point)                     return this.hitTestPoint(obj, callback, scope);
-    else                                                         return false;
+    if      (obj instanceof rune.display.Stage)             return this.hitTestChildrenOf(obj, callback, scope);
+    else if (obj instanceof rune.display.InteractiveObject) return this.hitTestObject(obj, callback, scope);
+    else if (obj instanceof rune.display.DisplayGroup)      return this.hitTestGroup(obj, callback, scope);
+    else if (obj instanceof rune.geom.Point)                return this.hitTestPoint(obj, callback, scope);
+    else                                                    return false;
 };
 
 /**
@@ -515,17 +515,17 @@ rune.tilemap.TilemapLayer.prototype.hitTestPoint = function(point, callback, sco
 /**
  * Evaluates and resolves collision between the tilemap layer and an interactive object's hitbox.
  *
- * @param {rune.display.DisplayObjectContainer|rune.display.InteractiveObject|rune.display.DisplayGroup} obj The object to be evaluated.
+ * @param {rune.display.Stage|rune.display.InteractiveObject|rune.display.DisplayGroup} obj The object to be evaluated.
  * @param {Function} [callback] Executed for each detected collision.
  * @param {Object} [scope] Scope of execution for the callback method.
  *
  * @returns {boolean}
  */
 rune.tilemap.TilemapLayer.prototype.hitTestAndSeparate = function(obj, callback, scope) {
-    if      (obj instanceof rune.display.DisplayObjectContainer) return this.hitTestAndSeparateChildrenOf(obj, callback, scope);
-    else if (obj instanceof rune.display.InteractiveObject)      return this.hitTestAndSeparateObject(obj, callback, scope);
-    else if (obj instanceof rune.display.DisplayGroup)           return this.hitTestAndSeparateGroup(obj, callback, scope);
-    else                                                         return false;
+    if      (obj instanceof rune.display.Stage)             return this.hitTestAndSeparateChildrenOf(obj, callback, scope);
+    else if (obj instanceof rune.display.InteractiveObject) return this.hitTestAndSeparateObject(obj, callback, scope);
+    else if (obj instanceof rune.display.DisplayGroup)      return this.hitTestAndSeparateGroup(obj, callback, scope);
+    else                                                    return false;
 };
 
 /**
@@ -559,7 +559,6 @@ rune.tilemap.TilemapLayer.prototype.hitTestAndSeparateChildrenOf = function(pare
  * @returns {boolean}
  */
 rune.tilemap.TilemapLayer.prototype.hitTestAndSeparateObject = function(obj, callback, scope) {
-    // @work
     var result = false;
     var tile = null;
     var tiles = this.getTileIndexesInRect(obj['hitbox']);

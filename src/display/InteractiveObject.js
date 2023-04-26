@@ -75,7 +75,8 @@ rune.display.InteractiveObject = function(x, y, width, height) {
      * Describes the type of collision to which the object responds.
      *
      * @type {number}
-     * @default rune.physics.Space.ANY
+     * @protected
+     * @ignore
      */
     this.m_allowCollisions = rune.physics.Space.ANY;
     
@@ -93,7 +94,8 @@ rune.display.InteractiveObject = function(x, y, width, height) {
      * object.
      *
      * @type {boolean}
-     * @default false
+     * @protected
+     * @ignore
      */
     this.m_immovable = false;
     
@@ -102,7 +104,8 @@ rune.display.InteractiveObject = function(x, y, width, height) {
      * velocity. Not all interactive objects need this functionality enabled.
      *
      * @type {boolean}
-     * @default false
+     * @protected
+     * @ignore
      */
     this.m_movable = false;
     
@@ -292,10 +295,10 @@ Object.defineProperty(rune.display.InteractiveObject.prototype, "active", {
 /**
  * Describes the type of collision to which the object responds.
  *
- * @member {boolean} allowCollisions
+ * @member {number} allowCollisions
  * @memberof rune.display.InteractiveObject
  * @instance
- * @default true
+ * @default rune.physics.Space.ANY
  */
 Object.defineProperty(rune.display.InteractiveObject.prototype, "allowCollisions", {
     /**
@@ -639,18 +642,19 @@ Object.defineProperty(rune.display.InteractiveObject.prototype, "previousY", {
  * Evaluates whether the object's hitbox overlaps or intersects with the 
  * parameter object's hitbox.
  *
- * @param {rune.display.DisplayObjectContainer|rune.display.InteractiveObject|rune.display.DisplayGroup|rune.tilemap.Tilemap} obj The object to be evaluated.
+ * @param {rune.display.Stage|rune.display.InteractiveObject|rune.display.DisplayGroup|rune.tilemap.TilemapLayer|rune.geom.Point} obj The object to be evaluated.
  * @param {Function} [callback] Executed for each detected collision.
  * @param {Object} [scope] Scope of execution for the callback method.
  *
  * @returns {boolean}
  */
 rune.display.InteractiveObject.prototype.hitTest = function(obj, callback, scope) {
-    if      (obj instanceof rune.display.DisplayObjectContainer) return this.hitTestChildrenOf(obj, callback, scope);
-    else if (obj instanceof rune.display.InteractiveObject)      return this.hitTestObject(obj, callback, scope);
-    else if (obj instanceof rune.display.DisplayGroup)           return this.hitTestGroup(obj, callback, scope);
-    else if (obj instanceof rune.tilemap.TilemapLayer)           return this.hitTestTilemapLayer(obj, callback, scope);
-    else                                                         return false;
+    if      (obj instanceof rune.display.Stage)             return this.hitTestChildrenOf(obj, callback, scope);
+    else if (obj instanceof rune.display.InteractiveObject) return this.hitTestObject(obj, callback, scope);
+    else if (obj instanceof rune.display.DisplayGroup)      return this.hitTestGroup(obj, callback, scope);
+    else if (obj instanceof rune.tilemap.TilemapLayer)      return this.hitTestTilemapLayer(obj, callback, scope);
+    else if (obj instanceof rune.geom.Point)                return this.hitTestPoint(obj, callback, scope);
+    else                                                    return false;
 };
 
 /**
@@ -757,18 +761,18 @@ rune.display.InteractiveObject.prototype.hitTestTilemapLayer = function(layer, c
  * Evaluates and resolves collision between the object's hitbox and the given 
  * argument object.
  *
- * @param {rune.display.DisplayObjectContainer|rune.display.InteractiveObject|rune.display.DisplayGroup|rune.tilemap.TilemapLayer} obj The object to be evaluated.
+ * @param {rune.display.Stage|rune.display.InteractiveObject|rune.display.DisplayGroup|rune.tilemap.TilemapLayer} obj The object to be evaluated.
  * @param {Function} [callback] Executed automatically in case of overlap.
  * @param {Object} [scope] Scope within the callback method must be executed.
  *
  * @returns {boolean}
  */
 rune.display.InteractiveObject.prototype.hitTestAndSeparate = function(obj, callback, scope) {
-    if      (obj instanceof rune.display.DisplayObjectContainer) return this.hitTestAndSeparateChildrenOf(obj, callback, scope);
-    else if (obj instanceof rune.display.InteractiveObject)      return this.hitTestAndSeparateObject(obj, callback, scope);
-    else if (obj instanceof rune.display.DisplayGroup)           return this.hitTestAndSeparateGroup(obj, callback, scope);
-    else if (obj instanceof rune.tilemap.TilemapLayer)           return this.hitTestAndSeparateTilemapLayer(obj, callback, scope);
-    else                                                         return false;
+    if      (obj instanceof rune.display.Stage)             return this.hitTestAndSeparateChildrenOf(obj, callback, scope);
+    else if (obj instanceof rune.display.InteractiveObject) return this.hitTestAndSeparateObject(obj, callback, scope);
+    else if (obj instanceof rune.display.DisplayGroup)      return this.hitTestAndSeparateGroup(obj, callback, scope);
+    else if (obj instanceof rune.tilemap.TilemapLayer)      return this.hitTestAndSeparateTilemapLayer(obj, callback, scope);
+    else                                                    return false;
 };
 
 /**

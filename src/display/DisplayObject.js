@@ -302,7 +302,6 @@ Object.defineProperty(rune.display.DisplayObject.prototype, "x", {
      * @suppress {accessControls}
      */
     set : function(value) {
-        this.m_previousX = this.m_x;
         if (this.m_x != value) {
             this.m_x =  value;
             
@@ -337,7 +336,6 @@ Object.defineProperty(rune.display.DisplayObject.prototype, "y", {
      * @suppress {accessControls}
      */
     set : function(value) {
-        this.m_previousY = this.m_y;
         if (this.m_y != value) {
             this.m_y =  value;
             

@@ -76,6 +76,9 @@ npx google-closure-compiler \
 --js "./../../src/display/Sprite.js" \
 --js "./../../src/display/Stage.js" \
 --js "./../../src/display/Screen.js" \
+--js "./../../src/particle/Particle.js" \
+--js "./../../src/particle/EmitterOptions.js" \
+--js "./../../src/particle/Emitter.js" \
 --js "./../../src/tilemap/Block.js" \
 --js "./../../src/tilemap/Tile.js" \
 --js "./../../src/tilemap/TilemapLayer.js" \

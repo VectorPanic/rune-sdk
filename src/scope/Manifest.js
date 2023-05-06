@@ -164,6 +164,16 @@ var rune = function() {
 	m_this.net = {};
 	
 	/**
+	 * The rune.particle package contains classes for creating, removing, and 
+	 * managing particle effects.
+	 *
+	 * @namespace particle
+	 * @memberof rune
+	 * @since 1.0
+	 */
+	m_this.particle = {};
+	
+	/**
 	 * the rune.physics package contains classes for "box-based" 
 	 * two-dimensional physics and collision management.
 	 *

@@ -42,6 +42,7 @@ demo.data.Requests.prototype.constructor = demo.data.Requests;
  */
 demo.data.Requests.prototype.m_construct = function() {
 	rune.resource.Requests.prototype.m_construct.call(this);
+    this.add("demo_particle_8x8",                                   "./../demo/asset/gif/demo_particle_8x8.gif");
     this.add("demo_astronaut_48x48",                                "./../demo/asset/gif/demo_astronaut_48x48.gif");
     this.add("demo_astronaut_sound_collision",                      "./../demo/asset/wav/demo_astronaut_sound_collision.wav");
     this.add("demo_controller_159x87",                              "./../demo/asset/gif/demo_controller_159x87.gif");

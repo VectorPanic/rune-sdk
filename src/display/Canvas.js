@@ -636,8 +636,11 @@ rune.display.Canvas.prototype.m_constructCanvas = function() {
 rune.display.Canvas.prototype.m_constructContext = function() {
 	this.m_disposeContext();
 	if (this.m_context == null && this.m_canvas instanceof HTMLCanvasElement ) {
-		this.m_context = this.m_canvas.getContext("2d");
+		this.m_context = this.m_canvas.getContext("2d", {
+			willReadFrequently: true
+		});
 		this.m_context.imageSmoothingEnabled = false;
+		this.m_context.imageSmoothingQuality = "low";
 	} else throw new Error();
 };
 

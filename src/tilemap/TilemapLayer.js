@@ -412,7 +412,7 @@ rune.tilemap.TilemapLayer.prototype.getTileValueOfPoint = function(p) {
  * This process only includes tiles that are solid ie. which has some form 
  * of collision data associated with it.
  *
- * @param {rune.display.DisplayObjectContainer|rune.display.InteractiveObject|rune.display.DisplayGroup|rune.geom.Point} obj The object to be evaluated.
+ * @param {rune.display.DisplayObjectContainer|rune.display.InteractiveObject|rune.display.DisplayGroup|rune.geom.Point|Array} obj The object to be evaluated.
  * @param {Function} [callback] Executed for each detected collision.
  * @param {Object} [scope] Scope of execution for the callback method.
  *
@@ -423,6 +423,7 @@ rune.tilemap.TilemapLayer.prototype.hitTest = function(obj, callback, scope) {
     else if (obj instanceof rune.display.InteractiveObject) return this.hitTestObject(obj, callback, scope);
     else if (obj instanceof rune.display.DisplayGroup)      return this.hitTestGroup(obj, callback, scope);
     else if (obj instanceof rune.geom.Point)                return this.hitTestPoint(obj, callback, scope);
+    else if (obj instanceof Array)                          return this.hitTestContentOf(obj, callback, scope);
     else                                                    return false;
 };
 
@@ -443,6 +444,27 @@ rune.tilemap.TilemapLayer.prototype.hitTestChildrenOf = function(parent, callbac
             result = true;
         }
     }, this);
+    
+    return result;
+};
+
+/**
+ * Evaluates whether the tilemap layer overlaps or intersects the hitbox 
+ * of any of the contents of an array.
+ *
+ * @param {Array} array The array to evaluate.
+ * @param {Function} [callback] Executed for each detected collision.
+ * @param {Object} [scope] Scope of execution for the callback method.
+ *
+ * @returns {boolean}
+ */
+rune.tilemap.TilemapLayer.prototype.hitTestContentOf = function(array, callback, scope) {
+    var result = false;
+    for (var i = 0; i < array.length; i++) {
+        if (this.hitTestObject(array[i], callback, scope)) {
+            result = true;
+        }
+    }
     
     return result;
 };
@@ -515,7 +537,7 @@ rune.tilemap.TilemapLayer.prototype.hitTestPoint = function(point, callback, sco
 /**
  * Evaluates and resolves collision between the tilemap layer and an interactive object's hitbox.
  *
- * @param {rune.display.Stage|rune.display.InteractiveObject|rune.display.DisplayGroup} obj The object to be evaluated.
+ * @param {rune.display.Stage|rune.display.InteractiveObject|rune.display.DisplayGroup|Array} obj The object to be evaluated.
  * @param {Function} [callback] Executed for each detected collision.
  * @param {Object} [scope] Scope of execution for the callback method.
  *
@@ -525,6 +547,7 @@ rune.tilemap.TilemapLayer.prototype.hitTestAndSeparate = function(obj, callback,
     if      (obj instanceof rune.display.Stage)             return this.hitTestAndSeparateChildrenOf(obj, callback, scope);
     else if (obj instanceof rune.display.InteractiveObject) return this.hitTestAndSeparateObject(obj, callback, scope);
     else if (obj instanceof rune.display.DisplayGroup)      return this.hitTestAndSeparateGroup(obj, callback, scope);
+    else if (obj instanceof Array)                          return this.hitTestAndSeparateContentOf(obj, callback, scope);
     else                                                    return false;
 };
 
@@ -544,6 +567,27 @@ rune.tilemap.TilemapLayer.prototype.hitTestAndSeparateChildrenOf = function(pare
             result = true;
         }
     }, this);
+    
+    return result;
+};
+
+/**
+ * Calculates and resolves collision between a Tilemap layer and 
+ * objects in an array.
+ *
+ * @param {Array} array The array object to evaluate.
+ * @param {Function} [callback] Executed for each detected collision.
+ * @param {Object} [scope] Scope of execution for the callback method.
+ *
+ * @returns {boolean}
+ */
+rune.tilemap.TilemapLayer.prototype.hitTestAndSeparateContentOf = function(array, callback, scope) {
+    var result = false;
+    for (var i = 0; i < array.length; i++) {
+        if (this.hitTestAndSeparate(array[i], callback, scope)) {
+            result = true;
+        }
+    }
     
     return result;
 };

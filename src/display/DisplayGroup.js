@@ -350,7 +350,7 @@ rune.display.DisplayGroup.prototype.hasMember = function(prospect) {
  * each hit, a callback method is also executed, which attaches the two objects 
  * that collide as arguments to the method.
  *
- * @param {rune.display.DisplayObject|rune.display.DisplayGroup|rune.geom.Point} obj Object to test against.
+ * @param {rune.display.DisplayObject|rune.display.DisplayGroup|rune.geom.Point|Array} obj Object to test against.
  * @param {Function} [callback] Method that is called when a collision is detected.
  * @param {Object} [scope] Scope of execution of the callback method.
  *
@@ -360,6 +360,7 @@ rune.display.DisplayGroup.prototype.hitTest = function(obj, callback, scope) {
     if      (obj instanceof rune.display.DisplayGroup)  return this.hitTestGroup(obj,  callback, scope);
     else if (obj instanceof rune.display.DisplayObject) return this.hitTestObject(obj, callback, scope);
     else if (obj instanceof rune.geom.Point)            return this.hitTestPoint(obj,  callback, scope);
+    else if (obj instanceof Array)                      return this.hitTestContentOf(obj,  callback, scope);
     else                                                return false;
 };
 
@@ -369,7 +370,7 @@ rune.display.DisplayGroup.prototype.hitTest = function(obj, callback, scope) {
  * properties. For each hit, a callback method is also executed, which attaches 
  * the two objects that collide as arguments to the method.
  *
- * @param {rune.display.DisplayObject|rune.display.DisplayGroup} obj Object to test against.
+ * @param {rune.display.DisplayObject|rune.display.DisplayGroup|Array} obj Object to test against.
  * @param {Function} [callback] Method that is called when a collision is detected.
  * @param {Object} [scope] Scope of execution of the callback method.
  *
@@ -378,7 +379,31 @@ rune.display.DisplayGroup.prototype.hitTest = function(obj, callback, scope) {
 rune.display.DisplayGroup.prototype.hitTestAndSeparate = function(obj, callback, scope) {
     if      (obj instanceof rune.display.DisplayGroup)  return this.hitTestAndSeparateGroup(obj,  callback, scope);
     else if (obj instanceof rune.display.DisplayObject) return this.hitTestAndSeparateObject(obj, callback, scope);
+    else if (obj instanceof Array)                      return this.hitTestAndSeparateContentOf(obj, callback, scope);
     else                                                return false;
+};
+
+/**
+ * Evaluates and handles collisions between group member hitboxes and the 
+ * hitboxes of objects in an array.
+ *
+ * @param {Array} array The array to test against.
+ * @param {Function} [callback] Method that is called when a collision is detected.
+ * @param {Object} [scope] Scope of execution of the callback method.
+ *
+ * @returns {boolean}
+ */
+rune.display.DisplayGroup.prototype.hitTestAndSeparateContentOf = function(array, callback, scope) {
+    var collide = false;
+    this.forEachMember(function(member) {
+        for (var i = 0; i < array.length; i++) {
+            if (member.hitTestAndSeparate(array[i], callback, scope)) {
+                collide = true;
+            }
+        }
+    }, this);
+    
+    return collide;
 };
 
 /**
@@ -433,6 +458,29 @@ rune.display.DisplayGroup.prototype.hitTestAndSeparateObject = function(obj, cal
             collide = true;
         }
     }
+    
+    return collide;
+};
+
+/**
+ * Evaluates collision between the hitboxes of group members and the hitboxes 
+ * of objects in an array.
+ *
+ * @param {Array} array The array to test against.
+ * @param {Function} [callback] Method that is called when a collision is detected.
+ * @param {Object} [scope] Scope of execution of the callback method.
+ *
+ * @returns {boolean}
+ */
+rune.display.DisplayGroup.prototype.hitTestContentOf = function(array, callback, scope) {
+    var collide = false;
+    this.forEachMember(function(member) {
+        for (var i = 0; i < array.length; i++) {
+            if (member.hitTest(array[i], callback, scope)) {
+                collide = true;
+            }
+        }
+    }, this);
     
     return collide;
 };

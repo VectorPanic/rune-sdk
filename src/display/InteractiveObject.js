@@ -642,7 +642,7 @@ Object.defineProperty(rune.display.InteractiveObject.prototype, "previousY", {
  * Evaluates whether the object's hitbox overlaps or intersects with the 
  * parameter object's hitbox.
  *
- * @param {rune.display.Stage|rune.display.InteractiveObject|rune.display.DisplayGroup|rune.tilemap.TilemapLayer|rune.geom.Point} obj The object to be evaluated.
+ * @param {rune.display.Stage|rune.display.InteractiveObject|rune.display.DisplayGroup|rune.tilemap.TilemapLayer|rune.geom.Point|Array} obj The object to be evaluated.
  * @param {Function} [callback] Executed for each detected collision.
  * @param {Object} [scope] Scope of execution for the callback method.
  *
@@ -654,6 +654,7 @@ rune.display.InteractiveObject.prototype.hitTest = function(obj, callback, scope
     else if (obj instanceof rune.display.DisplayGroup)      return this.hitTestGroup(obj, callback, scope);
     else if (obj instanceof rune.tilemap.TilemapLayer)      return this.hitTestTilemapLayer(obj, callback, scope);
     else if (obj instanceof rune.geom.Point)                return this.hitTestPoint(obj, callback, scope);
+    else if (obj instanceof Array)                          return this.hitTestContentOf(obj, callback, scope);
     else                                                    return false;
 };
 
@@ -686,6 +687,31 @@ rune.display.InteractiveObject.prototype.hitTestChildrenOf = function(parent, ca
     } else throw new Error();
     
     return output;
+};
+
+/**
+ * Evaluates whether the object's hitbox overlaps or intersects the 
+ * hitbox of any other object in the specified list. The list can 
+ * contain a mixture of data types, provided that each data type is 
+ * supported by the hitTest method.
+ *
+ * @param {Array} array Container object whose children are to be checked.
+ * @param {Function} [callback] Executed for each detected collision.
+ * @param {Object} [scope] Scope of execution for the callback method.
+ *
+ * @throws {Error} If the specified argument is not of type DisplayObjectContainer.
+ *
+ * @returns {boolean} If any of the container object's children are overlapped by this object, true is returned, otherwise false.
+ */
+rune.display.InteractiveObject.prototype.hitTestContentOf = function(array, callback, scope) {
+    var result = false;
+    for (var i = 0; i < array.length; i++) {
+        if (this.hitTest(array[i], callback, scope)) {
+            result = true;
+        }
+    }
+    
+    return result;
 };
 
 /**
@@ -761,7 +787,7 @@ rune.display.InteractiveObject.prototype.hitTestTilemapLayer = function(layer, c
  * Evaluates and resolves collision between the object's hitbox and the given 
  * argument object.
  *
- * @param {rune.display.Stage|rune.display.InteractiveObject|rune.display.DisplayGroup|rune.tilemap.TilemapLayer} obj The object to be evaluated.
+ * @param {rune.display.Stage|rune.display.InteractiveObject|rune.display.DisplayGroup|rune.tilemap.TilemapLayer|Array} obj The object to be evaluated.
  * @param {Function} [callback] Executed automatically in case of overlap.
  * @param {Object} [scope] Scope within the callback method must be executed.
  *
@@ -772,6 +798,7 @@ rune.display.InteractiveObject.prototype.hitTestAndSeparate = function(obj, call
     else if (obj instanceof rune.display.InteractiveObject) return this.hitTestAndSeparateObject(obj, callback, scope);
     else if (obj instanceof rune.display.DisplayGroup)      return this.hitTestAndSeparateGroup(obj, callback, scope);
     else if (obj instanceof rune.tilemap.TilemapLayer)      return this.hitTestAndSeparateTilemapLayer(obj, callback, scope);
+    else if (obj instanceof Array)                          return this.hitTestAndSeparateContentOf(obj, callback, scope);
     else                                                    return false;
 };
 
@@ -793,6 +820,27 @@ rune.display.InteractiveObject.prototype.hitTestAndSeparateChildrenOf = function
             result = true;
         }
     }, this);
+    
+    return result;
+};
+
+/**
+ * Evaluates and resolves hitbox-based collision between the object 
+ * and other objects in a list structure (array).
+ *
+ * @param {Array} array The array object to be evaluated.
+ * @param {Function} [callback] Executed automatically in case of overlap.
+ * @param {Object} [scope] Scope within the callback method must be executed.
+ *
+ * @returns {boolean}
+ */
+rune.display.InteractiveObject.prototype.hitTestAndSeparateContentOf = function(array, callback, scope) {
+    var result = false;
+    for (var i = 0; i < array.length; i++) {
+        if (this.hitTestAndSeparate(array[i], callback, scope)) {
+            result = true;
+        }
+    }
     
     return result;
 };

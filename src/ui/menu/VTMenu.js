@@ -76,6 +76,15 @@ rune.ui.VTMenu = function(options) {
      * Extend rune.display.DisplayObjectContainer.
      */
     rune.display.DisplayObjectContainer.call(this, 0, 0, 0, 0);
+    
+    //--------------------------------------------------------------------------
+    // Override public properties
+    //--------------------------------------------------------------------------
+    
+    /**
+     * @inheritDoc
+     */
+    this.immovable = true;
 };
 
 //------------------------------------------------------------------------------
@@ -112,6 +121,12 @@ rune.ui.VTMenu.prototype.add = function(text) {
     this.width  = this.m_list.width + (this.m_pointer.width + (this.m_options.pointerPadding || 4)); //@note: Magic padding.
     this.height = this.m_list.height;
     this.m_list.right = this.width;
+    this['hitbox'].set(
+        0,
+        0,
+        this.width,
+        this.height
+    );
 };
 
 /**

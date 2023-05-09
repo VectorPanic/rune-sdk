@@ -80,6 +80,18 @@ Object.defineProperty(rune.display.Artboard.prototype, "graphics", {
 //------------------------------------------------------------------------------
 
 /**
+ * @inheritDoc
+ */
+rune.display.Artboard.prototype.render = function() {
+    if (this.m_cached == false) {
+        this.m_renderBackgroundColor();
+        this.m_renderGraphics();
+        
+        this.restoreCache();
+    }
+};
+
+/**
  * The class constructor.
  *
  * @returns {undefined}

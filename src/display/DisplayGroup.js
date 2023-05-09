@@ -667,6 +667,7 @@ rune.display.DisplayGroup.prototype.postUpdate = function(step) {
  * @returns {undefined}
  */
 rune.display.DisplayGroup.prototype.dispose = function() {
+    this.removeMembers(true);
     this.m_disposeQuadtree();
 };
 

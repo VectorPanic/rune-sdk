@@ -628,6 +628,7 @@ rune.media.Sound.prototype.m_disposeStereoPanner = function() {
  */
 rune.media.Sound.prototype.m_disposeSource = function() {
     if (this.m_source != null) {
+        this.stop();
         this.m_source.disconnect();
         this.m_source  = null;
     }

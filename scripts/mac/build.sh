@@ -5,7 +5,6 @@ npx google-closure-compiler \
 --language_out ECMASCRIPT5_STRICT \
 --warning_level VERBOSE \
 --compilation_level SIMPLE_OPTIMIZATIONS \
---isolation_mode IIFE \
 --js "./../../src/scope/Manifest.js" \
 --js "./../../src/util/Executable.js" \
 --js "./../../src/util/Filter.js" \

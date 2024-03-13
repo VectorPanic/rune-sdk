@@ -3,11 +3,5 @@
 //------------------------------------------------------------------------------
 
 /**
- * This code is used to export the SDK to the global scope of JavaScript as the 
- * source code is compiled using IIFE.
+ * This file is used to create global identifiers, if necessary.
  */
-if (typeof window !== "undefined") {
-	if (typeof window.rune === "undefined") {
-		window.rune = rune;
-	}
-}

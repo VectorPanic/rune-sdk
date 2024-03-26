@@ -133,14 +133,14 @@ demo.scene.Scene001.prototype.m_initEmitter = function() {
  * @private
  */
 demo.scene.Scene001.prototype.m_updateInput = function(step) {
-    if (this.keyboard.justPressed("W")) {
+    if (this.keyboard.justPressed("W") || this.gamepads.stickLeftJustUp) {
         if (this.m_menu.up()) {
             this.m_sound.play();
             this.m_emitter.emit(10);
         }
     }
     
-    if (this.keyboard.justPressed("S") || this.gamepads.justPressed(8)) {
+    if (this.keyboard.justPressed("S") || this.gamepads.stickLeftJustDown) {
         if (this.m_menu.down()) {
             this.m_sound.play();
             this.m_emitter.emit(10);

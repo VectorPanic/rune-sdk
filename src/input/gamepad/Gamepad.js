@@ -249,7 +249,11 @@ Object.defineProperty(rune.input.Gamepad.prototype, "stickLeftJustUp", {
      * @ignore
      */
     get : function() {
-        return ((this.m_axesOne.y < -this.tolerance) && (this.m_so.axes[1] > -this.tolerance)) ? true : false;
+        if (this.m_so.axes) {
+            return ((this.m_axesOne.y < -this.tolerance) && (this.m_so.axes[1] > -this.tolerance)) ? true : false;
+        }
+        
+        return false;
     }
 });
 
@@ -285,7 +289,11 @@ Object.defineProperty(rune.input.Gamepad.prototype, "stickLeftJustDown", {
      * @ignore
      */
     get : function() {
-        return ((this.m_axesOne.y > this.tolerance) && (this.m_so.axes[1] < this.tolerance)) ? true : false;
+        if (this.m_so.axes) {
+            return ((this.m_axesOne.y > this.tolerance) && (this.m_so.axes[1] < this.tolerance)) ? true : false;
+        }
+        
+        return false;
     }
 });
 
@@ -321,7 +329,11 @@ Object.defineProperty(rune.input.Gamepad.prototype, "stickLeftJustLeft", {
      * @ignore
      */
     get : function() {
-        return ((this.m_axesOne.x < -this.tolerance) && (this.m_so.axes[0] > -this.tolerance)) ? true : false;
+        if (this.m_so.axes) {
+            return ((this.m_axesOne.x < -this.tolerance) && (this.m_so.axes[0] > -this.tolerance)) ? true : false;
+        }
+        
+        return false;
     }
 });
 
@@ -357,7 +369,11 @@ Object.defineProperty(rune.input.Gamepad.prototype, "stickLeftJustRight", {
      * @ignore
      */
     get : function() {
-        return ((this.m_axesOne.x > this.tolerance) && (this.m_so.axes[0] < this.tolerance)) ? true : false;
+        if (this.m_so.axes) {
+            return ((this.m_axesOne.x > this.tolerance) && (this.m_so.axes[0] < this.tolerance)) ? true : false;
+        }
+        
+        return false;
     }
 });
 
@@ -413,7 +429,11 @@ Object.defineProperty(rune.input.Gamepad.prototype, "stickRightJustUp", {
      * @ignore
      */
     get : function() {
-        return ((this.m_axesTwo.y < -this.tolerance) && (this.m_so.axes[3] > -this.tolerance)) ? true : false;
+        if (this.m_so.axes) {
+            return ((this.m_axesTwo.y < -this.tolerance) && (this.m_so.axes[3] > -this.tolerance)) ? true : false;
+        }
+        
+        return false;
     }
 });
 
@@ -449,7 +469,11 @@ Object.defineProperty(rune.input.Gamepad.prototype, "stickRightJustDown", {
      * @ignore
      */
     get : function() {
-        return ((this.m_axesTwo.y > this.tolerance) && (this.m_so.axes[3] < this.tolerance)) ? true : false;
+        if (this.m_so.axes) {
+            return ((this.m_axesTwo.y > this.tolerance) && (this.m_so.axes[3] < this.tolerance)) ? true : false;
+        }
+        
+        return false;
     }
 });
 
@@ -485,7 +509,11 @@ Object.defineProperty(rune.input.Gamepad.prototype, "stickRightJustLeft", {
      * @ignore
      */
     get : function() {
-        return ((this.m_axesTwo.x < -this.tolerance) && (this.m_so.axes[2] > -this.tolerance)) ? true : false;
+        if (this.m_so.axes) {
+            return ((this.m_axesTwo.x < -this.tolerance) && (this.m_so.axes[2] > -this.tolerance)) ? true : false;
+        }
+        
+        return false;
     }
 });
 
@@ -521,7 +549,11 @@ Object.defineProperty(rune.input.Gamepad.prototype, "stickRightJustRight", {
      * @ignore
      */
     get : function() {
-        return ((this.m_axesTwo.x > this.tolerance) && (this.m_so.axes[2] < this.tolerance)) ? true : false;
+        if (this.m_so.axes) {
+            return ((this.m_axesTwo.x > this.tolerance) && (this.m_so.axes[2] < this.tolerance)) ? true : false;
+        }
+        
+        return false;
     }
 });
 

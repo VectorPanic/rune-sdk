@@ -88,6 +88,26 @@ rune.tilemap.TilemapLayer = function(map, data) {
 //------------------------------------------------------------------------------
 
 /**
+ * Reference to the raw map data of the layer, i.e., an array containing all 
+ * map indices. Note that this reference is intended for read-only purposes; 
+ * avoid modifying this list directly.
+ *
+ * @member {Array.<number>} data
+ * @memberof rune.tilemap.TilemapLayer
+ * @instance
+ * @readonly
+ */
+Object.defineProperty(rune.tilemap.TilemapLayer.prototype, "data", {
+    /**
+     * @this rune.tilemap.TilemapLayer
+     * @ignore
+     */
+    get : function() {
+        return this.m_data;
+    }
+});
+
+/**
  * A stack of Path objects. Each object included in the stack is rendered on 
  * top of the layer. Used primarily for troubleshooting.
  *

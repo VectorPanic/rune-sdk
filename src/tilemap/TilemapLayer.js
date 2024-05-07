@@ -668,7 +668,7 @@ rune.tilemap.TilemapLayer.prototype.hitTestAndSeparateGroup = function(group, ca
  * @returns {undefined}
  */
 rune.tilemap.TilemapLayer.prototype.setTileValueAt = function(i, v) {
-    this.m_data[i] = parseInt(v, 16);
+    this.m_data[i] = parseInt(v, 10);
 };
 
 /**

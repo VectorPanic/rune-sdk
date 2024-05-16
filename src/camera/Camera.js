@@ -115,6 +115,16 @@ rune.camera.Camera = function(x, y, width, height) {
      */
     this.m_viewport = null;
     
+    /**
+     * The camera's viewport including any offset in the form of camera 
+     * shake effect.
+     *
+     * @type {rune.geom.Rectangle}
+     * @protected
+     * @ignore
+     */
+    this.m_viewportOffset = null;
+    
     //--------------------------------------------------------------------------
     // Super call
     //--------------------------------------------------------------------------
@@ -377,6 +387,7 @@ rune.camera.Camera.prototype.m_constructViewport = function() {
     this.m_disposeViewport();
     if (this.m_viewport == null) {
         this.m_viewport = new rune.camera.CameraViewport(this);
+        this.m_viewportOffset = new rune.geom.Rectangle();
     } else throw new Error();
 };
 
@@ -462,6 +473,11 @@ rune.camera.Camera.prototype.m_constructTargets = function() {
 rune.camera.Camera.prototype.m_updateShake = function(step) {
     if (this.m_shake != null) {
         this.m_shake.update(step);
+        
+        this.m_viewportOffset['x'] = this.m_viewport['x'] + this.m_shake['x'];
+        this.m_viewportOffset['y'] = this.m_viewport['y'] + this.m_shake['y'];
+        this.m_viewportOffset['width'] = this.m_viewport['width'];
+        this.m_viewportOffset['height'] = this.m_viewport['height'];
     }
 };
 
@@ -554,7 +570,7 @@ rune.camera.Camera.prototype.m_renderMapBackBuffer = function() {
     if (this.input['map']['back'] && this.input['map']['back'].visible) {
         this["canvas"].renderTiles(
             this.input['map'], 
-            this.m_viewport,
+            this.m_viewportOffset,
             rune.tilemap.Tilemap.BACK_BUFFER
         );
         
@@ -576,8 +592,8 @@ rune.camera.Camera.prototype.m_renderMapPaths = function(layer) {
             path = layer['paths'].get(i);
             this["canvas"].renderPath(
                 path,
-                this.m_viewport['x'] + this.m_shake['x'], 
-                this.m_viewport['y'] + this.m_shake['y']
+                this.m_viewportOffset['x'], 
+                this.m_viewportOffset['y']
             );
         } 
     }
@@ -596,8 +612,8 @@ rune.camera.Camera.prototype.m_renderInput = function() {
         for (var i = 0, l = children.length; i < l; i++) {
             this["canvas"].renderDisplayObject(
                 children[i], 
-                this.m_viewport['x'] + this.m_shake['x'], 
-                this.m_viewport['y'] + this.m_shake['y']
+                this.m_viewportOffset['x'], 
+                this.m_viewportOffset['y']
             );
             
             this.m_renderInputDebug(children[i]);

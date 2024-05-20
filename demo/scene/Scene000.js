@@ -41,7 +41,7 @@ demo.scene.Scene000.prototype.constructor = demo.scene.Scene000;
  */
 demo.scene.Scene000.prototype.onSelect = function() {
     //@note: It is not possible to change the scene directly by init().
-	rune.scene.Scene.prototype.init.call(this);
+	rune.scene.Scene.prototype.onSelect.call(this);
     this.application.scenes.load([
         new demo.scene.Scene001(),
         new demo.scene.Scene002(),

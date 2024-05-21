@@ -144,6 +144,24 @@ Object.defineProperty(rune.display.DisplayGroup.prototype, "container", {
 });
 
 /**
+ * Reference to the application's subsystem for connected gamepad devices.
+ *
+ * @member {rune.input.Gamepads} gamepads
+ * @memberof rune.display.DisplayGroup
+ * @instance
+ * @readonly
+ */
+Object.defineProperty(rune.display.DisplayGroup.prototype, "gamepads", {
+    /**
+     * @this rune.display.DisplayGroup
+     * @ignore
+     */
+    get : function() {
+        return rune.system.Application['instance']['inputs']['gamepads'];
+    }
+});
+
+/**
  * Reference to the subsystem representing the keyboard input.
  *
  * @member {rune.input.Keyboard} keyboard

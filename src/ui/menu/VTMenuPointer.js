@@ -14,7 +14,7 @@
  * 
  * Represents the graphical pointer of a VTMenu.
  */
-rune.ui.VTMenuPointer = function(text, resource) {
+rune.ui.VTMenuPointer = function() {
     
     //--------------------------------------------------------------------------
     // Super call

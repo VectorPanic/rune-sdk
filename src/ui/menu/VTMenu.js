@@ -95,6 +95,30 @@ rune.ui.VTMenu.prototype = Object.create(rune.display.DisplayObjectContainer.pro
 rune.ui.VTMenu.prototype.constructor = rune.ui.VTMenu;
 
 //------------------------------------------------------------------------------
+// Public getter and setter methods
+//------------------------------------------------------------------------------
+
+/**
+ * Reference to the pointer-object indicating the current selection in 
+ * the menu. By default, this is a reference to an object of type 
+ * rune.ui.VTMenuPointer.
+ *
+ * @member {rune.display.DisplayObject} pointer
+ * @memberof rune.ui.VTMenu
+ * @instance
+ * @readonly
+ */
+Object.defineProperty(rune.ui.VTMenu.prototype, "pointer", {
+    /**
+     * @this rune.ui.VTMenu
+     * @ignore
+     */
+    get : function() {
+        return this.m_pointer;
+    }
+});
+
+//------------------------------------------------------------------------------
 // Override public prototype methods (ENGINE)
 //------------------------------------------------------------------------------
 

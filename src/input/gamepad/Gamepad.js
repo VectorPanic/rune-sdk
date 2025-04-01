@@ -85,7 +85,7 @@ rune.input.Gamepad = function() {
      * @type {Object}
      * @private
      */
-    this.m_so = null
+    this.m_so = null;
 };
 
 //------------------------------------------------------------------------------
@@ -611,6 +611,35 @@ rune.input.Gamepad.prototype.reset = function() {
     this.m_disposeState();
 };
 
+/**
+ * Triggers the gamepad vibration using the specified effect type.
+ *
+ * @param {number} [duration=250] The duration of the vibration in milliseconds.
+ * @param {number} [delay=0] The delay before the vibration starts, in milliseconds.
+ * @param {number} [weak=1.0] The intensity of the weak (low-frequency) vibration, ranging from 0.0 to 1.0.
+ * @param {number} [strong=1.0] The intensity of the strong (high-frequency) vibration, ranging from 0.0 to 1.0.
+ * @param {string} [type="dual-rumble"] The type of vibration effect to use (e.g., "dual-rumble").
+ * 
+ * @returns {undefined}
+ */
+rune.input.Gamepad.prototype.vibrate = function(duration, delay, weak, strong, type) {
+    if (this.m_sc != null && this.m_sc.vibrationActuator) {
+        duration = rune.util.Math.isNum(duration) ? duration : 250;
+        if (duration > 0) {
+            this.m_sc.vibrationActuator.playEffect(
+                type || "dual-rumble", {
+                    startDelay: delay || 0,
+                    duration: duration || 150,
+                    weakMagnitude: weak || 1.0,
+                    strongMagnitude: strong || 1.0,
+                }
+            );
+        } else {
+            this.m_sc.vibrationActuator.reset();
+        }
+    }
+};
+
 //------------------------------------------------------------------------------
 // Internal prototype methods
 //------------------------------------------------------------------------------
@@ -623,6 +652,7 @@ rune.input.Gamepad.prototype.reset = function() {
  * @ignore
  */
 rune.input.Gamepad.prototype.dispose = function() {
+    this.vibrate(0);
     this.m_disposeAxes();
     this.m_disposeState();
 };
@@ -727,7 +757,7 @@ rune.input.Gamepad.prototype.m_isButtonInvalid = function(button) {
 rune.input.Gamepad.prototype.m_clone = function(obj) {
     var clone = {};
     for (var i in obj) {
-        if (obj[i] && typeof obj[i] === "object") clone[i] = this.m_clone(obj[i]);
+        if (obj[i] && typeof obj[i] === "object" && i !== "vibrationActuator") clone[i] = this.m_clone(obj[i]);
         else clone[i] = obj[i];
     }
 

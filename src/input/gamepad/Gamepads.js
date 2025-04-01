@@ -569,6 +569,32 @@ rune.input.Gamepads.prototype.reset = function() {
     this.m_resetGamepads();
 };
 
+/**
+ * Triggers vibration on all connected gamepads.
+ *
+ * @param {number} [duration=250] - The duration of the vibration in milliseconds.
+ * @param {number} [delay=0] - The delay before the vibration starts, in milliseconds.
+ * @param {number} [weak=1.0] - The intensity of the weak (low-frequency) vibration, ranging from 0.0 to 1.0.
+ * @param {number} [strong=1.0] - The intensity of the strong (high-frequency) vibration, ranging from 0.0 to 1.0.
+ * @param {string} [type="dual-rumble"] - The type of vibration effect to use (e.g., "dual-rumble").
+ * 
+ * @returns {undefined}
+ */
+rune.input.Gamepads.prototype.vibrate = function(duration, delay, weak, strong, type) {
+    var i = this.m_gamepads.length;
+    while (i--) {
+        if (this.m_gamepads[i] != null) {
+            this.m_gamepads[i].vibrate(
+                duration, 
+                delay, 
+                weak, 
+                strong,
+                type
+            );
+        };
+    };    
+};
+
 //------------------------------------------------------------------------------
 // Public prototype methods (ENGINE)
 //------------------------------------------------------------------------------
@@ -580,6 +606,7 @@ rune.input.Gamepads.prototype.reset = function() {
  * @ignore
  */
 rune.input.Gamepads.prototype.dispose = function() {
+    this.vibrate(0);
     this.m_disposeGamepads();
     this.m_disposeDevices();
 };

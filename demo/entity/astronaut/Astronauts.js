@@ -203,6 +203,8 @@ demo.entity.Astronauts.prototype.m_updateCollision = function(step) {
             this.m_sound.volume = ca.viewport.zoom * 0.5;
             this.m_sound.rate = rune.util.Math.random(0.5, 2.0);
             this.m_sound.play();
+            
+            this.gamepads.vibrate();
         }
     }, this);
 };

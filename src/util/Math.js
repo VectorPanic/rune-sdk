@@ -231,6 +231,19 @@ rune.util.Math.isEven = function(n) {
 };
 
 /**
+ * Checks whether n is a number. The method does not consider 
+ * "special values" like NaN or Infinity as numbers; they must be 
+ * digit-based, either positive or negative.
+ * 
+ * @param {number|undefined} n A number.
+ * 
+ * @return {boolean} Whether n is an number.
+ */
+rune.util.Math.isNum = function(n) {
+    return /^[-]?\d+$/.test(n);
+};
+
+/**
  * Returns whether n is an odd number (true) or not (false).
  *
  * @param {number} n A number.

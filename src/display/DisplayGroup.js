@@ -521,7 +521,7 @@ rune.display.DisplayGroup.prototype.hitTestGroup = function(group, callback, sco
     for (var x = 0; x < a.length; x++) {
         b = group.getMembersCloseTo(a[x]);
         for (var y = 0; y < b.length; y++) {
-            if (a[x] != b[y]) {
+            if (a[x] != null && a[x] != b[y]) {
                 if (a[x].hitTestObject(b[y], callback, scope)) {
                     c = true;
                 }

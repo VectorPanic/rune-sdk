@@ -162,7 +162,7 @@ rune.animation.Animations.prototype.clear = function() {
  */
 rune.animation.Animations.prototype.create = function(name, frames, framerate, looped) {
 	var animation = new rune.animation.Animation(
-        name.toLowerCase(),
+        name,
         frames,
         framerate,
         looped

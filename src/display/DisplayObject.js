@@ -1159,6 +1159,7 @@ rune.display.DisplayObject.prototype.setParent = function(parent) {
  */
 rune.display.DisplayObject.prototype.m_construct = function() {
     this.m_constructCanvas();
+    this.m_constructStates();
     this.m_constructHitbox();
     this.m_constructFlicker();
 };

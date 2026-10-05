@@ -75,6 +75,11 @@ Object.defineProperty(rune.camera.CameraTargets.prototype, "position", {
     get : function() {
         this.m_position.x = 0;
         this.m_position.y = 0;
+
+        if (this.m_targets.length === 0) {
+            return this.m_position;
+        }
+
         for (var i = 0, l = this.m_targets.length; i < l; i++) {
             this.m_position.x += this.m_targets[i]['center'].x;
             this.m_position.y += this.m_targets[i]['center'].y;

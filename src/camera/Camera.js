@@ -289,6 +289,7 @@ rune.camera.Camera.prototype.update = function(step) {
     this.m_updateFade(step);
     this.m_updateTargets(step);
     this.m_updateBoundaries(step);
+    this.m_updateViewportOffset();
 };
 
 /**
@@ -297,6 +298,7 @@ rune.camera.Camera.prototype.update = function(step) {
 rune.camera.Camera.prototype.render = function() {
     //@note: Never perform cache checking, cameras do not use cache.
     //@note: Always use custom render flow.
+    this.m_updateViewportOffset();
     this.m_renderBackgroundColor();
     this.m_renderMapBackBuffer();
     this.m_renderInput();
@@ -388,6 +390,7 @@ rune.camera.Camera.prototype.m_constructViewport = function() {
     if (this.m_viewport == null) {
         this.m_viewport = new rune.camera.CameraViewport(this);
         this.m_viewportOffset = new rune.geom.Rectangle();
+        this.m_updateViewportOffset();
     } else throw new Error();
 };
 
@@ -473,9 +476,23 @@ rune.camera.Camera.prototype.m_constructTargets = function() {
 rune.camera.Camera.prototype.m_updateShake = function(step) {
     if (this.m_shake != null) {
         this.m_shake.update(step);
+    }
+};
+
+/**
+ * Updates the viewport rectangle used for rendering.
+ *
+ * @return {undefined}
+ * @protected
+ * @ignore
+ */
+rune.camera.Camera.prototype.m_updateViewportOffset = function() {
+    if (this.m_viewport != null && this.m_viewportOffset != null) {
+        var shakeX = (this.m_shake != null) ? this.m_shake['x'] : 0;
+        var shakeY = (this.m_shake != null) ? this.m_shake['y'] : 0;
         
-        this.m_viewportOffset['x'] = this.m_viewport['x'] + this.m_shake['x'];
-        this.m_viewportOffset['y'] = this.m_viewport['y'] + this.m_shake['y'];
+        this.m_viewportOffset['x'] = this.m_viewport['x'] + shakeX;
+        this.m_viewportOffset['y'] = this.m_viewport['y'] + shakeY;
         this.m_viewportOffset['width'] = this.m_viewport['width'];
         this.m_viewportOffset['height'] = this.m_viewport['height'];
     }
@@ -567,14 +584,15 @@ rune.camera.Camera.prototype.m_updateBoundaries = function(step) {
  * @ignore
  */
 rune.camera.Camera.prototype.m_renderMapBackBuffer = function() {
-    if (this.input['map']['back'] && this.input['map']['back'].visible) {
+    var map = (this.input != null) ? this.input['map'] : null;
+    if (map != null && map['back'] && map['back'].visible) {
         this["canvas"].renderTiles(
-            this.input['map'], 
+            map,
             this.m_viewportOffset,
             rune.tilemap.Tilemap.BACK_BUFFER
         );
         
-        this.m_renderMapPaths(this.input['map']['back']);
+        this.m_renderMapPaths(map['back']);
     }
 };
 
@@ -633,8 +651,8 @@ rune.camera.Camera.prototype.m_renderInput = function() {
 rune.camera.Camera.prototype.m_renderInputDebug = function(obj) {
     if (obj['debug'] == true) {
         this.m_canvas.drawRect(
-            obj['x'] - this.m_viewport['x'],
-            obj['y'] - this.m_viewport['y'],
+            obj['x'] - this.m_viewportOffset['x'],
+            obj['y'] - this.m_viewportOffset['y'],
             obj['width'],
             obj['height'],
             obj['debugColor'],
@@ -644,8 +662,8 @@ rune.camera.Camera.prototype.m_renderInputDebug = function(obj) {
     
     if (obj['hitbox'].debug == true) {
         this.m_canvas.drawRect(
-            obj['hitbox']['x'] - this.m_viewport['x'],
-            obj['hitbox']['y'] - this.m_viewport['y'],
+            obj['hitbox']['x'] - this.m_viewportOffset['x'],
+            obj['hitbox']['y'] - this.m_viewportOffset['y'],
             obj['hitbox']['width'],
             obj['hitbox']['height'],
             obj['hitbox'].debugColor,
@@ -662,14 +680,15 @@ rune.camera.Camera.prototype.m_renderInputDebug = function(obj) {
  * @ignore
  */
 rune.camera.Camera.prototype.m_renderMapFrontBuffer = function() {
-    if (this.input['map']['front'] && this.input['map']['front'].visible) {
+    var map = (this.input != null) ? this.input['map'] : null;
+    if (map != null && map['front'] && map['front'].visible) {
         this["canvas"].renderTiles(
-            this.input['map'], 
-            this.m_viewport,
+            map,
+            this.m_viewportOffset,
             rune.tilemap.Tilemap.FRONT_BUFFER
         ); 
         
-        this.m_renderMapPaths(this.input['map']['front']); 
+        this.m_renderMapPaths(map['front']);
     }
 };
 
@@ -792,5 +811,6 @@ rune.camera.Camera.prototype.m_disposeViewport = function() {
     if (this.m_viewport instanceof rune.camera.CameraViewport) {
         this.m_viewport.dispose();
         this.m_viewport = null;
+        this.m_viewportOffset = null;
     }
 };

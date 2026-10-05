@@ -23,29 +23,6 @@
  */
 rune.display.InteractiveObject = function(x, y, width, height) {
     
-    //--------------------------------------------------------------------------
-    // Public properties
-    //--------------------------------------------------------------------------
-    
-    /**
-     * The mass of the object. This value is used to calculate the impact when 
-     * the object collides with another object with mass.
-     *
-     * @type {number}
-     * @default 1.0
-     */
-    this.mass = 1.0;
-    
-    /**
-     * The elasticity of the object. Used to calculate the impact when two 
-     * objects collide with each other. The greater the value, the more bouncy 
-     * the object behaves.
-     *
-     * @type {number}
-     * @default 0.0
-     */
-    this.elasticity = 0.0;
-    
     /**
      * Used in collision handling. If an object is sticky, other objects 
      * placed on top of the object may follow its movement. This is useful 
@@ -81,6 +58,15 @@ rune.display.InteractiveObject = function(x, y, width, height) {
     this.m_allowCollisions = rune.physics.Space.ANY;
     
     /**
+     * The elasticity of the object.
+     *
+     * @type {number}
+     * @protected
+     * @ignore
+     */
+    this.m_elasticity = 0.0;
+    
+    /**
      * Represents a boundary box used for collision detection.
      *
      * @type {rune.display.Hitbox}
@@ -98,6 +84,15 @@ rune.display.InteractiveObject = function(x, y, width, height) {
      * @ignore
      */
     this.m_immovable = false;
+    
+    /**
+     * The mass of the object.
+     *
+     * @type {number}
+     * @protected
+     * @ignore
+     */
+    this.m_mass = 1.0;
     
     /**
      * Whether the object should be moved automatically when it is assigned 
@@ -338,6 +333,40 @@ Object.defineProperty(rune.display.InteractiveObject.prototype, "application", {
 });
 
 /**
+ * The elasticity of the object. Used to calculate the impact when two 
+ * objects collide with each other. The value is clamped to the range 0.0-1.0.
+ *
+ * @member {number}
+ * @memberof rune.display.InteractiveObject
+ * @instance
+ * @default 0.0
+ */
+Object.defineProperty(rune.display.InteractiveObject.prototype, "elasticity", {
+    /**
+     * @this rune.display.InteractiveObject
+     * @ignore
+     */
+    get : function() {
+        return this.m_elasticity;
+    },
+    
+    /**
+     * @this rune.display.InteractiveObject
+     * @ignore
+     */
+    set : function(value) {
+        value = Number(value);
+        if (value > 1.0) {
+            value = 1.0;
+        } else if (!(value > 0.0)) {
+            value = 0.0;
+        }
+        
+        this.m_elasticity = value;
+    }
+});
+
+/**
  * Reference to the application's subsystem for connected gamepad devices.
  *
  * @member {rune.input.Gamepads} gamepads
@@ -417,6 +446,35 @@ Object.defineProperty(rune.display.InteractiveObject.prototype, "keyboard", {
      */
     get : function() {
         return rune.system.Application['instance']['inputs']['keyboard'];
+    }
+});
+
+/**
+ * The mass of the object. This value is used to calculate the impact when 
+ * the object collides with another object with mass. The value must be 
+ * greater than zero.
+ *
+ * @member {number}
+ * @memberof rune.display.InteractiveObject
+ * @instance
+ * @default 1.0
+ */
+Object.defineProperty(rune.display.InteractiveObject.prototype, "mass", {
+    /**
+     * @this rune.display.InteractiveObject
+     * @ignore
+     */
+    get : function() {
+        return this.m_mass;
+    },
+    
+    /**
+     * @this rune.display.InteractiveObject
+     * @ignore
+     */
+    set : function(value) {
+        value = Number(value);
+        this.m_mass = value > 0.0 ? value : 1.0;
     }
 });
 

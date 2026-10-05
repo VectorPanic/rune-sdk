@@ -330,14 +330,10 @@ demo.scene.Scene002.prototype.m_updateInputMirror = function() {
  * @private
  */
 demo.scene.Scene002.prototype.m_updateInputZoom = function() {
-    var p = this.m_cam.viewport.center;
-    
     if (this.keyboard.pressed("Z")) {
-        this.m_cam.viewport.zoom += 0.01;
-        this.m_cam.viewport.center = p;
+        this.m_cam.viewport.zoomBy(0.01);
     } else if (this.keyboard.pressed("X")) {
-        this.m_cam.viewport.zoom -= 0.01;
-        this.m_cam.viewport.center = p;
+        this.m_cam.viewport.zoomBy(-0.01);
     }
 };
 

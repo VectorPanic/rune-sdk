@@ -82,16 +82,12 @@ demo.scene.Scene003.prototype.update = function(step) {
     
     // CAMERA ZOOM OUT
     if (this.keyboard.pressed("X")) {
-        var tmp = rune.geom.Rectangle.clone(camera.viewport.center);
-        camera.viewport.zoom -= 0.01;
-        camera.viewport.center = tmp;
+        camera.viewport.zoomBy(-0.01);
     }
     
     // CAMERA ZOOM IN
     if (this.keyboard.pressed("Z")) {
-        var tmp = rune.geom.Rectangle.clone(camera.viewport.center);
-        camera.viewport.zoom += 0.01;
-        camera.viewport.center = tmp;
+        camera.viewport.zoomBy(0.01);
     }
     
     // CAMERA RESET

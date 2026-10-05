@@ -146,6 +146,37 @@ Object.defineProperty(rune.camera.CameraViewport.prototype, "zoom", {
 });
 
 //------------------------------------------------------------------------------
+// Public prototype methods (API)
+//------------------------------------------------------------------------------
+
+/**
+ * Changes the zoom value while preserving the current viewport center.
+ *
+ * @param {number} value Zoom value.
+ *
+ * @returns {number} The current zoom value after clamping.
+ */
+rune.camera.CameraViewport.prototype.zoomTo = function(value) {
+    var center = this['center'];
+    this['zoom'] = value;
+    this['center'] = center;
+
+    return this.m_zoom;
+};
+
+/**
+ * Changes the zoom value relative to the current zoom while preserving the
+ * current viewport center.
+ *
+ * @param {number} value Zoom value delta.
+ *
+ * @returns {number} The current zoom value after clamping.
+ */
+rune.camera.CameraViewport.prototype.zoomBy = function(value) {
+    return this.zoomTo(this.m_zoom + value);
+};
+
+//------------------------------------------------------------------------------
 // Internal prototype methods
 //------------------------------------------------------------------------------
 

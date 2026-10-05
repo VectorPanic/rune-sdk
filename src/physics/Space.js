@@ -279,7 +279,7 @@ rune.physics.Space.separateY = function(obj1, obj2) {
             obj2.y += overlap;
             obj2['velocity']['y'] = obj1v - obj2v * obj2.elasticity;
             if (obj1.active && obj1.sticky && (obj1delta < obj2delta)) {
-                obj2.x += obj1.x - obj1['hitbox']['previousX'];
+                obj2.x += obj1['hitbox']['x'] - obj1['hitbox']['previousX'];
             }
         }
         

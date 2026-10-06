@@ -39,7 +39,7 @@ rune.data.Highscores = function(id, length, tables) {
      * @type {string}
      * @private
      */
-    this.m_id = id;
+    this.m_id = this.m_createID(id);
     
     /**
      * The number of positions per highscore table.
@@ -47,7 +47,7 @@ rune.data.Highscores = function(id, length, tables) {
      * @type {number}
      * @private
      */
-    this.m_length = length || 10;
+    this.m_length = Math.max(1, parseInt(length, 10) || 10);
     
     /**
      * The number of highscore tables.
@@ -55,7 +55,7 @@ rune.data.Highscores = function(id, length, tables) {
      * @type {number}
      * @private
      */
-    this.m_tables = tables || 1;
+    this.m_tables = Math.max(1, parseInt(tables, 10) || 1);
     
     //--------------------------------------------------------------------------
     // Private constants
@@ -113,7 +113,10 @@ Object.defineProperty(rune.data.Highscores.prototype, "key", {
  * @return {undefined}
  */
 rune.data.Highscores.prototype.clear = function() {
-    window.localStorage.removeItem(this['key']);
+    try {
+        window.localStorage.removeItem(this['key']);
+    } catch (error) {}
+    
     this.m_constructData();
 };
 
@@ -127,8 +130,9 @@ rune.data.Highscores.prototype.clear = function() {
  * @return {Object}
  */
 rune.data.Highscores.prototype.get = function(ranking, table) {
-    table = table || 0;
-    return this.m_data[table][ranking];
+    table = this.m_resolveTable(table);
+    ranking = parseInt(ranking, 10);
+    return table > -1 ? this.m_data[table][ranking] : null;
 };
 
 /**
@@ -140,7 +144,9 @@ rune.data.Highscores.prototype.get = function(ranking, table) {
  * @ignore
  */
 rune.data.Highscores.prototype.save = function() {
-    window.localStorage.setItem(this['key'], JSON.stringify(this.m_data));
+    try {
+        window.localStorage.setItem(this['key'], JSON.stringify(this.m_data));
+    } catch (error) {}
 };
 
 /**
@@ -156,7 +162,12 @@ rune.data.Highscores.prototype.save = function() {
  * @return {number} Current ranking on the highscore list.
  */
 rune.data.Highscores.prototype.test = function(score, table) {
-    table = table || 0;
+    table = this.m_resolveTable(table);
+    score = parseFloat(score);
+    if (table == -1 || isNaN(score)) {
+        return -1;
+    }
+    
     for (var i = 0; i < this.m_data[table].length; i++) {
         if (score > this.m_data[table][i].score) {
             return i;
@@ -177,12 +188,16 @@ rune.data.Highscores.prototype.test = function(score, table) {
  * @return {number} Current ranking on the highscore list.
  */
 rune.data.Highscores.prototype.send = function(score, name, table) {
-    table = table || 0;
+    table = this.m_resolveTable(table);
+    if (table == -1) {
+        return -1;
+    }
+    
     var index = this.test(score, table);
     if (index > -1) {
         this.m_data[table].splice(index, 0, {
             name: name || "Rune",
-            score: score,
+            score: parseFloat(score),
             date: Date.now()
         });
         
@@ -231,7 +246,12 @@ rune.data.Highscores.prototype.m_construct = function() {
  * @suppress {checkTypes}
  */
 rune.data.Highscores.prototype.m_constructData = function() {
-    this.m_data = JSON.parse(window.localStorage.getItem(this['key']));
+    try {
+        this.m_data = JSON.parse(window.localStorage.getItem(this['key']));
+    } catch (error) {
+        this.m_data = null;
+    }
+    
     if (this.m_validate(this.m_data) == false) {
         this.m_data = [];
         for (var i = 0; i < this.m_tables; i++) {
@@ -281,6 +301,12 @@ rune.data.Highscores.prototype.m_validate = function(data) {
                 if (!Array.isArray(data[i]) || data[i].length != this.m_length) {
                     return false;
                 }
+                
+                for (var j = 0; j < data[i].length; j++) {
+                    if (this.m_validateEntry(data[i][j]) == false) {
+                        return false;
+                    }
+                }
             }
             
             return true;
@@ -288,4 +314,72 @@ rune.data.Highscores.prototype.m_validate = function(data) {
     }
     
     return false;
+};
+
+/**
+ * Creates a storage ID. If no explicit application ID is provided, the URL path
+ * is used so multiple games on the same domain get separate highscore data.
+ *
+ * @param {string} id The App ID.
+ *
+ * @return {string}
+ * @protected
+ * @ignore
+ */
+rune.data.Highscores.prototype.m_createID = function(id) {
+    id = String(id || "");
+    if (id.length > 0 && id != ".") {
+        return id;
+    }
+    
+    return this.m_createLocationID();
+};
+
+/**
+ * Creates a stable storage ID based on the current page location.
+ *
+ * @return {string}
+ * @protected
+ * @ignore
+ */
+rune.data.Highscores.prototype.m_createLocationID = function() {
+    var id = "rune";
+    if (typeof window != "undefined" && window.location != null) {
+        id += "." + (window.location.hostname || "local");
+        id += "." + (window.location.pathname || "/");
+    }
+    
+    return id.replace(/[^a-zA-Z0-9]+/g, ".").replace(/^\.+|\.+$/g, "");
+};
+
+/**
+ * Resolves a highscore table index.
+ *
+ * @param {number=} table Table index.
+ *
+ * @return {number}
+ * @protected
+ * @ignore
+ */
+rune.data.Highscores.prototype.m_resolveTable = function(table) {
+    table = parseInt(table || 0, 10);
+    return table >= 0 && table < this.m_tables ? table : -1;
+};
+
+/**
+ * Validates a single highscore entry.
+ *
+ * @param {Object} entry Highscore entry.
+ *
+ * @return {boolean}
+ * @protected
+ * @ignore
+ */
+rune.data.Highscores.prototype.m_validateEntry = function(entry) {
+    return entry != null &&
+        typeof entry.name == "string" &&
+        typeof entry.score == "number" &&
+        typeof entry.date == "number" &&
+        isNaN(entry.score) == false &&
+        isNaN(entry.date) == false;
 };

@@ -126,7 +126,7 @@ Object.defineProperty(rune.particle.Emitter.prototype, "numParticles", {
 /**
  * Reference to the settings object.
  *
- * @member {number} options
+ * @member {rune.particle.EmitterOptions} options
  * @memberof rune.particle.Emitter
  * @instance
  * @readonly
@@ -160,6 +160,8 @@ rune.particle.Emitter.prototype.clear = function(dispose) {
         p = this.m_particles[i];
         if (p.parent !== null) {
             p.parent.removeChild(p, dispose);
+        } else if (dispose == true) {
+            p.dispose();
         }
     }
     
@@ -191,13 +193,14 @@ rune.particle.Emitter.prototype.clearInterval = function(cleanup, dispose) {
 /**
  * Emits new particles.
  *
- * @param {number} [ammount=1] The number of particles to be emitted.
+ * @param {number} [amount=1] The number of particles to be emitted.
  *
  * @returns {undefined}
  */
-rune.particle.Emitter.prototype.emit = function(ammount) {
-    ammount = rune.util.Math.clamp(ammount || 0, 1, this.m_options.capacity);
-    while (ammount-- > 0) {
+rune.particle.Emitter.prototype.emit = function(amount) {
+    amount = parseInt(amount, 10) || 1;
+    amount = rune.util.Math.clamp(amount, 1, this.m_options.capacity);
+    while (amount-- > 0) {
         this.m_emit();
     }
 };
@@ -227,19 +230,19 @@ rune.particle.Emitter.prototype.getParticles = function(active, list) {
 /**
  * Emits new particles at a fixed time interval.
  *
- * @param {number} ammount The number of particles to be emitted.
+ * @param {number} amount The number of particles to be emitted.
  * @param {number} delay The time, in milliseconds, between particle emissions.
  * @param {number} repeat The number of repetitions.
  *
  * @returns {undefined}
  */
-rune.particle.Emitter.prototype.setInterval = function(ammount, delay, repeat) {
+rune.particle.Emitter.prototype.setInterval = function(amount, delay, repeat) {
     this.clearInterval();
     this.m_timer = new rune.timer.Timer({
         duration: delay,
         repeat: repeat,
         onTick: function(timer) {
-            this.emit(ammount);
+            this.emit(amount);
         },
         scope: this
     });
@@ -285,7 +288,7 @@ rune.particle.Emitter.prototype.dispose = function() {
 rune.particle.Emitter.prototype.m_updateTimer = function(step) {
     if (this.m_timer != null) {
         if (this.m_timer['complete']) this.clearInterval();
-        else this.m_timer.update(step);
+        else if (this.m_timer.update(step)) this.clearInterval();
     }
 };
 
@@ -298,6 +301,10 @@ rune.particle.Emitter.prototype.m_updateTimer = function(step) {
  */
 rune.particle.Emitter.prototype.m_emit = function() {
     var particle = this.m_createParticle();
+        if (typeof particle.reset == "function") {
+            particle.reset(this);
+        }
+        
         particle['x'] = this['centerX'] + rune.util.Math.random(-this['width']  >> 1, this['width']  >> 1);
         particle['y'] = this['centerY'] + rune.util.Math.random(-this['height'] >> 1, this['height'] >> 1);
         
@@ -310,6 +317,10 @@ rune.particle.Emitter.prototype.m_emit = function() {
         
         particle.lifespan = rune.util.Math.randomInt(this.m_options.minLifespan, this.m_options.maxLifespan);
         particle['velocity'].angular = rune.util.Math.random(this.m_options.minRotation, this.m_options.maxRotation);
+        
+        if (typeof particle.onEmit == "function") {
+            particle.onEmit(this);
+        }
         
     if (this['parent'] != null) {
         this['parent'].addChild(particle);
@@ -324,14 +335,31 @@ rune.particle.Emitter.prototype.m_emit = function() {
  * @ignore
  */
 rune.particle.Emitter.prototype.m_createParticle = function() {
-    var particle = null;
+    var particle = this.m_getInactiveParticle();
     
-    if (this.m_particles.length < this.m_options.capacity) {
+    if (particle == null && this.m_particles.length < this.m_options.capacity) {
         particle = new this.m_options.particles[Math.floor(Math.random() * this.m_options.particles.length)]();
-    } else {
+    } else if (particle == null) {
         particle = this.m_particles.shift();
     }
     
     this.m_particles.push(particle);
     return particle;
+};
+
+/**
+ * Gets an inactive particle from the pool.
+ *
+ * @returns {rune.particle.Particle}
+ * @protected
+ * @ignore
+ */
+rune.particle.Emitter.prototype.m_getInactiveParticle = function() {
+    for (var i = 0; i < this.m_particles.length; i++) {
+        if (this.m_particles[i]['parent'] == null) {
+            return this.m_particles.splice(i, 1)[0];
+        }
+    }
+    
+    return null;
 };

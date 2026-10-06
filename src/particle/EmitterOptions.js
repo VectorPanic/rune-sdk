@@ -26,6 +26,73 @@ rune.particle.EmitterOptions = function(data) {
      * @ignore
      */
     data = data || {};
+    
+    /**
+     * @ignore
+     */
+    var number = function(value, fallback) {
+        value = parseFloat(value);
+        return isNaN(value) == false ? value : fallback;
+    };
+    
+    /**
+     * @ignore
+     */
+    var integer = function(value, fallback) {
+        value = parseInt(value, 10);
+        return isNaN(value) == false ? value : fallback;
+    };
+    
+    /**
+     * @ignore
+     */
+    var range = function(a, b) {
+        return a <= b ? [a, b] : [b, a];
+    };
+    
+    /**
+     * @ignore
+     */
+    var particles = Array.isArray(data["particles"]) ? data["particles"].slice() : [];
+    
+    /**
+     * @ignore
+     */
+    particles = particles.filter(function(value) {
+        return typeof value == "function";
+    });
+    
+    /**
+     * @ignore
+     */
+    var lifespan = range(
+        Math.max(0, integer(data["minLifespan"], 2500)),
+        Math.max(0, integer(data["maxLifespan"], 5000))
+    );
+    
+    /**
+     * @ignore
+     */
+    var rotation = range(
+        number(data["minRotation"], 0),
+        number(data["maxRotation"], 0)
+    );
+    
+    /**
+     * @ignore
+     */
+    var velocityX = range(
+        number(data["minVelocityX"], 0),
+        number(data["maxVelocityX"], 0)
+    );
+    
+    /**
+     * @ignore
+     */
+    var velocityY = range(
+        number(data["minVelocityY"], 0),
+        number(data["maxVelocityY"], 0)
+    );
 
     //--------------------------------------------------------------------------
     // Public properties
@@ -37,7 +104,7 @@ rune.particle.EmitterOptions = function(data) {
      *
      * @type {rune.geom.Point}
      */
-    this.acceleration = new rune.geom.Point(data.accelerationX || 0, data.accelerationY || 0);
+    this.acceleration = new rune.geom.Point(number(data["accelerationX"], 0), number(data["accelerationY"], 0));
     
     /**
      * The emitter's capacity, i.e. the maximum number of particles it can 
@@ -45,7 +112,7 @@ rune.particle.EmitterOptions = function(data) {
      *
      * @type {number}
      */
-    this.capacity = data.capacity || 64;
+    this.capacity = Math.max(1, integer(data["capacity"], 64));
 
     /**
      * Force (in x- and y-direction) that counteracts the particles' velocity, 
@@ -53,49 +120,49 @@ rune.particle.EmitterOptions = function(data) {
      *
      * @type {rune.geom.Point}
      */
-    this.drag = new rune.geom.Point(data.dragX || 0, data.dragY || 0);
+    this.drag = new rune.geom.Point(number(data["dragX"], 0), number(data["dragY"], 0));
     
     /**
      * The maximum lifetime of a particle (in milliseconds).
      *
      * @type {number}
      */
-    this.maxLifespan = data.maxLifespan || 5000;
+    this.maxLifespan = lifespan[1];
     
     /**
      * A particle's maximum angular velocity.
      *
      * @type {number}
      */
-    this.maxRotation = data.maxRotation || 0;
+    this.maxRotation = rotation[1];
     
     /**
      * A particle's maximum velocity.
      *
      * @type {rune.geom.Point}
      */
-    this.maxVelocity = new rune.geom.Point(data.maxVelocityX || 0, data.maxVelocityY || 0);
+    this.maxVelocity = new rune.geom.Point(velocityX[1], velocityY[1]);
     
     /**
      * The minimum lifetime of a particle (in milliseconds).
      *
      * @type {number}
      */
-    this.minLifespan = data.minLifespan || 2500;
+    this.minLifespan = lifespan[0];
     
     /**
      * A particle's minimum angular velocity.
      *
      * @type {number}
      */
-    this.minRotation = data.minRotation || 0;
+    this.minRotation = rotation[0];
     
     /**
      * A particle's minimum velocity.
      *
      * @type {rune.geom.Point}
      */
-    this.minVelocity = new rune.geom.Point(data.minVelocityX || 0, data.minVelocityY || 0);
+    this.minVelocity = new rune.geom.Point(velocityX[0], velocityY[0]);
     
     /**
      * A list of classes to use as particles. When a new particle is to be 
@@ -104,7 +171,7 @@ rune.particle.EmitterOptions = function(data) {
      *
      * @type {Array.<Function>}
      */
-    this.particles = data.particles || [rune.particle.Particle];
+    this.particles = particles.length > 0 ? particles : [rune.particle.Particle];
 };
 
 //------------------------------------------------------------------------------

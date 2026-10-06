@@ -56,7 +56,18 @@ rune.input.Gamepads = function(options) {
      * Invokes secondary class constructor.
      */
     this.m_construct();
-}
+};
+
+//------------------------------------------------------------------------------
+// Public static constants
+//------------------------------------------------------------------------------
+
+/**
+ * Maximum number of gamepads exposed by the handler.
+ *
+ * @constant {number}
+ */
+rune.input.Gamepads.NUM_GAMEPADS = 4;
 
 //------------------------------------------------------------------------------
 // Public getter and setter methods
@@ -112,7 +123,7 @@ Object.defineProperty(rune.input.Gamepads.prototype, "numGamepads", {
         var num = 0;
         if (this.m_gamepads != null) {
             for (var i = 0; i < this.m_gamepads.length; i++) {
-                if (this.m_gamepads[i].connected == true) {
+                if (this.m_gamepads[i] != null && this.m_gamepads[i].connected == true) {
                     num++;
                 }
             }
@@ -463,9 +474,11 @@ Object.defineProperty(rune.input.Gamepads.prototype, "m_numDevices", {
      */
     get : function() {
         var num = 0;
-        for (var i = 0; i < this.m_devices.length; i++) {
-            if (this.m_devices[i] !== null) {
-                num++;
+        if (this.m_devices != null) {
+            for (var i = 0; i < this.m_devices.length; i++) {
+                if (this.m_devices[i] !== null) {
+                    num++;
+                }
             }
         }
         
@@ -492,7 +505,7 @@ Object.defineProperty(rune.input.Gamepads.prototype, "m_numDevices", {
  * @returns {rune.input.Gamepad}
  */
 rune.input.Gamepads.prototype.get = function(id) {
-    if (id < this.m_gamepads.length) {
+    if (this.m_gamepads != null && id > -1 && id < this.m_gamepads.length) {
         return this.m_gamepads[id];
     } throw new RangeError();
 };
@@ -506,6 +519,8 @@ rune.input.Gamepads.prototype.get = function(id) {
  * @returns {boolean}
  */
 rune.input.Gamepads.prototype.justPressed = function(button) {
+    if (this.m_gamepads == null) return false;
+    
     var i = this.m_gamepads.length;
     while (i--) {
         if (this.m_gamepads[i] != null) {
@@ -527,6 +542,8 @@ rune.input.Gamepads.prototype.justPressed = function(button) {
  * @returns {boolean}
  */
 rune.input.Gamepads.prototype.justReleased = function(button) {
+    if (this.m_gamepads == null) return false;
+    
     var i = this.m_gamepads.length;
     while (i--) {
         if (this.m_gamepads[i] != null) {
@@ -548,6 +565,8 @@ rune.input.Gamepads.prototype.justReleased = function(button) {
  * @returns {boolean}
  */
 rune.input.Gamepads.prototype.pressed = function(button) {
+    if (this.m_gamepads == null) return false;
+    
     var i = this.m_gamepads.length;
     while (i--) {
         if (this.m_gamepads[i] != null) {
@@ -581,6 +600,8 @@ rune.input.Gamepads.prototype.reset = function() {
  * @returns {undefined}
  */
 rune.input.Gamepads.prototype.vibrate = function(duration, delay, weak, strong, type) {
+    if (this.m_gamepads == null) return;
+    
     var i = this.m_gamepads.length;
     while (i--) {
         if (this.m_gamepads[i] != null) {
@@ -618,7 +639,7 @@ rune.input.Gamepads.prototype.dispose = function() {
  * @ignore
  */
 rune.input.Gamepads.prototype.update = function() {
-    if (this.m_options.enable == true) {
+    if (this.m_options.enable == true && this.m_gamepads != null) {
         this.m_updateDevices();
         this.m_updateGamepads();
     }
@@ -653,8 +674,10 @@ rune.input.Gamepads.prototype.m_construct = function() {
  * @private
  */
 rune.input.Gamepads.prototype.m_constructDevices = function() {
-    if (navigator && typeof navigator.getGamepads === "function") {
+    if (typeof navigator !== "undefined" && typeof navigator.getGamepads === "function") {
         this.m_devices = window.navigator.getGamepads();
+    } else if (this.m_options.enable == false) {
+        this.m_devices = [];
     } else throw new Error("Gamepads not supported at runtime.");
 };
 
@@ -670,7 +693,8 @@ rune.input.Gamepads.prototype.m_constructGamepads = function() {
     this.m_disposeGamepads();
     if (this.m_gamepads == null && this.m_devices != null) {
         this.m_gamepads = [];
-        for (var i = 0; i < this.m_devices.length; i++) {
+        var l = Math.max(rune.input.Gamepads.NUM_GAMEPADS, this.m_devices.length);
+        for (var i = 0; i < l; i++) {
             this.m_gamepads.push(
                 new rune.input.Gamepad()
             );
@@ -687,7 +711,7 @@ rune.input.Gamepads.prototype.m_constructGamepads = function() {
  * @private
  */
 rune.input.Gamepads.prototype.m_updateDevices = function() {
-    if (window.navigator != null) {
+    if (window.navigator != null && typeof window.navigator.getGamepads === "function") {
         this.m_devices = window.navigator.getGamepads();
 
         var a = this['m_numDevices'];
@@ -695,6 +719,8 @@ rune.input.Gamepads.prototype.m_updateDevices = function() {
 
         if      (a > b) this.m_onDeviceConnected();
         else if (a < b) this.m_onDeviceDisconnected();
+    } else if (this.m_options.enable == false) {
+        this.m_devices = [];
     } else throw new Error();
 };
 
@@ -707,9 +733,9 @@ rune.input.Gamepads.prototype.m_updateDevices = function() {
 rune.input.Gamepads.prototype.m_updateGamepads = function() {
     if (this.m_gamepads == null) return;
     for (var i = 0; i < this.m_gamepads.length; i++) {
-        if (this.m_gamepads[i].active === true) {
+        if (this.m_gamepads[i] != null && this.m_gamepads[i].active === true) {
             this.m_gamepads[i].update(
-                this.m_devices[i]
+                (this.m_devices != null) ? this.m_devices[i] : null
             );
         }
     }
@@ -750,6 +776,8 @@ rune.input.Gamepads.prototype.m_disposeDevices = function() {
  * @private
  */
 rune.input.Gamepads.prototype.m_resetGamepads = function() {
+    if (this.m_gamepads == null) return;
+    
     var i = this.m_gamepads.length;
     while (i--) this.m_resetGamepad(this.m_gamepads[i]);
 };
@@ -779,6 +807,8 @@ rune.input.Gamepads.prototype.m_resetGamepad = function(gamepad) {
  * @private
  */
 rune.input.Gamepads.prototype.m_getPropOfGamepads = function(prop) {
+    if (this.m_gamepads == null) return false;
+    
     var i = this.m_gamepads.length;
     while (i--) {
         if (this.m_gamepads[i] != null) {

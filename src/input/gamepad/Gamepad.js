@@ -231,7 +231,7 @@ Object.defineProperty(rune.input.Gamepad.prototype, "stickLeftUp", {
      * @ignore
      */
     get : function() {
-        return (this.m_axesOne.y < -this.tolerance) ? true : false;
+        return (this.m_axesOne != null && this.m_axesOne.y < -this.tolerance) ? true : false;
     }
 });
 
@@ -249,7 +249,7 @@ Object.defineProperty(rune.input.Gamepad.prototype, "stickLeftJustUp", {
      * @ignore
      */
     get : function() {
-        if (this.m_so.axes) {
+        if (this.m_axesOne != null && this.m_so != null && this.m_so.axes) {
             return ((this.m_axesOne.y < -this.tolerance) && (this.m_so.axes[1] > -this.tolerance)) ? true : false;
         }
         
@@ -271,7 +271,7 @@ Object.defineProperty(rune.input.Gamepad.prototype, "stickLeftDown", {
      * @ignore
      */
     get : function() {
-        return (this.m_axesOne.y > this.tolerance) ? true : false;
+        return (this.m_axesOne != null && this.m_axesOne.y > this.tolerance) ? true : false;
     }
 });
 
@@ -289,7 +289,7 @@ Object.defineProperty(rune.input.Gamepad.prototype, "stickLeftJustDown", {
      * @ignore
      */
     get : function() {
-        if (this.m_so.axes) {
+        if (this.m_axesOne != null && this.m_so != null && this.m_so.axes) {
             return ((this.m_axesOne.y > this.tolerance) && (this.m_so.axes[1] < this.tolerance)) ? true : false;
         }
         
@@ -311,7 +311,7 @@ Object.defineProperty(rune.input.Gamepad.prototype, "stickLeftLeft", {
      * @ignore
      */
     get : function() {
-        return (this.m_axesOne.x < -this.tolerance) ? true : false;
+        return (this.m_axesOne != null && this.m_axesOne.x < -this.tolerance) ? true : false;
     }
 });
 
@@ -329,7 +329,7 @@ Object.defineProperty(rune.input.Gamepad.prototype, "stickLeftJustLeft", {
      * @ignore
      */
     get : function() {
-        if (this.m_so.axes) {
+        if (this.m_axesOne != null && this.m_so != null && this.m_so.axes) {
             return ((this.m_axesOne.x < -this.tolerance) && (this.m_so.axes[0] > -this.tolerance)) ? true : false;
         }
         
@@ -351,7 +351,7 @@ Object.defineProperty(rune.input.Gamepad.prototype, "stickLeftRight", {
      * @ignore
      */
     get : function() {
-        return (this.m_axesOne.x > this.tolerance) ? true : false;
+        return (this.m_axesOne != null && this.m_axesOne.x > this.tolerance) ? true : false;
     }
 });
 
@@ -369,7 +369,7 @@ Object.defineProperty(rune.input.Gamepad.prototype, "stickLeftJustRight", {
      * @ignore
      */
     get : function() {
-        if (this.m_so.axes) {
+        if (this.m_axesOne != null && this.m_so != null && this.m_so.axes) {
             return ((this.m_axesOne.x > this.tolerance) && (this.m_so.axes[0] < this.tolerance)) ? true : false;
         }
         
@@ -411,7 +411,7 @@ Object.defineProperty(rune.input.Gamepad.prototype, "stickRightUp", {
      * @ignore
      */
     get : function() {
-        return (this.m_axesTwo.y < -this.tolerance) ? true : false;
+        return (this.m_axesTwo != null && this.m_axesTwo.y < -this.tolerance) ? true : false;
     }
 });
 
@@ -429,7 +429,7 @@ Object.defineProperty(rune.input.Gamepad.prototype, "stickRightJustUp", {
      * @ignore
      */
     get : function() {
-        if (this.m_so.axes) {
+        if (this.m_axesTwo != null && this.m_so != null && this.m_so.axes) {
             return ((this.m_axesTwo.y < -this.tolerance) && (this.m_so.axes[3] > -this.tolerance)) ? true : false;
         }
         
@@ -451,7 +451,7 @@ Object.defineProperty(rune.input.Gamepad.prototype, "stickRightDown", {
      * @ignore
      */
     get : function() {
-        return (this.m_axesTwo.y > this.tolerance) ? true : false;
+        return (this.m_axesTwo != null && this.m_axesTwo.y > this.tolerance) ? true : false;
     }
 });
 
@@ -469,7 +469,7 @@ Object.defineProperty(rune.input.Gamepad.prototype, "stickRightJustDown", {
      * @ignore
      */
     get : function() {
-        if (this.m_so.axes) {
+        if (this.m_axesTwo != null && this.m_so != null && this.m_so.axes) {
             return ((this.m_axesTwo.y > this.tolerance) && (this.m_so.axes[3] < this.tolerance)) ? true : false;
         }
         
@@ -491,7 +491,7 @@ Object.defineProperty(rune.input.Gamepad.prototype, "stickRightLeft", {
      * @ignore
      */
     get : function() {
-        return (this.m_axesTwo.x < -this.tolerance) ? true : false;
+        return (this.m_axesTwo != null && this.m_axesTwo.x < -this.tolerance) ? true : false;
     }
 });
 
@@ -509,7 +509,7 @@ Object.defineProperty(rune.input.Gamepad.prototype, "stickRightJustLeft", {
      * @ignore
      */
     get : function() {
-        if (this.m_so.axes) {
+        if (this.m_axesTwo != null && this.m_so != null && this.m_so.axes) {
             return ((this.m_axesTwo.x < -this.tolerance) && (this.m_so.axes[2] > -this.tolerance)) ? true : false;
         }
         
@@ -531,7 +531,7 @@ Object.defineProperty(rune.input.Gamepad.prototype, "stickRightRight", {
      * @ignore
      */
     get : function() {
-        return (this.m_axesTwo.x > this.tolerance) ? true : false;
+        return (this.m_axesTwo != null && this.m_axesTwo.x > this.tolerance) ? true : false;
     }
 });
 
@@ -549,7 +549,7 @@ Object.defineProperty(rune.input.Gamepad.prototype, "stickRightJustRight", {
      * @ignore
      */
     get : function() {
-        if (this.m_so.axes) {
+        if (this.m_axesTwo != null && this.m_so != null && this.m_so.axes) {
             return ((this.m_axesTwo.x > this.tolerance) && (this.m_so.axes[2] < this.tolerance)) ? true : false;
         }
         
@@ -609,6 +609,7 @@ rune.input.Gamepad.prototype.pressed = function(button) {
  */
 rune.input.Gamepad.prototype.reset = function() {
     this.m_disposeState();
+    this.m_resetAxes();
 };
 
 /**
@@ -629,9 +630,9 @@ rune.input.Gamepad.prototype.vibrate = function(duration, delay, weak, strong, t
             this.m_sc.vibrationActuator.playEffect(
                 type || "dual-rumble", {
                     startDelay: delay || 0,
-                    duration: duration || 150,
-                    weakMagnitude: weak || 1.0,
-                    strongMagnitude: strong || 1.0,
+                    duration: duration,
+                    weakMagnitude: (typeof weak === "number") ? weak : 1.0,
+                    strongMagnitude: (typeof strong === "number") ? strong : 1.0,
                 }
             );
         } else {
@@ -686,7 +687,7 @@ rune.input.Gamepad.prototype.update = function(state) {
  */
 rune.input.Gamepad.prototype.m_updateState = function(state) {
     this.m_so = this.m_sc;
-    this.m_sc = this.m_clone(state);
+    this.m_sc = (state != null) ? this.m_clone(state) : null;
 };
 
 /**
@@ -706,6 +707,26 @@ rune.input.Gamepad.prototype.m_updateAxes = function() {
         this.m_axesOne.y = (Math.abs(this.m_axesOne.y) < this.threshold) ? 0 : this.m_axesOne.y;
         this.m_axesTwo.x = (Math.abs(this.m_axesTwo.x) < this.threshold) ? 0 : this.m_axesTwo.x;
         this.m_axesTwo.y = (Math.abs(this.m_axesTwo.y) < this.threshold) ? 0 : this.m_axesTwo.y;
+    } else {
+        this.m_resetAxes();
+    }
+};
+
+/**
+ * Resets joystick values.
+ *
+ * @returns {undefined}
+ * @private
+ */
+rune.input.Gamepad.prototype.m_resetAxes = function() {
+    if (this.m_axesOne != null) {
+        this.m_axesOne.x = 0;
+        this.m_axesOne.y = 0;
+    }
+    
+    if (this.m_axesTwo != null) {
+        this.m_axesTwo.x = 0;
+        this.m_axesTwo.y = 0;
     }
 };
 
@@ -728,7 +749,7 @@ rune.input.Gamepad.prototype.m_disposeAxes = function() {
  */
 rune.input.Gamepad.prototype.m_disposeState = function() {
     this.m_so = null;
-    this.m_cs = null;
+    this.m_sc = null;
 };
 
 /**
@@ -744,7 +765,7 @@ rune.input.Gamepad.prototype.m_isButtonInvalid = function(button) {
     if (this.m_so == null || this.m_so.buttons == null || this.m_so.buttons[button] == null) return true;
 
     return false;
-}
+};
 
 /**
  * Creates a (fast) shallow clone of an object.
@@ -755,6 +776,8 @@ rune.input.Gamepad.prototype.m_isButtonInvalid = function(button) {
  * @private
  */
 rune.input.Gamepad.prototype.m_clone = function(obj) {
+    if (obj == null) return null;
+    
     var clone = {};
     for (var i in obj) {
         if (obj[i] && typeof obj[i] === "object" && i !== "vibrationActuator") clone[i] = this.m_clone(obj[i]);
@@ -762,4 +785,4 @@ rune.input.Gamepad.prototype.m_clone = function(obj) {
     }
 
     return clone;
-}
+};

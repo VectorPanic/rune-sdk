@@ -17,6 +17,7 @@
  * etc.) for each individual key on the keyboard.
  */
 rune.input.Keyboard = function(options) {
+    options = options || {};
     
     //--------------------------------------------------------------------------
     // Private properties
@@ -143,8 +144,8 @@ Object.defineProperty(rune.input.Keyboard.prototype, "enabled", {
  * @returns {boolean}
  */
 rune.input.Keyboard.prototype.justPressed = function(key) {
-    key = key.toUpperCase();
-    if (this.m_keys[this.m_LUT[key]] != null) return this.m_keys[this.m_LUT[key]].isJustPressed();
+    var keyboardKey = this.m_getKey(key);
+    if (keyboardKey != null) return keyboardKey.isJustPressed();
     else return false;
 };
 
@@ -156,8 +157,8 @@ rune.input.Keyboard.prototype.justPressed = function(key) {
  * @returns {boolean}
  */
 rune.input.Keyboard.prototype.justReleased = function(key) {
-    key = key.toUpperCase();
-    if (this.m_keys[this.m_LUT[key]] != null) return this.m_keys[this.m_LUT[key]].isJustReleased();
+    var keyboardKey = this.m_getKey(key);
+    if (keyboardKey != null) return keyboardKey.isJustReleased();
     else return false;
 };
 
@@ -169,8 +170,8 @@ rune.input.Keyboard.prototype.justReleased = function(key) {
  * @returns {boolean}
  */
 rune.input.Keyboard.prototype.pressed = function(key) {
-    key = key.toUpperCase();
-    if (this.m_keys[this.m_LUT[key]] != null) return this.m_keys[this.m_LUT[key]].isPressed();
+    var keyboardKey = this.m_getKey(key);
+    if (keyboardKey != null) return keyboardKey.isPressed();
     else return false;
 };
 
@@ -180,6 +181,8 @@ rune.input.Keyboard.prototype.pressed = function(key) {
  * @returns {undefined}
  */
 rune.input.Keyboard.prototype.reset = function() {
+    if (this.m_keys == null) return;
+    
     var i = this.m_keys.length;
     while (i--) {
         var key = this.m_keys[i];
@@ -305,7 +308,7 @@ rune.input.Keyboard.prototype.m_constructKeys = function() {
     this.m_constructKey("PERIOD",       190);
     this.m_constructKey("NUMPADPERIOD", 110);
     this.m_constructKey("SLASH",        191);
-    this.m_constructKey("NUMPADSLASH",  191);
+    this.m_constructKey("NUMPADSLASH",  111);
     this.m_constructKey("CONTROL",       17);
     this.m_constructKey("ALT",           18);
     this.m_constructKey("SPACE",         32);
@@ -338,8 +341,13 @@ rune.input.Keyboard.prototype.m_constructKey = function(keyName, keyCode) {
  * @private
  */
 rune.input.Keyboard.prototype.m_constructEvent = function() {
-    this.m_constructEventKeyDown();
-    this.m_constructEventKeyUp();
+    if (this.m_onKeyDownHandler == null) {
+        this.m_constructEventKeyDown();
+    }
+    
+    if (this.m_onKeyUpHandler == null) {
+        this.m_constructEventKeyUp();
+    }
 };
 
 /**
@@ -381,6 +389,8 @@ rune.input.Keyboard.prototype.m_constructEventKeyUp = function() {
  * @private
  */
 rune.input.Keyboard.prototype.m_updateKeys = function() {
+    if (this.m_keys == null) return;
+    
     var i = this.m_keys.length;
     while (i--) {
         var key = this.m_keys[i];
@@ -409,11 +419,14 @@ rune.input.Keyboard.prototype.m_disposeEvent = function() {
  * @private
  */
 rune.input.Keyboard.prototype.m_disposeEventKeyUp = function() {
-    var m_this = this;
-    this.m_options.target.removeEventListener(
-        "keydown",
-        this.m_onKeyDownHandler
-    );
+    if (this.m_onKeyDownHandler != null) {
+        this.m_options.target.removeEventListener(
+            "keydown",
+            this.m_onKeyDownHandler
+        );
+        
+        this.m_onKeyDownHandler = null;
+    }
 };
 
 /**
@@ -423,11 +436,14 @@ rune.input.Keyboard.prototype.m_disposeEventKeyUp = function() {
  * @private
  */
 rune.input.Keyboard.prototype.m_disposeEventKeyDown = function() {
-    var m_this = this;
-    this.m_options.target.removeEventListener(
-        "keyup",
-        this.m_onKeyUpHandler
-    );
+    if (this.m_onKeyUpHandler != null) {
+        this.m_options.target.removeEventListener(
+            "keyup",
+            this.m_onKeyUpHandler
+        );
+        
+        this.m_onKeyUpHandler = null;
+    }
 };
 
 /**
@@ -438,8 +454,27 @@ rune.input.Keyboard.prototype.m_disposeEventKeyDown = function() {
  */
 rune.input.Keyboard.prototype.m_disposeKeys = function() {
     this.m_LUT = null;
-    this.m_keys.length = 0;
+    if (this.m_keys != null) {
+        this.m_keys.length = 0;
+    }
+    
     this.m_keys = null;
+};
+
+/**
+ * Finds a KeyboardKey object by name.
+ *
+ * @param {string} key Name of key.
+ *
+ * @returns {rune.input.KeyboardKey}
+ * @private
+ */
+rune.input.Keyboard.prototype.m_getKey = function(key) {
+    if (typeof key === "string" && this.m_keys != null && this.m_LUT != null) {
+        return this.m_keys[this.m_LUT[key.toUpperCase()]] || null;
+    }
+    
+    return null;
 };
 
 /**
@@ -451,6 +486,8 @@ rune.input.Keyboard.prototype.m_disposeKeys = function() {
  * @private
  */
 rune.input.Keyboard.prototype.m_onKeyDown = function(keyCode) {
+    if (this.m_keys == null) return;
+    
     var key = this.m_keys[keyCode];
     if (key != null) key.onKeyDown();
 };
@@ -464,6 +501,8 @@ rune.input.Keyboard.prototype.m_onKeyDown = function(keyCode) {
  * @private
  */
 rune.input.Keyboard.prototype.m_onKeyUp = function(keyCode) {
+    if (this.m_keys == null) return;
+    
     var key = this.m_keys[keyCode];
     if (key != null) key.onKeyUp();
 };

@@ -581,8 +581,38 @@ rune.system.Application.prototype.m_initScreen = function() {
     this.m_disposeScreen();
     if (this.m_screen == null) {
         this.m_screen = new rune.display.Screen(this.m_config);
-        this.m_screen["canvas"].attach(document.body); //@todo: make configurable via Config.
+        this.m_screen["canvas"].attach(this.m_getCanvasTarget());
     } else throw new Error();
+};
+
+/**
+ * Resolves the DOM target to which the application's primary canvas should be
+ * attached.
+ *
+ * @throws {Error} If the configured target cannot be resolved.
+ *
+ * @return {HTMLElement}
+ * @private
+ */
+rune.system.Application.prototype.m_getCanvasTarget = function() {
+    var target = this.m_config.target;
+    
+    if (target == null) {
+        return document.body;
+    }
+    
+    if (target instanceof HTMLElement) {
+        return target;
+    }
+    
+    if (typeof target === "string") {
+        var element = document.querySelector(target);
+        if (element instanceof HTMLElement) {
+            return element;
+        }
+    }
+    
+    throw new Error("Invalid canvas target.");
 };
 
 /**

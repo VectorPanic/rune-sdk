@@ -140,6 +140,15 @@ rune.system.Config = function(options) {
      * @default 216
      */
     this.screenResolutionY = option("screenResolutionY", 225); //180; //216;
+
+    /**
+     * DOM target where the application's primary canvas element should be
+     * attached. Use null to attach the canvas to document.body.
+     *
+     * @type {HTMLElement|string}
+     * @default null
+     */
+    this.target = option("target", null);
     
     /**
      * If the application is to be started with support for gamepad devices.

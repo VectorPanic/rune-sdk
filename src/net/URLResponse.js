@@ -49,8 +49,8 @@ Object.defineProperty(rune.net.URLResponse.prototype, "type", {
 	 * @ignore
 	 */
 	get : function() {
-		var type = this.m_data.match(/[^:]\w+\/[\w-+\d.]+(?=;|,)/);
-		if (type.length > 0) return type[0];
+		var type = this.m_data.match(/^data:([^;,]+)/);
+		if (type != null && type.length > 1) return type[1];
 		else return "application/octet-stream";
 	}
 });
@@ -90,8 +90,7 @@ Object.defineProperty(rune.net.URLResponse.prototype, "size", {
      * @ignore
      */
     get : function() {
-        var data = this.m_data.split(",")[1];
-        return window.atob(data).length;
+        return this.m_decodePayload().length;
     }
 });
 
@@ -144,10 +143,10 @@ rune.net.URLResponse.prototype.asEncodedResource = function(handler, scope) {
             
         case "text/plain":
             this.asText(handler, scope);
+            break;
             
         default:
             throw new Error("Unsupported media type.");
-            break;
     }
 };
 
@@ -178,8 +177,7 @@ rune.net.URLResponse.prototype.asImage = function(handler, scope) {
  * @return {undefined}
  */
 rune.net.URLResponse.prototype.asJSON = function(handler, scope) {
-	var str = this.m_data.replace(/^data:application\/json;base64,/, "");
-	var obj = JSON.parse(atob(str));
+	var obj = JSON.parse(this.m_decodePayload());
 	
     window.setTimeout(function() {
         handler.call(scope, obj);
@@ -197,8 +195,49 @@ rune.net.URLResponse.prototype.asJSON = function(handler, scope) {
 rune.net.URLResponse.prototype.asText = function(handler, scope) {
     var m_this = this;
     window.setTimeout(function() {
-        handler.call(scope, m_this.m_data.split(",")[1]);
+        handler.call(scope, m_this.m_decodePayload());
     }, 0);
+};
+
+//------------------------------------------------------------------------------
+// Private prototype methods
+//------------------------------------------------------------------------------
+
+/**
+ * Decodes the data payload from the Data URL.
+ *
+ * @returns {string}
+ * @private
+ */
+rune.net.URLResponse.prototype.m_decodePayload = function() {
+    var payload = this.m_getPayload();
+    if (this.m_isBase64()) {
+        return window.atob(payload);
+    }
+
+    return decodeURIComponent(payload);
+};
+
+/**
+ * Returns the payload section from the Data URL.
+ *
+ * @returns {string}
+ * @private
+ */
+rune.net.URLResponse.prototype.m_getPayload = function() {
+    var data = this.m_data.split(",");
+    if (data.length > 1) return data.slice(1).join(",");
+    else return "";
+};
+
+/**
+ * Checks if the Data URL payload is Base64 encoded.
+ *
+ * @returns {boolean}
+ * @private
+ */
+rune.net.URLResponse.prototype.m_isBase64 = function() {
+    return /;base64(?:,|$)/.test(this.m_data);
 };
 
 //------------------------------------------------------------------------------

@@ -105,6 +105,7 @@ Object.defineProperty(rune.net.URLRequest.prototype, "url", {
  * @ignore
  */
 rune.net.URLRequest.prototype.dispose = function() {
+    this.m_onAbort = null;
     this.m_onComplete = null;
     this.m_onError = null;
     this.m_scope = null;
@@ -123,6 +124,6 @@ rune.net.URLRequest.prototype.dispose = function() {
  */
 rune.net.URLRequest.prototype.exec = function(func, args) {
 	if (typeof this[func] === "function") {
-        this[func].apply(this.m_scope, args);
+        this[func].apply(this.m_scope, args || []);
     }
 };

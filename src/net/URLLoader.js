@@ -142,7 +142,10 @@ rune.net.URLLoader.prototype.m_construct = function(options) {
  * @private
  */
 rune.net.URLLoader.prototype.m_constructRequest = function(options) {
+    this.m_disposeXHR();
+    this.m_disposeFileReader();
     this.m_disposeRequest();
+    this.m_disposeResponse();
     if (this.m_request == null) {
         this.m_request = new rune.net.URLRequest(options);
         if (rune.util.URL.protocol(this.m_request['url']) === "data") {
@@ -164,6 +167,8 @@ rune.net.URLLoader.prototype.m_constructRequest = function(options) {
 rune.net.URLLoader.prototype.m_constructResponse = function(data) {
     this.m_disposeResponse();
     if (this.m_response == null && this.m_request != null) {
+        this.m_disposeXHR();
+        this.m_disposeFileReader();
         this.m_response = new rune.net.URLResponse(data);
         this.m_request.exec("m_onComplete", [this.m_response]);
     } else throw new Error();
@@ -236,6 +241,8 @@ rune.net.URLLoader.prototype.m_disposeResponse = function() {
  */
 rune.net.URLLoader.prototype.m_disposeXHR = function() {
     if (this.m_xhr instanceof XMLHttpRequest) {
+        this.m_xhr.onload = null;
+        this.m_xhr.onerror = null;
         this.m_xhr.abort();
         this.m_xhr = null;
     }
@@ -249,7 +256,12 @@ rune.net.URLLoader.prototype.m_disposeXHR = function() {
  */
 rune.net.URLLoader.prototype.m_disposeFileReader = function() {
     if (this.m_fileReader instanceof FileReader) {
-        this.m_fileReader.abort();
+        this.m_fileReader.onloadend = null;
+        this.m_fileReader.onerror = null;
+        if (this.m_fileReader.readyState === FileReader.LOADING) {
+            this.m_fileReader.abort();
+        }
+
         this.m_fileReader = null;
     }
 };
@@ -277,7 +289,7 @@ rune.net.URLLoader.prototype.m_processRequestURL = function() {
     this.m_constructXHR();
     if (this.m_xhr) {
         this.m_xhr.onload = function(event) {
-            if (event.target.status === 200) {
+            if (m_this.m_isSuccessStatus(event.target)) {
                 m_this.m_processBlob(event.target.response);
             } else {
                 m_this.m_execErrorProcess();
@@ -307,11 +319,31 @@ rune.net.URLLoader.prototype.m_processBlob = function(blob) {
     this.m_constructFileReader();
     if (this.m_fileReader) {
         this.m_fileReader.onloadend = function(event) {
-            m_this.m_constructResponse(event.target.result);
+            if (event.target.error == null) {
+                m_this.m_constructResponse(event.target.result);
+            } else {
+                m_this.m_execErrorProcess();
+            }
         };
         
+        this.m_fileReader.onerror = function() {
+            m_this.m_execErrorProcess();
+        };
+
         this.m_fileReader.readAsDataURL(blob);
     } else throw new Error();
+};
+
+/**
+ * Checks if the XHR response should be treated as successful.
+ *
+ * @param {XMLHttpRequest} xhr XHR object to inspect.
+ *
+ * @returns {boolean}
+ * @private
+ */
+rune.net.URLLoader.prototype.m_isSuccessStatus = function(xhr) {
+    return (xhr.status >= 200 && xhr.status < 300) || (xhr.status === 0 && xhr.response != null);
 };
 
 /**

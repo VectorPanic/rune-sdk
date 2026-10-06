@@ -202,7 +202,13 @@ rune.geom.Vector2D.prototype.multiply = function(value) {
  * @returns {rune.geom.Vector2D}
  */
 rune.geom.Vector2D.prototype.normalize = function(scale) {
-    return this.divide(scale || this.magnitude());
+    var magnitude = this.magnitude();
+    if (magnitude > 0) {
+        this.divide(magnitude);
+        this.multiply(scale || 1);
+    }
+
+    return this;
 };
 
 /**
@@ -245,10 +251,11 @@ rune.geom.Vector2D.prototype.rotate = function(rads) {
  * @returns {rune.geom.Vector2D}
  */
 rune.geom.Vector2D.prototype.round = function(n) {
-    var p = rune.geom.Vector2D.PRECISION[n || 2];
+    n = (n == null) ? 2 : n;
+    var p = rune.geom.Vector2D.PRECISION[n] || Math.pow(10, n);
     
-    this['x'] = ((0.5 + this.x * p) << 0) / p;
-    this['y'] = ((0.5 + this.y * p) << 0) / p;
+    this['x'] = Math.round(this.x * p) / p;
+    this['y'] = Math.round(this.y * p) / p;
     
     return this;
 };

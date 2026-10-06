@@ -104,7 +104,7 @@ rune.geom.Rectangle.containsRectangle = function(x1, y1, w1, h1, x2, y2, w2, h2)
 	return ((x2 >= x1 && x2 <= x1 + w1) &&
 			(x2  + w2 >= x1 && x2 + w2 <= x1 + w1) &&
 			(y2 >= y1 && y2 <= y1 + h1) &&
-			(y2  + h2 >= y1 && y2 + h2 <= y1 + h2));
+			(y2  + h2 >= y1 && y2 + h2 <= y1 + h1));
 };
 
 /**
@@ -162,6 +162,11 @@ rune.geom.Rectangle.intersection = function(x1, y1, w1, h1, x2, y2, w2, h2, o) {
 		o['y'] = Math.max(y1, y2);
 		o['width']  = Math.min(x1 + w1,  x2 + w2) - o['x'];
 		o['height'] = Math.min(y1 + h1,  y2 + h2) - o['y'];
+	} else {
+		o['x'] = 0;
+		o['y'] = 0;
+		o['width']  = 0;
+		o['height'] = 0;
 	}
 	
 	return o;

@@ -133,8 +133,8 @@ rune.physics.Velocity.prototype.update = function(step) {
  * @private
  */
 rune.physics.Velocity.prototype.m_updateMotion = function(step) {
-    this.x = this.m_calcVelocity(this.x, this.acceleration.x, this.drag.x, this.max.x);
-    this.y = this.m_calcVelocity(this.y, this.acceleration.y, this.drag.y, this.max.y);
+    this.x = this.m_calcVelocity(this.x, step, this.acceleration.x, this.drag.x, this.max.x);
+    this.y = this.m_calcVelocity(this.y, step, this.acceleration.y, this.drag.y, this.max.y);
 };
 
 /**
@@ -146,13 +146,14 @@ rune.physics.Velocity.prototype.m_updateMotion = function(step) {
  * @private
  */
 rune.physics.Velocity.prototype.m_updateAngularMotion = function(step) {
-    this.angular = this.m_calcVelocity(this.angular, this.angularAcceleration, this.angularDrag, this.angularMax);
+    this.angular = this.m_calcVelocity(this.angular, step, this.angularAcceleration, this.angularDrag, this.angularMax);
 };
 
 /**
  * Calculates new velocity.
  *
  * @param {number} velocity Previous velocity.
+ * @param {number} step Current time step.
  * @param {number} [acceleration=0] Acceleration speed.
  * @param {number} [drag=0] Deceleration amount.
  * @param {number} [max=10000] Maximum speed.
@@ -160,8 +161,8 @@ rune.physics.Velocity.prototype.m_updateAngularMotion = function(step) {
  * @returns {number}
  * @private
  */
-rune.physics.Velocity.prototype.m_calcVelocity = function(velocity, acceleration, drag, max) {
-    var scale = rune.system.Application['instance']['time']['scale'];
+rune.physics.Velocity.prototype.m_calcVelocity = function(velocity, step, acceleration, drag, max) {
+    var scale = step / ((1 / 60) * 1000);
     acceleration = acceleration * scale || 0;
     drag = drag * scale || 0;
     max = max || 10000;

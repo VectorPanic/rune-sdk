@@ -134,7 +134,7 @@ rune.util.Stack.prototype.dispose = function() {
 /**
  * Executes all objects in the current stack.
  *
- * @param {...Object} args Functional arguments.
+ * @param {...*} args Functional arguments.
  *
  * @return {undefined}
  */

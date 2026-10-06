@@ -1179,7 +1179,7 @@ rune.display.InteractiveObject.prototype.m_updateVelocity = function(step) {
         this.m_velocity.update(step);
         
         //@note: To make velocity equal between different framerates.
-        var s = rune.system.Application['instance']['time']['scale'];
+        var s = step / ((1 / 60) * 1000);
         
         this['x'] += this.m_velocity['x'] * s;
         this['y'] += this.m_velocity['y'] * s;

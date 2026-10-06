@@ -9,18 +9,18 @@
  *
  * @class
  * @classdesc
- * 
- * The Sounds class represents a system for playing sound effects and music. 
- * The system is divided into three audio channels; Sound, Music and Master. 
- * Playback and handling are done via Sound objects that are retrieved from the 
+ *
+ * The Sounds class represents a system for playing sound effects and music.
+ * The system is divided into three audio channels; Sound, Music and Master.
+ * Playback and handling are done via Sound objects that are retrieved from the
  * sound channel to which the object is to be connected.
  */
 rune.media.Sounds = function() {
-    
+
     //--------------------------------------------------------------------------
     // Private properties
     //--------------------------------------------------------------------------
-    
+
     /**
      * The master channel.
      *
@@ -28,7 +28,7 @@ rune.media.Sounds = function() {
      * @private
      */
     this.m_master = null;
-    
+
     /**
      * The music channel.
      *
@@ -36,7 +36,7 @@ rune.media.Sounds = function() {
      * @private
      */
     this.m_music = null;
-    
+
     /**
      * The sound channel.
      *
@@ -44,7 +44,7 @@ rune.media.Sounds = function() {
      * @private
      */
     this.m_sound = null;
-    
+
     //--------------------------------------------------------------------------
     // Constructor call
     //--------------------------------------------------------------------------
@@ -60,14 +60,14 @@ rune.media.Sounds = function() {
 //------------------------------------------------------------------------------
 
 /**
- * The Master Channel. This channel is for special cases and can therefore 
- * contain both sound and / or music. This channel does not stop playback when 
- * the application switches from one set of scenes to another. The channel is 
- * also limited to only shared audio objects, ie the channel can thus not 
- * contain "unique" Sound objects. This is so that the same Sound object can 
+ * The Master Channel. This channel is for special cases and can therefore
+ * contain both sound and / or music. This channel does not stop playback when
+ * the application switches from one set of scenes to another. The channel is
+ * also limited to only shared audio objects, ie the channel can thus not
+ * contain "unique" Sound objects. This is so that the same Sound object can
  * be retrieved between scene changes.
  *
- * @member {rune.media.soundChannel} master
+ * @member {rune.media.SoundChannel} master
  * @memberof rune.media.Sounds
  * @instance
  * @readonly
@@ -83,13 +83,13 @@ Object.defineProperty(rune.media.Sounds.prototype, "master", {
 });
 
 /**
- * The music channel. This channel is intended for playing background music so 
- * that it can be easily isolated from sound effects. The channel allows both 
- * "unique" and "shared" audio objects. When the application switches between a 
- * set of scenes, the sound channel is stopped and emptied of all existing 
+ * The music channel. This channel is intended for playing background music so
+ * that it can be easily isolated from sound effects. The channel allows both
+ * "unique" and "shared" audio objects. When the application switches between a
+ * set of scenes, the sound channel is stopped and emptied of all existing
  * Sound objects.
  *
- * @member {rune.media.soundChannel} music
+ * @member {rune.media.SoundChannel} music
  * @memberof rune.media.Sounds
  * @instance
  * @readonly
@@ -105,12 +105,12 @@ Object.defineProperty(rune.media.Sounds.prototype, "music", {
 });
 
 /**
- * The sound channel. This channel is intended for sound effects. The channel 
- * allows both "unique" and "shared" audio objects. Just like the Music 
- * channel, the channel is emptied when the application switches from one set 
+ * The sound channel. This channel is intended for sound effects. The channel
+ * allows both "unique" and "shared" audio objects. Just like the Music
+ * channel, the channel is emptied when the application switches from one set
  * of scenes to another.
  *
- * @member {rune.media.soundChannel} sound
+ * @member {rune.media.SoundChannel} sound
  * @memberof rune.media.Sounds
  * @instance
  * @readonly
@@ -136,8 +136,13 @@ Object.defineProperty(rune.media.Sounds.prototype, "sound", {
  * @ignore
  */
 rune.media.Sounds.prototype.clear = function() {
-    this.m_sound.clear();
-    this.m_music.clear();
+    if (this.m_sound) {
+        this.m_sound.clear();
+    }
+
+    if (this.m_music) {
+        this.m_music.clear();
+    }
 };
 
 /**
@@ -171,7 +176,7 @@ rune.media.Sounds.prototype.update = function(step) {
 //------------------------------------------------------------------------------
 
 /**
- * Class constructor method. 
+ * Class constructor method.
  *
  * @returns {undefined}
  * @protected
@@ -184,7 +189,7 @@ rune.media.Sounds.prototype.m_construct = function() {
 };
 
 /**
- * Creates the master channel. 
+ * Creates the master channel.
  *
  * @returns {undefined}
  * @protected
@@ -198,7 +203,7 @@ rune.media.Sounds.prototype.m_constructMaster = function() {
 };
 
 /**
- * Creates the music channel. 
+ * Creates the music channel.
  *
  * @returns {undefined}
  * @protected
@@ -212,7 +217,7 @@ rune.media.Sounds.prototype.m_constructMusic = function() {
 };
 
 /**
- * Creates the sound channel. 
+ * Creates the sound channel.
  *
  * @returns {undefined}
  * @protected
@@ -271,7 +276,7 @@ rune.media.Sounds.prototype.m_updateSound = function(step) {
 };
 
 /**
- * Removes the sound channel. 
+ * Removes the sound channel.
  *
  * @returns {undefined}
  * @protected
@@ -285,7 +290,7 @@ rune.media.Sounds.prototype.m_disposeSound = function() {
 };
 
 /**
- * Removes the music channel. 
+ * Removes the music channel.
  *
  * @returns {undefined}
  * @protected
@@ -299,7 +304,7 @@ rune.media.Sounds.prototype.m_disposeMusic = function() {
 };
 
 /**
- * Removes the master channel. 
+ * Removes the master channel.
  *
  * @returns {undefined}
  * @protected

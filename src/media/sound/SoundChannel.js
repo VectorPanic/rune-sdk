@@ -3,7 +3,7 @@
 //------------------------------------------------------------------------------
 
 /**
- * Creates a new sound channel. 
+ * Creates a new sound channel.
  *
  * @constructor
  * @package
@@ -12,21 +12,21 @@
  *
  * @class
  * @classdesc
- * 
- * The SoundChannel class represents an sound channel for playing sound effects 
- * and / or music. The class is used to create and bind Sound objects to the 
- * channel. Each Sound object must be connected to an audio channel in order to 
- * be played. There are two types of Sound objects; unique and shared. With 
- * shared Sound objects, it is possible to reuse the same object for several 
- * different sound sources. Note that there can be no multiple playbacks of a 
+ *
+ * The SoundChannel class represents an sound channel for playing sound effects
+ * and / or music. The class is used to create and bind Sound objects to the
+ * channel. Each Sound object must be connected to an audio channel in order to
+ * be played. There are two types of Sound objects; unique and shared. With
+ * shared Sound objects, it is possible to reuse the same object for several
+ * different sound sources. Note that there can be no multiple playbacks of a
  * shared audio object at one time, in which case a unique object must be used.
  */
 rune.media.SoundChannel = function(shared) {
-    
+
     //--------------------------------------------------------------------------
     // Private properties
     //--------------------------------------------------------------------------
-    
+
     /**
      * The audio context that represents the audio channel.
      *
@@ -42,7 +42,7 @@ rune.media.SoundChannel = function(shared) {
      * @private
      */
     this.m_gain = null;
-    
+
     /**
      * create stereo panner
      *
@@ -50,7 +50,7 @@ rune.media.SoundChannel = function(shared) {
      * @private
      */
     this.m_panner = null;
-    
+
     /**
      * Playback rate.
      *
@@ -58,7 +58,7 @@ rune.media.SoundChannel = function(shared) {
      * @private
      */
     this.m_rate = 1.0;
-    
+
     /**
      * Whether the object is shared or not.
      *
@@ -68,13 +68,13 @@ rune.media.SoundChannel = function(shared) {
     this.m_shared = Boolean(shared);
 
     /**
-     * Register of created sound objects. 
+     * Register of created sound objects.
      *
      * @type {Array.<rune.media.Sound>}
      * @private
      */
     this.m_sounds = [];
-    
+
     /**
      * Tween system.
      *
@@ -111,7 +111,7 @@ Object.defineProperty(rune.media.SoundChannel.prototype, "length", {
      * @ignore
      */
     get : function() {
-        return this.m_sounds.length;
+        return this.m_sounds != null ? this.m_sounds.length : 0;
     }
 });
 
@@ -129,13 +129,13 @@ Object.defineProperty(rune.media.SoundChannel.prototype, "paused", {
      * @ignore
      */
     get : function() {
-        return (this.m_context.state === "suspended");
+        return this.m_context != null ? this.m_context.state === "suspended" : true;
     }
 });
 
 /**
- * Sets the rate at which the audio is being played back. The normal playback 
- * rate is multiplied by this value to obtain the current rate, so a value of 
+ * Sets the rate at which the audio is being played back. The normal playback
+ * rate is multiplied by this value to obtain the current rate, so a value of
  * 1.0 indicates normal speed.
  *
  * @member {number} rate
@@ -150,13 +150,15 @@ Object.defineProperty(rune.media.SoundChannel.prototype, "rate", {
     get : function() {
         return this.m_rate;
     },
-    
+
     /**
      * @this rune.media.SoundChannel
      * @ignore
      */
     set : function(value) {
-        this.m_rate = value;
+        if (typeof value === "number" && isFinite(value)) {
+            this.m_rate = value;
+        }
         /*
         var i = this.m_sounds.length;
         while (i--) {
@@ -167,8 +169,8 @@ Object.defineProperty(rune.media.SoundChannel.prototype, "rate", {
 });
 
 /**
- * Returns whether the sound channel is limited to shared Sound objects only 
- * (true) or not (false). If the channel is "shared", all requests for unique 
+ * Returns whether the sound channel is limited to shared Sound objects only
+ * (true) or not (false). If the channel is "shared", all requests for unique
  * Sound objects are denied.
  *
  * @member {boolean} shared
@@ -200,15 +202,17 @@ Object.defineProperty(rune.media.SoundChannel.prototype, "volume", {
      * @ignore
      */
     get : function() {
-        return this.m_gain.gain.value;
+        return this.m_gain != null ? this.m_gain.gain.value : 0.0;
     },
-    
+
     /**
      * @this rune.media.SoundChannel
      * @ignore
      */
     set : function(value) {
-        this.m_gain.gain.value = rune.util.Math.clamp(value, 0.0, 1.0);
+        if (this.m_gain != null) {
+            this.m_gain.gain.value = rune.util.Math.clamp(value, 0.0, 1.0);
+        }
     }
 });
 
@@ -241,12 +245,14 @@ Object.defineProperty(rune.media.SoundChannel.prototype, "context", {
 //------------------------------------------------------------------------------
 
 /**
- * Clears the current audio channel on Sound objects. This means that ongoing 
+ * Clears the current audio channel on Sound objects. This means that ongoing
  * playback of Sound objects is stopped and all object references are destroyed.
  *
  * @returns {undefined}
  */
 rune.media.SoundChannel.prototype.clear = function() {
+    if (this.m_sounds == null) return;
+
     while (this.m_sounds.length) {
         this.remove(this.m_sounds[0], true);
     }
@@ -261,41 +267,47 @@ rune.media.SoundChannel.prototype.clear = function() {
  * @returns {undefined}
  */
 rune.media.SoundChannel.prototype.fade = function(to, duration) {
+    if (this.m_tweens == null) return;
+
     this.m_tweens.clear();
     this.m_tweens.create({
         target: this,
         transition: rune.tween.Sine.easeIn,
-        duration: duration || 2500,
+        duration: typeof duration === "number" ? duration : 2500,
         args: {
-            volume: to || 0
+            volume: typeof to === "number" ? to : 0
         }
     });
 };
 
 /**
- * Gets (and binds) a Sound object to the channel. The returned Sound object 
- * contains an interface for handling that particular sound, but all playback 
+ * Gets (and binds) a Sound object to the channel. The returned Sound object
+ * contains an interface for handling that particular sound, but all playback
  * will be tied to the channel from which the object was created.
  *
  * @param {string} name The name of the resource file that the Sound object will use.
- * @param {boolean} [unique=false] Whether the object should be unique (true) or shared (false). 
+ * @param {boolean} [unique=false] Whether the object should be unique (true) or shared (false).
  *
  * @returns {rune.media.Sound}
  */
 rune.media.SoundChannel.prototype.get = function(name, unique) {
+    if (this.m_sounds == null || this.m_context == null || this.m_gain == null) {
+        throw new Error("SoundChannel is disposed.");
+    }
+
     if (this.m_shared) unique = false;
     if (!unique) {
         for (var i = 0; i < this.m_sounds.length; i++) {
             if (this.m_sounds[i]['name'] == name && !this.m_sounds[i]['unique']) {
                 return this.m_sounds[i];
             }
-        }   
+        }
     }
-    
+
     var sound = new rune.media.Sound(this, name, unique);
-    sound.connect(this.m_panner);
+    sound.connect(this.m_panner || this.m_gain);
     this.m_sounds.push(sound);
-    
+
     return sound;
 };
 
@@ -311,9 +323,9 @@ rune.media.SoundChannel.prototype.pause = function() {
 };
 
 /**
- * Removes a Sound object from the channel. By default, objects are removed 
- * from the channel, but retained in memory. Set the dispose argument to true 
- * to destroy the object as it is removed from the channel. If the object is 
+ * Removes a Sound object from the channel. By default, objects are removed
+ * from the channel, but retained in memory. Set the dispose argument to true
+ * to destroy the object as it is removed from the channel. If the object is
  * destroyed, a null reference is returned.
  *
  * @param {rune.media.Sound} sound Sound object to remove.
@@ -322,6 +334,8 @@ rune.media.SoundChannel.prototype.pause = function() {
  * @returns {rune.media.Sound}
  */
 rune.media.SoundChannel.prototype.remove = function(sound, dispose) {
+    if (this.m_sounds == null) return sound;
+
     var index = this.m_sounds.indexOf(sound);
     if (index > -1) {
         this.m_sounds.splice(index, 1);
@@ -329,9 +343,9 @@ rune.media.SoundChannel.prototype.remove = function(sound, dispose) {
             sound.dispose();
             sound = null;
         }
-    } 
-    
-    return sound; 
+    }
+
+    return sound;
 };
 
 /**
@@ -359,6 +373,8 @@ rune.media.SoundChannel.prototype.resume = function() {
  * @ignore
  */
 rune.media.SoundChannel.prototype.update = function(step) {
+    if (this.m_sounds == null) return;
+
     this.m_updateSounds(step);
     this.m_updateTweens(step);
 };
@@ -371,6 +387,7 @@ rune.media.SoundChannel.prototype.update = function(step) {
  * @ignore
  */
 rune.media.SoundChannel.prototype.dispose = function() {
+    this.m_disposeTweens();
     this.m_disposeSounds();
     this.m_disposePanner();
     this.m_disposeGain();
@@ -404,11 +421,17 @@ rune.media.SoundChannel.prototype.m_construct = function() {
  *
  * @returns {undefined}
  * @private
+ * @suppress {checkTypes}
  */
 rune.media.SoundChannel.prototype.m_constructContext = function() {
     this.m_disposeContext();
     if (this.m_context == null) {
-        this.m_context = new AudioContext();
+        var AudioContextClass = window['AudioContext'] || window['webkitAudioContext'];
+        if (typeof AudioContextClass !== "function") {
+            throw new Error("Web Audio API is not supported.");
+        }
+
+        this.m_context = new AudioContextClass();
     } else throw new Error();
 };
 
@@ -435,8 +458,10 @@ rune.media.SoundChannel.prototype.m_constructGain = function() {
 rune.media.SoundChannel.prototype.m_constructPanner = function() {
     this.m_disposePanner();
     if (this.m_panner == null && this.m_gain != null) {
-        this.m_panner = this.m_context.createStereoPanner();
-        this.m_panner.connect(this.m_gain);
+        if (typeof this.m_context.createStereoPanner === "function") {
+            this.m_panner = this.m_context.createStereoPanner();
+            this.m_panner.connect(this.m_gain);
+        }
     } else throw new Error();
 };
 
@@ -462,6 +487,8 @@ rune.media.SoundChannel.prototype.m_constructTweens = function() {
  * @private
  */
 rune.media.SoundChannel.prototype.m_updateSounds = function(step) {
+    if (this.m_sounds == null) return;
+
     var i = this.m_sounds.length;
     while (i--) {
         this.m_sounds[i].update(step);
@@ -502,10 +529,12 @@ rune.media.SoundChannel.prototype.m_disposeTweens = function() {
  * @private
  */
 rune.media.SoundChannel.prototype.m_disposeSounds = function() {
+    if (this.m_sounds == null) return;
+
     while (this.m_sounds.length) {
         this.remove(this.m_sounds[0], true);
     }
-    
+
     this.m_sounds = null;
 };
 
@@ -543,7 +572,17 @@ rune.media.SoundChannel.prototype.m_disposeGain = function() {
  */
 rune.media.SoundChannel.prototype.m_disposeContext = function() {
     if (this.m_context != null) {
-        this.m_context.close();
+        var context = this.m_context;
+        var result = null;
+
+        try {
+            result = context.close();
+        } catch (error) {}
+
+        if (result != null && typeof result['catch'] === "function") {
+            result['catch'](function() {});
+        }
+
         this.m_context = null;
     }
 };

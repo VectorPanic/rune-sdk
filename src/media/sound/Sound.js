@@ -14,9 +14,9 @@
  *
  * @class
  * @classdesc
- * 
- * The Sound class represents a sound that can be played in an audio channel. 
- * The class offers an interface for playing a specific sound. It is the sound 
+ *
+ * The Sound class represents a sound that can be played in an audio channel.
+ * The class offers an interface for playing a specific sound. It is the sound
  * channel that does the actual playback.
  */
 rune.media.Sound = function(channel, resource, unique) {
@@ -24,7 +24,7 @@ rune.media.Sound = function(channel, resource, unique) {
     //--------------------------------------------------------------------------
     // Private properties
     //--------------------------------------------------------------------------
-    
+
     /**
      * Name of the resource file used as the audio source.
      *
@@ -32,7 +32,7 @@ rune.media.Sound = function(channel, resource, unique) {
      * @private
      */
     this.m_resource = resource;
-    
+
     /**
      * The audio channel object that created the Sound object.
      *
@@ -40,7 +40,7 @@ rune.media.Sound = function(channel, resource, unique) {
      * @private
      */
     this.m_channel = channel;
-    
+
     /**
      * Playback speed.
      *
@@ -48,7 +48,7 @@ rune.media.Sound = function(channel, resource, unique) {
      * @private
      */
     this.m_rate = 1.0;
-    
+
     /**
      * Sound source.
      *
@@ -56,7 +56,7 @@ rune.media.Sound = function(channel, resource, unique) {
      * @private
      */
     this.m_source = null;
-    
+
     /**
      * Stereo panner node.
      *
@@ -64,7 +64,7 @@ rune.media.Sound = function(channel, resource, unique) {
      * @private
      */
     this.m_stereoPanner = null;
-    
+
     /**
      * Whether the object is unique or shared.
      *
@@ -72,7 +72,7 @@ rune.media.Sound = function(channel, resource, unique) {
      * @private
      */
     this.m_unique = Boolean(unique);
-    
+
     /**
      * Tween system used for volume management.
      *
@@ -96,7 +96,7 @@ rune.media.Sound = function(channel, resource, unique) {
 //------------------------------------------------------------------------------
 
 /**
- * Refers to the audio channel that created the audio object and thus the 
+ * Refers to the audio channel that created the audio object and thus the
  * object is bound to.
  *
  * @member {rune.media.SoundChannel} channel
@@ -115,7 +115,7 @@ Object.defineProperty(rune.media.Sound.prototype, "channel", {
 });
 
 /**
- * A boolean value which is true if the media contained in the element has 
+ * A boolean value which is true if the media contained in the element has
  * finished playing.
  *
  * @member {boolean} ended
@@ -129,12 +129,13 @@ Object.defineProperty(rune.media.Sound.prototype, "ended", {
      * @ignore
      */
     get : function() {
-        return this.m_source['mediaElement'].ended;
+        var element = this.m_getMediaElement();
+        return element != null ? element.ended : true;
     }
 });
 
 /**
- * Whether the Sound object should start over when it reaches the end. This can 
+ * Whether the Sound object should start over when it reaches the end. This can
  * for example be useful for background music.
  *
  * @member {boolean} loop
@@ -147,15 +148,19 @@ Object.defineProperty(rune.media.Sound.prototype, "loop", {
      * @ignore
      */
     get : function() {
-        return this.m_source['mediaElement'].loop;
+        var element = this.m_getMediaElement();
+        return element != null ? element.loop : false;
     },
-    
+
     /**
      * @this rune.media.Sound
      * @ignore
      */
     set : function(value) {
-        this.m_source['mediaElement'].loop = value;
+        var element = this.m_getMediaElement();
+        if (element != null) {
+            element.loop = value;
+        }
     }
 });
 
@@ -178,8 +183,8 @@ Object.defineProperty(rune.media.Sound.prototype, "name", {
 });
 
 /**
- * Pan represented by a floating point number between -1 (left) and 1 (right). 
- * The default value is 0 and distributes the sound evenly between the left 
+ * Pan represented by a floating point number between -1 (left) and 1 (right).
+ * The default value is 0 and distributes the sound evenly between the left
  * and right speakers.
  *
  * @member {number} pan
@@ -192,15 +197,21 @@ Object.defineProperty(rune.media.Sound.prototype, "pan", {
      * @ignore
      */
     get : function() {
-        return this.m_stereoPanner['pan'].value;
+        if (this.m_stereoPanner != null && this.m_stereoPanner['pan'] != null) {
+            return this.m_stereoPanner['pan'].value;
+        }
+
+        return 0.0;
     },
-    
+
     /**
      * @this rune.media.Sound
      * @ignore
      */
     set : function(value) {
-        this.m_stereoPanner['pan'].value = rune.util.Math.clamp(value, -1.0, 1.0);
+        if (this.m_stereoPanner != null && this.m_stereoPanner['pan'] != null) {
+            this.m_stereoPanner['pan'].value = rune.util.Math.clamp(value, -1.0, 1.0);
+        }
     }
 });
 
@@ -218,12 +229,13 @@ Object.defineProperty(rune.media.Sound.prototype, "paused", {
      * @ignore
      */
     get : function() {
-        return this.m_source['mediaElement'].paused;
+        var element = this.m_getMediaElement();
+        return element != null ? element.paused : true;
     }
 });
 
 /**
- * The object's true playback speed, ie the speed relative to the playback 
+ * The object's true playback speed, ie the speed relative to the playback
  * speed of the audio channel to which the object is connected.
  *
  * @member {number} playbackRate
@@ -237,12 +249,13 @@ Object.defineProperty(rune.media.Sound.prototype, "playbackRate", {
      * @ignore
      */
     get : function() {
-        return this.m_source['mediaElement'].playbackRate;
+        var element = this.m_getMediaElement();
+        return element != null ? element.playbackRate : 1.0;
     }
 });
 
 /**
- * Whether or not the browser should adjust the pitch of the audio to 
+ * Whether or not the browser should adjust the pitch of the audio to
  * compensate for changes to the playback rate.
  *
  * @member {boolean} preservesPitch
@@ -256,22 +269,42 @@ Object.defineProperty(rune.media.Sound.prototype, "preservesPitch", {
      * @ignore
      */
     get : function() {
-        return this.m_source['mediaElement'].preservesPitch;
+        var element = this.m_getMediaElement();
+        if (element != null) {
+            if (typeof element['preservesPitch'] === "boolean") {
+                return element['preservesPitch'];
+            }
+
+            if (typeof element['webkitPreservesPitch'] === "boolean") {
+                return element['webkitPreservesPitch'];
+            }
+
+            if (typeof element['mozPreservesPitch'] === "boolean") {
+                return element['mozPreservesPitch'];
+            }
+        }
+
+        return true;
     },
-    
+
     /**
      * @this rune.media.Sound
      * @ignore
      */
     set : function(value) {
-        this.m_source['mediaElement'].preservesPitch = value;
+        var element = this.m_getMediaElement();
+        if (element != null) {
+            element['preservesPitch'] = value;
+            element['webkitPreservesPitch'] = value;
+            element['mozPreservesPitch'] = value;
+        }
     }
 });
 
 /**
- * Sets the rate at which the media is being played back. This is used to 
- * implement user controls for fast forward, slow motion, and so forth. The 
- * normal playback rate is multiplied by this value to obtain the current 
+ * Sets the rate at which the media is being played back. This is used to
+ * implement user controls for fast forward, slow motion, and so forth. The
+ * normal playback rate is multiplied by this value to obtain the current
  * rate, so a value of 1.0 indicates normal speed.
  *
  * @member {number} rate
@@ -287,22 +320,24 @@ Object.defineProperty(rune.media.Sound.prototype, "rate", {
     get : function() {
         return this.m_rate;
     },
-    
+
     /**
      * @this rune.media.Sound
      * @ignore
      */
     set : function(value) {
-        this.m_rate = value;
+        if (typeof value === "number" && isFinite(value)) {
+            this.m_rate = value;
+        }
         //this.m_source['mediaElement'].playbackRate = this.m_rate * this.m_channel['rate'];
     }
 });
 
 /**
- * A double-precision floating-point value indicating the current playback 
- * time in seconds; if the media has not started to play and has not been 
- * seeked, this value is the media's initial playback time. Setting this value 
- * seeks the media to the new time. The time is specified relative to the 
+ * A double-precision floating-point value indicating the current playback
+ * time in seconds; if the media has not started to play and has not been
+ * seeked, this value is the media's initial playback time. Setting this value
+ * seeks the media to the new time. The time is specified relative to the
  * media's timeline.
  *
  * @member {number} time
@@ -315,20 +350,26 @@ Object.defineProperty(rune.media.Sound.prototype, "time", {
      * @ignore
      */
     get : function() {
-        return this.m_source['mediaElement'].currentTime;
+        var element = this.m_getMediaElement();
+        return element != null ? element.currentTime : 0.0;
     },
-    
+
     /**
      * @this rune.media.Sound
      * @ignore
      */
     set : function(value) {
-        this.m_source['mediaElement'].currentTime = value;
+        var element = this.m_getMediaElement();
+        if (element != null) {
+            try {
+                element.currentTime = value;
+            } catch (error) {}
+        }
     }
 });
 
 /**
- * Sound The object's sound volume. Volume is given as a floating point number 
+ * Sound The object's sound volume. Volume is given as a floating point number
  * between 0 (0%) and 1 (100%).
  *
  * @member {number} volume
@@ -341,15 +382,19 @@ Object.defineProperty(rune.media.Sound.prototype, "volume", {
      * @ignore
      */
     get : function() {
-        return this.m_source['mediaElement'].volume;
+        var element = this.m_getMediaElement();
+        return element != null ? element.volume : 0.0;
     },
-    
+
     /**
      * @this rune.media.Sound
      * @ignore
      */
     set : function(value) {
-        this.m_source['mediaElement'].volume = rune.util.Math.clamp(value, 0.0, 1.0);
+        var element = this.m_getMediaElement();
+        if (element != null) {
+            element.volume = rune.util.Math.clamp(value, 0.0, 1.0);
+        }
     }
 });
 
@@ -384,13 +429,15 @@ Object.defineProperty(rune.media.Sound.prototype, "unique", {
  * @returns {undefined}
  */
 rune.media.Sound.prototype.fade = function(to, duration) {
+    if (this.m_tweens == null) return;
+
     this.m_tweens.clear();
     this.m_tweens.create({
         target: this,
         transition: rune.tween.Sine.easeIn,
-        duration: duration || 2500,
+        duration: typeof duration === "number" ? duration : 2500,
         args: {
-            volume: to || 0
+            volume: typeof to === "number" ? to : 0
         },
     });
 };
@@ -401,7 +448,10 @@ rune.media.Sound.prototype.fade = function(to, duration) {
  * @returns {undefined}
  */
 rune.media.Sound.prototype.pause = function() {
-    this.m_source['mediaElement'].pause();
+    var element = this.m_getMediaElement();
+    if (element != null) {
+        element.pause();
+    }
 };
 
 /**
@@ -412,11 +462,23 @@ rune.media.Sound.prototype.pause = function() {
  * @returns {undefined}
  */
 rune.media.Sound.prototype.play = function(restart) {
+    var element = this.m_getMediaElement();
+    if (element == null) return;
+
     if (restart == true) {
-        this.m_source['mediaElement'].currentTime = 0;
+        try {
+            element.currentTime = 0;
+        } catch (error) {}
     }
 
-    this.m_source['mediaElement'].play();
+    var playback = null;
+    try {
+        playback = element.play();
+    } catch (error) {}
+
+    if (playback != null && typeof playback['catch'] === "function") {
+        playback['catch'](function() {});
+    }
 };
 
 /**
@@ -434,8 +496,13 @@ rune.media.Sound.prototype.resume = function() {
  * @returns {undefined}
  */
 rune.media.Sound.prototype.stop = function() {
-    this.m_source['mediaElement'].pause();
-    this.m_source['mediaElement'].currentTime = 0;
+    var element = this.m_getMediaElement();
+    if (element != null) {
+        element.pause();
+        try {
+            element.currentTime = 0;
+        } catch (error) {}
+    }
 };
 
 //------------------------------------------------------------------------------
@@ -443,14 +510,15 @@ rune.media.Sound.prototype.stop = function() {
 //------------------------------------------------------------------------------
 
 /**
- * Destroys the audio object and frees allocated memory. The method can be used 
- * to remove and destroy Sound objects, but the recommended way to remove 
- * (and destroy) a Sound object is via the remove method of the sound channel 
+ * Destroys the audio object and frees allocated memory. The method can be used
+ * to remove and destroy Sound objects, but the recommended way to remove
+ * (and destroy) a Sound object is via the remove method of the sound channel
  * on which the object was created.
  *
  * @returns {undefined}
  */
 rune.media.Sound.prototype.dispose = function() {
+    this.m_disposeTweens();
     this.m_disposeStereoPanner();
     this.m_disposeSource();
     this.m_disposeChannel();
@@ -471,7 +539,14 @@ rune.media.Sound.prototype.dispose = function() {
  * @suppress {checkTypes}
  */
 rune.media.Sound.prototype.connect = function(node) {
-    this.m_stereoPanner.connect(node);
+    if (node == null || this.m_source == null) return;
+
+    if (this.m_stereoPanner != null) {
+        this.m_stereoPanner.connect(node);
+    } else {
+        this.m_source.connect(node);
+    }
+
     this['rate'] = 1.0;
 };
 
@@ -485,6 +560,8 @@ rune.media.Sound.prototype.connect = function(node) {
  * @ignore
  */
 rune.media.Sound.prototype.update = function(step) {
+    if (this.m_source == null) return;
+
     this.m_updateRate(step);
     this.m_updateTweens(step);
 };
@@ -511,7 +588,7 @@ rune.media.Sound.prototype.m_construct = function() {
 //------------------------------------------------------------------------------
 
 /**
- * Creates an audio source based on the resource used to represent the sound 
+ * Creates an audio source based on the resource used to represent the sound
  * object.
  *
  * @returns {undefined}
@@ -521,6 +598,10 @@ rune.media.Sound.prototype.m_constructSource = function() {
     this.m_disposeSource();
     if (this.m_source == null && this.m_channel != null) {
         var resource = rune.system.Application['instance']['resources'].get(this.m_resource);
+        if (resource == null || resource['data'] == null || typeof resource['data'].cloneNode !== "function") {
+            throw new Error("Invalid sound resource: " + this.m_resource);
+        }
+
         this.m_source = this.m_channel['context'].createMediaElementSource(resource['data'].cloneNode());
     } else throw new Error();
 };
@@ -534,9 +615,21 @@ rune.media.Sound.prototype.m_constructSource = function() {
 rune.media.Sound.prototype.m_constructStereoPanner = function() {
     this.m_disposeStereoPanner();
     if (this.m_stereoPanner == null && this.m_channel != null) {
-        this.m_stereoPanner = this.m_channel['context'].createStereoPanner();
-        this.m_source.connect(this.m_stereoPanner);
+        if (typeof this.m_channel['context'].createStereoPanner === "function") {
+            this.m_stereoPanner = this.m_channel['context'].createStereoPanner();
+            this.m_source.connect(this.m_stereoPanner);
+        }
     } else throw new Error();
+};
+
+/**
+ * Returns the media element used by the audio source.
+ *
+ * @returns {?HTMLMediaElement}
+ * @private
+ */
+rune.media.Sound.prototype.m_getMediaElement = function() {
+    return this.m_source != null ? this.m_source['mediaElement'] : null;
 };
 
 /**
@@ -553,7 +646,7 @@ rune.media.Sound.prototype.m_constructTweens = function() {
 };
 
 /**
- * Calculates and updates the playback speed (rate) based on the speed of the 
+ * Calculates and updates the playback speed (rate) based on the speed of the
  * audio object and audio channel.
  *
  * @param {number} step Current time step.
@@ -563,7 +656,10 @@ rune.media.Sound.prototype.m_constructTweens = function() {
  */
 rune.media.Sound.prototype.m_updateRate = function(step) {
     if (this.m_source && this.m_channel) {
-        this.m_source['mediaElement'].playbackRate = this.m_rate * this.m_channel['rate'];
+        var rate = this.m_rate * this.m_channel['rate'];
+        if (typeof rate === "number" && isFinite(rate) && rate > 0) {
+            this.m_source['mediaElement'].playbackRate = rate;
+        }
     }
 };
 
@@ -603,7 +699,7 @@ rune.media.Sound.prototype.m_disposeTweens = function() {
 rune.media.Sound.prototype.m_disposeChannel = function() {
     if (this.m_channel != null) {
         this.m_channel.remove(this, false);
-        this.m_channel = null;   
+        this.m_channel = null;
     }
 };
 
@@ -614,7 +710,7 @@ rune.media.Sound.prototype.m_disposeChannel = function() {
  * @private
  */
 rune.media.Sound.prototype.m_disposeStereoPanner = function() {
-    if (this.m_stereoPanner instanceof StereoPannerNode) {
+    if (this.m_stereoPanner != null) {
         this.m_stereoPanner.disconnect();
         this.m_stereoPanner = null;
     }

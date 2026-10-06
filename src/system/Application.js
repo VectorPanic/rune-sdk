@@ -364,9 +364,51 @@ Object.defineProperty(rune.system.Application.prototype, "width", {
     }
 });
 
+/**
+ * DOM target where the application's primary canvas element is attached.
+ *
+ * @member {HTMLElement|string} target
+ * @memberof rune.system.Application
+ * @instance
+ */
+Object.defineProperty(rune.system.Application.prototype, "target", {
+    /**
+     * @this rune.system.Application
+     * @ignore
+     */
+    get : function() {
+        return this.m_config.target;
+    },
+    
+    /**
+     * @this rune.system.Application
+     * @ignore
+     */
+    set : function(value) {
+        this.setTarget(value);
+    }
+});
+
 //------------------------------------------------------------------------------
 // Public prototype methods (API)
 //------------------------------------------------------------------------------
+
+/**
+ * Moves the application's primary canvas element to a new DOM target.
+ *
+ * @param {HTMLElement|string} target DOMElement or selector to append to.
+ *
+ * @return {undefined}
+ */
+rune.system.Application.prototype.setTarget = function(target) {
+    var element = this.m_getCanvasTarget(target);
+    
+    this.m_config.target = target;
+    
+    if (this.m_screen != null) {
+        this.m_screen["canvas"].attach(element);
+    }
+};
 
 /**
  * Starts the current application.
@@ -581,7 +623,7 @@ rune.system.Application.prototype.m_initScreen = function() {
     this.m_disposeScreen();
     if (this.m_screen == null) {
         this.m_screen = new rune.display.Screen(this.m_config);
-        this.m_screen["canvas"].attach(this.m_getCanvasTarget());
+        this.m_screen["canvas"].attach(this.m_getCanvasTarget(this.m_config.target));
     } else throw new Error();
 };
 
@@ -594,8 +636,10 @@ rune.system.Application.prototype.m_initScreen = function() {
  * @return {HTMLElement}
  * @private
  */
-rune.system.Application.prototype.m_getCanvasTarget = function() {
-    var target = this.m_config.target;
+rune.system.Application.prototype.m_getCanvasTarget = function(target) {
+    if (arguments.length == 0) {
+        target = this.m_config.target;
+    }
     
     if (target == null) {
         return document.body;

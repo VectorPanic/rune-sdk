@@ -92,7 +92,11 @@ Object.defineProperty(rune.state.States.prototype, "selected", {
  * @returns {undefined}
  */
 rune.state.States.prototype.load = function(states) {
-    if (Array.isArray(states) === true && states.length > 0) {
+    if (this.m_validateStates(states) === true) {
+        if (this.m_swap != null && this.m_swap !== states) {
+            this.m_disposeStateList(this.m_swap);
+        }
+        
         this.m_swap = states;
     } else throw new Error();
 };
@@ -105,8 +109,11 @@ rune.state.States.prototype.load = function(states) {
  * @returns {boolean} Whether a state could be selected.
  */
 rune.state.States.prototype.select = function(name) {
+    name = (name == null) ? "" : name.toString().toUpperCase();
+    if (this.m_states == null) return false;
+
     for (var i = 0; i < this.m_states.length; i++) {
-        if (this.m_states[i]['name'].toUpperCase() == name.toUpperCase()) {
+        if (this.m_states[i]['name'].toUpperCase() == name) {
             if (this.m_selected != i) {
                 var a = i;
                 var b = this.m_selected;
@@ -157,6 +164,8 @@ rune.state.States.prototype.render = function() {
  */
 rune.state.States.prototype.dispose = function() {
     this.m_disposeStates();
+    this.m_disposeSwap();
+    this.m_owner = null;
 };
 
 //------------------------------------------------------------------------------
@@ -172,8 +181,14 @@ rune.state.States.prototype.dispose = function() {
  * @private
  */
 rune.state.States.prototype.m_initStates = function() {
-    this.m_disposeStates();
     if (this.m_swap != null && this.m_swap.length > 0) {
+        var oldStates = this.m_states;
+        var oldState = this['selected'] || null;
+        var newState = this.m_swap[0];
+        if (oldState != null && oldState !== newState) {
+            oldState.onExit(newState);
+        }
+        
         this.m_states = this.m_swap;
         this.m_selected = 0;
         for (var i = 0; i < this.m_states.length; i++) {
@@ -182,6 +197,8 @@ rune.state.States.prototype.m_initStates = function() {
         }
         
         this.m_swap = null;
+        this.m_states[this.m_selected].onEnter(oldState);
+        this.m_disposeStateList(oldStates, this.m_states);
     } else throw new Error();
 };
 
@@ -232,13 +249,63 @@ rune.state.States.prototype.m_renderStates = function() {
  * @private
  */
 rune.state.States.prototype.m_disposeStates = function() {
-    if (this.m_states != null) {
-        for (var i = 0; i < this.m_states.length; i++) {
-            this.m_states[i].dispose();
-            this.m_states[i] = null;
+    this.m_disposeStateList(this.m_states);
+    this.m_states = [];
+    this.m_selected = 0;
+};
+
+/**
+ * Destroys pending states.
+ *
+ * @returns {undefined}
+ * @private
+ */
+rune.state.States.prototype.m_disposeSwap = function() {
+    this.m_disposeStateList(this.m_swap, this.m_states);
+    this.m_swap = null;
+};
+
+/**
+ * Destroys a list of states.
+ *
+ * @param {Array.<rune.state.State>} states List of states.
+ * @param {Array.<rune.state.State>} [keep] List of states not to destroy.
+ *
+ * @returns {undefined}
+ * @private
+ */
+rune.state.States.prototype.m_disposeStateList = function(states, keep) {
+    if (Array.isArray(states) === true) {
+        keep = keep || [];
+        for (var i = 0; i < states.length; i++) {
+            if (states[i] instanceof rune.state.State && keep.indexOf(states[i]) == -1) {
+                states[i].dispose();
+                states[i].setOwner(null);
+            }
+            
+            states[i] = null;
         }
-        
-        this.m_states = null;
-        this.m_selected = 0;
     }
+};
+
+/**
+ * Validates a list of states.
+ *
+ * @param {Array.<rune.state.State>} states List of states.
+ *
+ * @returns {boolean}
+ * @private
+ */
+rune.state.States.prototype.m_validateStates = function(states) {
+    if (Array.isArray(states) === false || states.length == 0) {
+        return false;
+    }
+
+    for (var i = 0; i < states.length; i++) {
+        if (states[i] instanceof rune.state.State === false) {
+            return false;
+        }
+    }
+
+    return true;
 };

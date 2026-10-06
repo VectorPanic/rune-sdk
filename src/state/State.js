@@ -32,7 +32,7 @@ rune.state.State = function(name) {
      * @type {string}
      * @private
      */
-    this.m_name = name || "undefined";
+    this.m_name = (name == null) ? "undefined" : name.toString();
 
     /**
      * Reference to the object that is in the current state.

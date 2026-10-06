@@ -181,8 +181,10 @@ rune.animation.Animations.prototype.create = function(name, frames, framerate, l
  */
 rune.animation.Animations.prototype.find = function(name) {
     var i = this.m_animations.length;
+    name = String(name).toLowerCase();
+    
     while (i--) {
-        if (this.m_animations[i]['name'] == name) {
+        if (String(this.m_animations[i]['name']).toLowerCase() == name) {
             return this.m_animations[i];
         }
     }
@@ -199,11 +201,11 @@ rune.animation.Animations.prototype.find = function(name) {
  * @returns {undefined}
  */
 rune.animation.Animations.prototype.goto = function(name, frame) {
-    if (this.m_animation != null && this.m_animation['name'] != name) {
-        this.m_animation = this.find(name);
-        if (this.m_animation != null) {
-            this.m_animation.goto(frame);
-        }
+    var animation = this.find(name);
+    
+    if (animation != null) {
+        this.m_animation = animation;
+        this.m_animation.goto(frame);
     }
 };
 
@@ -217,9 +219,11 @@ rune.animation.Animations.prototype.goto = function(name, frame) {
  * @returns {undefined}
  */
 rune.animation.Animations.prototype.gotoAndPlay = function(name, frame) {
-    this.goto(name, frame);
-    if (this.m_animation != null) {
-        this.m_animation.play();
+    var animation = this.find(name);
+    
+    if (animation != null) {
+        this.m_animation = animation;
+        this.m_animation.gotoAndPlay(frame);
     }
 };
 
@@ -233,9 +237,11 @@ rune.animation.Animations.prototype.gotoAndPlay = function(name, frame) {
  * @returns {undefined}
  */
 rune.animation.Animations.prototype.gotoAndStop = function(name, frame) {
-    this.goto(name, frame);
-    if (this.m_animation != null) {
-        this.m_animation.stop();
+    var animation = this.find(name);
+    
+    if (animation != null) {
+        this.m_animation = animation;
+        this.m_animation.gotoAndStop(frame);
     }
 };
 
@@ -294,8 +300,10 @@ rune.animation.Animations.prototype.play = function() {
  */
 rune.animation.Animations.prototype.remove = function(name) {
     var i = this.m_animations.length;
+    name = String(name).toLowerCase();
+    
     while (i--) {
-        if (this.m_animations[i]['name'].toLowerCase() == name.toLowerCase()) {
+        if (String(this.m_animations[i]['name']).toLowerCase() == name) {
             if (this.m_animation == this.m_animations[i]) {
                 this.m_animation = null;
             }

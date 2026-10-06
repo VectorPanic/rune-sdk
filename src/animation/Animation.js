@@ -110,7 +110,7 @@ Object.defineProperty(rune.animation.Animation.prototype, "atlasIndex", {
 	 * @ignore
 	 */
 	get : function() {
-		return this.frames[this['index']];
+		return this.frames[this['index']] || 0;
 	}
 });
 
@@ -135,7 +135,8 @@ Object.defineProperty(rune.animation.Animation.prototype, "delay", {
 	 * @ignore
 	 */
 	set : function(value) {
-		this.m_delay = rune.util.Math.clamp(parseInt(value, 10), 0, Number.MAX_SAFE_INTEGER);
+		value = parseInt(value, 10);
+		this.m_delay = isNaN(value) ? 0 : rune.util.Math.clamp(value, 0, Number.MAX_VALUE);
 	}
 });
 
@@ -196,7 +197,8 @@ Object.defineProperty(rune.animation.Animation.prototype, "framerate", {
 	 * @ignore
 	 */
 	set : function(value) {
-		this['delay'] = parseInt((1 / value) * 1000, 10);
+		value = parseFloat(value);
+		this['delay'] = value > 0 ? parseInt((1 / value) * 1000, 10) : 0;
 	}
 });
 
@@ -300,7 +302,9 @@ Object.defineProperty(rune.animation.Animation.prototype, "index", {
 	 * @ignore
 	 */
 	set : function(value) {
-		if (this.looped === true) {
+		if (this.frames.length < 1) {
+			this.m_index = 0;
+		} else if (this.looped === true) {
 			this.m_index = rune.util.Math.wrap(value, 0, this.frames.length - 1);
 		} else {
 			this.m_index = rune.util.Math.clamp(value, 0, this.frames.length - 1);
@@ -379,7 +383,10 @@ rune.animation.Animation.prototype.gotoPreviousFrame = function() {
  * @returns {undefined}
  */
 rune.animation.Animation.prototype.gotoRandomFrame = function() {
-	this['index'] = rune.util.Math.randomInt(0, this.frames.length - 1);
+	if (this.frames.length > 0) {
+		this['index'] = rune.util.Math.randomInt(0, this.frames.length - 1);
+	}
+	
 	this.m_elapsed = 0;
 };
 
@@ -427,14 +434,25 @@ rune.animation.Animation.prototype.dispose = function() {
  * @ignore
  */
 rune.animation.Animation.prototype.update = function(step) {
-	if (this.m_delay > 0 && this.m_paused == false) {
+	if (this.m_delay > 0 && this.m_paused == false && this.frames.length > 0) {
 		this.m_elapsed += step;
 		
-		while (this.m_elapsed  > this.m_delay) {
-			   this.m_elapsed -= this.m_delay;
-			   this['index']++;
-			   
-			   this.m_execScript();
+		while (this.m_elapsed >= this.m_delay && this.m_paused == false) {
+			this.m_elapsed -= this.m_delay;
+			
+			if (this.looped == false && this['index'] >= this.frames.length - 1) {
+				this.stop();
+				this.m_elapsed = 0;
+				break;
+			}
+			
+			this['index']++;
+			this.m_execScript();
+			
+			if (this.looped == false && this['index'] >= this.frames.length - 1) {
+				this.stop();
+				this.m_elapsed = 0;
+			}
 		}
 	}
 };

@@ -62,7 +62,7 @@ rune.display.Sprite.prototype.constructor = rune.display.Sprite;
  * Reference to the object's internal animation system. Use this reference to 
  * add, or delete, animation sequences for this object.
  *
- * @member {rune.animation.Animations} animations
+ * @member {rune.animation.Animations} animation
  * @memberof rune.display.Sprite
  * @instance
  * @readonly

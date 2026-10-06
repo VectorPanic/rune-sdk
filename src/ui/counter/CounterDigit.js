@@ -90,7 +90,7 @@ rune.ui.CounterDigit.prototype.init = function() {
  * @returns {number}
  */
 rune.ui.CounterDigit.prototype.getValue = function() {
-	var value = parseInt(this['animations'].current.name, 10);
+	var value = parseInt(this['animation'].current.name, 10);
 	return rune.util.Math.clamp(value, 0, 9);
 };
 

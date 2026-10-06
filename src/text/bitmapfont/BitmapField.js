@@ -65,7 +65,7 @@ rune.text.BitmapField = function(text, resource) {
 	 * @type {string}
 	 * @private
 	 */
-	this.m_text = text || "";
+	this.m_text = this.m_formatText(text);
 	
 	//--------------------------------------------------------------------------
 	// Super call
@@ -233,6 +233,7 @@ Object.defineProperty(rune.text.BitmapField.prototype, "text", {
 	 * @suppress {accessControls}
 	 */
 	set : function(value) {
+		value = this.m_formatText(value);
 		if (this.m_text != value) {
 			this.m_text  = value;
 			if (this.m_autoSize == true) {
@@ -259,7 +260,7 @@ Object.defineProperty(rune.text.BitmapField.prototype, "textHeight", {
 	 */
 	get : function() {
 		var numRows = this.m_text.split("\n").length;
-		return (numRows * this.m_format['charHeight']) + (numRows * this.m_leading);
+		return (numRows * this.m_format['charHeight']) + ((numRows - 1) * this.m_leading);
 	}
 });
 
@@ -282,8 +283,12 @@ Object.defineProperty(rune.text.BitmapField.prototype, "textWidth", {
 		for (var ln = 0; ln < rows.length; ln++) {
 			numChars = Math.max(rows[ln].length, numChars); 
 		}
-		
-		return numChars * (this.m_format['charWidth'] + this.m_letterSpacing);
+
+		if (numChars > 0) {
+			return (numChars * this.m_format['charWidth']) + ((numChars - 1) * this.m_letterSpacing);
+		}
+
+		return 0;
 	}
 });
 
@@ -343,6 +348,19 @@ rune.text.BitmapField.prototype.m_renderText = function() {
 };
 
 /**
+ * Formats a value as text.
+ *
+ * @param {*} value Value to format.
+ *
+ * @return {string}
+ * @private
+ */
+rune.text.BitmapField.prototype.m_formatText = function(value) {
+	if (value == null) return "";
+	else return value.toString();
+};
+
+/**
  * Renders a character.
  *
  * @param {number} charCode Unicode character code.
@@ -354,17 +372,19 @@ rune.text.BitmapField.prototype.m_renderText = function() {
  */
 rune.text.BitmapField.prototype.m_renderCharacter = function(charCode, x, y) {
 	var rect = this.m_format.getCharRect(charCode);
-	this.m_canvas.drawImage(
-		this.m_format['texture'],
-		x,
-		y,
-		rect.width,
-		rect.height,
-		rect.x, 
-		rect.y,
-		rect.width,
-		rect.height
-	);
+	if (rect instanceof rune.geom.Rectangle) {
+		this.m_canvas.drawImage(
+			this.m_format['texture'],
+			x,
+			y,
+			rect.width,
+			rect.height,
+			rect.x,
+			rect.y,
+			rect.width,
+			rect.height
+		);
+	}
 };
 
 /**

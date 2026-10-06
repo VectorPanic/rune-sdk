@@ -10,8 +10,8 @@
  *
  * @class
  * @classdesc
- * 
- * The ConsoleCommands class represents a register of available console 
+ *
+ * The ConsoleCommands class represents a register of available console
  * commands. Commands can be added and deleted via this class.
  */
 rune.console.ConsoleCommands = function() {
@@ -51,6 +51,8 @@ rune.console.ConsoleCommands = function() {
  * @returns {undefined}
  */
 rune.console.ConsoleCommands.prototype.add = function(command) {
+	if (this.m_commands == null) return;
+
 	if (command instanceof rune.console.ConsoleCommand) {
 		this.m_commands.push(command);
 	} else throw new TypeError("Invalid console command.");
@@ -77,6 +79,8 @@ rune.console.ConsoleCommands.prototype.create = function(command, callback, scop
  * @returns {undefined}
  */
 rune.console.ConsoleCommands.prototype.remove = function(command) {
+	if (this.m_commands == null) return;
+
 	for (var i = 0; i < this.m_commands.length; i++) {
 		if (this.m_commands[i].trigger === command) {
 			this.m_commands.splice(i, 1);
@@ -97,24 +101,31 @@ rune.console.ConsoleCommands.prototype.remove = function(command) {
  * @ignore
  */
 rune.console.ConsoleCommands.prototype.dispose = function() {
-	this.m_commands.length = 0;
-	this.m_commands = null;
+	if (this.m_commands != null) {
+		this.m_commands.length = 0;
+		this.m_commands = null;
+	}
 };
 
 /**
  * Execute a command from the command list.
  *
  * @param {string} input Command, including possible arguments.
- * 
+ *
  * @returns {string}
  * @package
  * @ignore
  */
 rune.console.ConsoleCommands.prototype.exec = function(input) {
-	var command = input.replace(/ .*/, "");
-	var args = input.split(" ");
-		args.shift();
-		
+	if (this.m_commands == null) return "";
+
+	input = String(input || "").replace(/^\s+|\s+$/g, "");
+	if (input.length == 0) return "";
+
+	var command = input.replace(/\s.*/, "");
+	var args = input.split(/\s+/);
+	args.shift();
+
 	for (var i = 0; i < this.m_commands.length; i++) {
 		if (this.m_commands[i].trigger.toLowerCase() === command.toLowerCase()) {
 			var output = this.m_commands[i].callback.apply(
@@ -123,11 +134,11 @@ rune.console.ConsoleCommands.prototype.exec = function(input) {
 			);
 			
 			//@note: Special case.
-			if (command.toLowerCase() == rune.console.Console.CMD_CLEAR) {
-				return ""
+			if (rune.console.Console != null && command.toLowerCase() == rune.console.Console.CMD_CLEAR) {
+				return "";
 			}
 			
-			return (output) ? this.m_cursorMarker + input +"\n" + output : this.m_cursorMarker + input;
+			return (output != null) ? this.m_cursorMarker + input + "\n" + output : this.m_cursorMarker + input;
 		}
 	}
 

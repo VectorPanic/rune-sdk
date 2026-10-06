@@ -10,7 +10,7 @@
  *
  * @class
  * @classdesc
- * 
+ *
  * The ConsoleHistory class represents the input history of a text console.
  */
 rune.console.ConsoleHistory = function() {
@@ -39,7 +39,7 @@ rune.console.ConsoleHistory = function() {
 	 * The extent of the history.
 	 *
 	 * @type {number}
-	 * @private 
+	 * @private
 	 */
 	this.m_length = 5;
 };
@@ -56,7 +56,13 @@ rune.console.ConsoleHistory = function() {
  * @returns {undefined}
  */
 rune.console.ConsoleHistory.prototype.add = function(input) {
+	if (this.m_inputs == null) return;
+
+	input = String(input || "").replace(/^\s+|\s+$/g, "");
+	if (input.length == 0) return;
+
 	this.m_inputs.unshift(input);
+	this.m_inputIndex = -1;
 	this.m_trimPrevious();
 };
 
@@ -66,6 +72,8 @@ rune.console.ConsoleHistory.prototype.add = function(input) {
  * @returns {string}
  */
 rune.console.ConsoleHistory.prototype.next = function() {
+	if (this.m_inputs == null || this.m_inputs.length == 0) return "";
+
 	this.m_inputIndex--;
 	if (this.m_inputIndex < 0) {
 		this.m_inputIndex = this.m_inputs.length - 1;
@@ -75,11 +83,13 @@ rune.console.ConsoleHistory.prototype.next = function() {
 };
 
 /**
- * Select previous. 
+ * Select previous.
  *
  * @returns {string}
  */
 rune.console.ConsoleHistory.prototype.previous = function() {
+	if (this.m_inputs == null || this.m_inputs.length == 0) return "";
+
 	this.m_inputIndex++;
 	if (this.m_inputIndex > this.m_inputs.length - 1) {
 		this.m_inputIndex = 0;
@@ -98,8 +108,12 @@ rune.console.ConsoleHistory.prototype.previous = function() {
  * @returns {undefined}
  */
 rune.console.ConsoleHistory.prototype.dispose = function() {
-	this.m_inputs.length = 0;
-	this.m_inputs = null;
+	if (this.m_inputs != null) {
+		this.m_inputs.length = 0;
+		this.m_inputs = null;
+	}
+
+	this.m_inputIndex = -1;
 };
 
 //------------------------------------------------------------------------------
@@ -113,6 +127,8 @@ rune.console.ConsoleHistory.prototype.dispose = function() {
  * @private
  */
 rune.console.ConsoleHistory.prototype.m_trimPrevious = function() {
+	if (this.m_inputs == null) return;
+
 	while (this.m_inputs.length > this.m_length) {
 		this.m_inputs.pop();
 	}

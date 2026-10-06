@@ -10,20 +10,20 @@
  *
  * @param {number} [width] Width in pixels.
  * @param {number} [height] Height in pixels.
- * 
+ *
  * @class
  * @classdesc
- * 
- * The ConsoleManager class represents the user interface of the developer 
- * console. The class ensures that the console is used correctly within the 
+ *
+ * The ConsoleManager class represents the user interface of the developer
+ * console. The class ensures that the console is used correctly within the
  * Rune ecosystem.
  */
 rune.console.ConsoleManager = function(width, height) {
-    
+
     //--------------------------------------------------------------------------
     // Public properties
     //--------------------------------------------------------------------------
-    
+
     /**
      * Whether or not the user can manually enable or disable the console.
      *
@@ -31,11 +31,11 @@ rune.console.ConsoleManager = function(width, height) {
      * @default true
      */
     this.interactive = true;
-    
+
     //--------------------------------------------------------------------------
     // Private properties
     //--------------------------------------------------------------------------
-    
+
     /**
      * Reference to console objects that this class handles.
      *
@@ -43,7 +43,7 @@ rune.console.ConsoleManager = function(width, height) {
      * @private
      */
     this.m_console = null;
-    
+
     /**
      * Whether the console receives text input or not.
      *
@@ -51,7 +51,7 @@ rune.console.ConsoleManager = function(width, height) {
      * @private
      */
     this.m_responsive = true;
-    
+
     /**
      * Used to animate the console.
      *
@@ -59,11 +59,11 @@ rune.console.ConsoleManager = function(width, height) {
      * @private
      */
     this.m_tweens = null;
-    
+
     //--------------------------------------------------------------------------
     // Super call
     //--------------------------------------------------------------------------
-    
+
     /**
      * Extends DisplayObjectContainer.
      */
@@ -93,7 +93,7 @@ rune.console.ConsoleManager.CONSOLE_TRIGGER = "BACKQUOTE";
 //------------------------------------------------------------------------------
 
 /**
- * Reference to the console's command system. Use this reference to add and 
+ * Reference to the console's command system. Use this reference to add and
  * delete console commands.
  *
  * @member {rune.console.ConsoleCommands} commands
@@ -107,7 +107,7 @@ Object.defineProperty(rune.console.ConsoleManager.prototype, "commands", {
      * @ignore
      */
     get : function() {
-        return this.m_console['commands'];
+        return this.m_console != null ? this.m_console['commands'] : null;
     }
 });
 
@@ -130,7 +130,7 @@ Object.defineProperty(rune.console.ConsoleManager.prototype, "instance", {
 });
 
 /**
- * If the console is passive, it can either be activated manually or receive 
+ * If the console is passive, it can either be activated manually or receive
  * input data. A passive console can still present data via its output.
  *
  * @member {boolean} passive
@@ -143,16 +143,18 @@ Object.defineProperty(rune.console.ConsoleManager.prototype, "passive", {
      * @ignore
      */
     get : function() {
-        return !(this.interactive && this.m_console['input'].enabled);
+        return !(this.interactive && this.m_console != null && this.m_console['input'] != null && this.m_console['input'].enabled);
     },
-    
+
     /**
      * @this rune.console.ConsoleManager
      * @ignore
      */
     set : function(value) {
         this.interactive = !value;
-        this.m_console['input'].enabled = !value;
+        if (this.m_console != null && this.m_console['input'] != null) {
+            this.m_console['input'].enabled = !value;
+        }
     }
 });
 
@@ -230,7 +232,8 @@ rune.console.ConsoleManager.prototype.show = function(callback, scope) {
  * @ignore
  */
 rune.console.ConsoleManager.prototype.set = function(ammount) {
-    ammount = ammount || 0.0;
+    ammount = (typeof ammount === "number" && isFinite(ammount)) ? ammount : 0.0;
+    ammount = rune.util.Math.clamp(ammount, 0.0, 1.0);
     if (this.m_console) {
         if (ammount > 0) {
             if (this.m_console['parent'] == null) {
@@ -310,7 +313,7 @@ rune.console.ConsoleManager.prototype.m_constructConsole = function() {
         this.m_console = new rune.console.Console(this.width, this.height);
         this.m_console['bottom'] = 0;
         
-        if (this.m_console.width  >= 1280 && 
+        if (this.m_console.width  >= 1280 &&
             this.m_console.height >= 720) {
             this.m_console.width  = this.m_console.width  >> 1;
             this.m_console.height = this.m_console.height >> 1;
@@ -344,7 +347,7 @@ rune.console.ConsoleManager.prototype.m_updateTweens = function(step) {
  */
 rune.console.ConsoleManager.prototype.m_updateInputs = function(step) {
     if (this.interactive) {
-        if (this['keyboard'] && this['keyboard'].justPressed(rune.console.ConsoleManager.CONSOLE_TRIGGER)) {
+        if (this.m_console != null && this['keyboard'] && this['keyboard'].justPressed(rune.console.ConsoleManager.CONSOLE_TRIGGER)) {
             if (this.m_console['parent'] == null) this.show();
             else this.hide();
         }
@@ -388,6 +391,8 @@ rune.console.ConsoleManager.prototype.m_disposeTweens = function() {
  * @private
  */
 rune.console.ConsoleManager.prototype.m_animate = function(p, d, c) {
+    if (this.m_tweens == null || this.m_console == null) return;
+
     this.m_responsive = false;
     this.m_tweens.clear();
     this.m_tweens.create({
@@ -397,7 +402,7 @@ rune.console.ConsoleManager.prototype.m_animate = function(p, d, c) {
         onDispose: function() {
             this.m_responsive = true;
             if (typeof c === "function") {
-                c.call(this, console);
+                c.call(this, this.m_console);
             }
         },
         args: {

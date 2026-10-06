@@ -12,15 +12,15 @@
  *
  * @class
  * @classdesc
- * 
+ *
  * The ConsoleOutput class represents the output field of a text console.
  */
 rune.console.ConsoleOutput = function(console) {
-	
+
 	//--------------------------------------------------------------------------
 	// Private properties
 	//--------------------------------------------------------------------------
-	
+
 	/**
 	 * The Console object to which the output field belongs.
 	 *
@@ -28,7 +28,7 @@ rune.console.ConsoleOutput = function(console) {
 	 * @private
 	 */
 	this.m_console = console;
-	
+
 	/**
 	 * Output rows.
 	 *
@@ -50,7 +50,9 @@ rune.console.ConsoleOutput = function(console) {
  */
 rune.console.ConsoleOutput.prototype.clear = function() {
 	this.m_rows = [];
-	this.m_console.breakCache();
+	if (this.m_console != null) {
+		this.m_console.breakCache();
+	}
 };
 
 /**
@@ -62,14 +64,18 @@ rune.console.ConsoleOutput.prototype.clear = function() {
  * @suppress {accessControls}
  */
 rune.console.ConsoleOutput.prototype.log = function(str) {
-	str = str || "";
+	if (this.m_rows == null) return;
+
+	str = str != null ? String(str) : "";
 	var strs = str.split("\n");
 	for (var i = 0; i < strs.length; i++) {
 		this.m_rows.unshift(strs[i]);
 	}
 
 	this.m_trimLog();
-	this.m_console.breakCache();
+	if (this.m_console != null) {
+		this.m_console.breakCache();
+	}
 };
 
 //------------------------------------------------------------------------------
@@ -83,8 +89,11 @@ rune.console.ConsoleOutput.prototype.log = function(str) {
  * @ignore
  */
 rune.console.ConsoleOutput.prototype.dispose = function() {
-	this.m_rows.length = 0;
-	this.m_rows = null;
+	if (this.m_rows != null) {
+		this.m_rows.length = 0;
+		this.m_rows = null;
+	}
+
 	this.m_console = null;
 };
 
@@ -95,7 +104,9 @@ rune.console.ConsoleOutput.prototype.dispose = function() {
  * @ignore
  */
 rune.console.ConsoleOutput.prototype.render = function() {
-	this.m_renderRows();
+	if (this.m_rows != null && this.m_console != null) {
+		this.m_renderRows();
+	}
 };
 
 //------------------------------------------------------------------------------
@@ -109,6 +120,8 @@ rune.console.ConsoleOutput.prototype.render = function() {
  * @private
  */
 rune.console.ConsoleOutput.prototype.m_trimLog = function() {
+	if (this.m_rows == null || this.m_console == null) return;
+
 	while (this.m_rows.length > this.m_console['numLines']) {
 		this.m_rows.pop();
 	}
@@ -121,6 +134,8 @@ rune.console.ConsoleOutput.prototype.m_trimLog = function() {
  * @private
  */
 rune.console.ConsoleOutput.prototype.m_renderRows = function() {
+	if (this.m_rows == null || this.m_console == null) return;
+
 	var text = "";
 	var rows = this.m_rows;
 	for (var ln = 0; ln < this.m_rows.length; ln++) {
@@ -133,7 +148,7 @@ rune.console.ConsoleOutput.prototype.m_renderRows = function() {
 				x,
 				y
 			);
-			
+
 			x += this.m_console['format']['charWidth'];
 		}
 	}
@@ -151,15 +166,17 @@ rune.console.ConsoleOutput.prototype.m_renderRows = function() {
  */
 rune.console.ConsoleOutput.prototype.m_renderCharacter = function(chr, x, y) {
 	var rect = this.m_console['format'].getCharRect(chr);
-	this.m_console['canvas'].drawImage(
-		this.m_console['format']['texture'],
-		x,
-		y,
-		rect['width'],
-		rect['height'],
-		rect['x'], 
-		rect['y'],
-		rect['width'],
-		rect['height']
-	);
+	if (rect != null) {
+		this.m_console['canvas'].drawImage(
+			this.m_console['format']['texture'],
+			x,
+			y,
+			rect['width'],
+			rect['height'],
+			rect['x'],
+			rect['y'],
+			rect['width'],
+			rect['height']
+		);
+	}
 };

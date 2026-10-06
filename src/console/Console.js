@@ -11,22 +11,22 @@
  *
  * @param {number} [width] Console width in pixels.
  * @param {number} [height] Console height in pixels.
- * 
+ *
  * @class
  * @classdesc
- * 
- * The Console class represents an input console that can take input and 
- * provide output. Input is given in the form of text commands and output is 
- * given in the form of text strings and / or function calls. With the console, 
- * it is possible to register customized application commands for testing and 
+ *
+ * The Console class represents an input console that can take input and
+ * provide output. Input is given in the form of text commands and output is
+ * given in the form of text strings and / or function calls. With the console,
+ * it is possible to register customized application commands for testing and
  * troubleshooting.
  */
 rune.console.Console = function(width, height) {
-    
+
     //--------------------------------------------------------------------------
     // Private properties
     //--------------------------------------------------------------------------
-    
+
     /**
      * Command manager.
      *
@@ -34,7 +34,7 @@ rune.console.Console = function(width, height) {
      * @private
      */
     this.m_commands = null;
-    
+
     /**
      * Represents the console font.
      *
@@ -42,7 +42,7 @@ rune.console.Console = function(width, height) {
      * @private
      */
     this.m_format = null;
-    
+
     /**
      * Pixel indentation (from left).
      *
@@ -50,7 +50,7 @@ rune.console.Console = function(width, height) {
      * @private
      */
     this.m_indentation = 4;
-    
+
     /**
      * Subsystem for text input.
      *
@@ -58,7 +58,7 @@ rune.console.Console = function(width, height) {
      * @private
      */
     this.m_input = null;
-    
+
     /**
      * Subsystem for text output.
      *
@@ -66,11 +66,11 @@ rune.console.Console = function(width, height) {
      * @private
      */
     this.m_output = null;
-    
+
     //--------------------------------------------------------------------------
     // Super call
     //--------------------------------------------------------------------------
-    
+
     /**
      * Extend DisplayObject.
      */
@@ -100,7 +100,7 @@ rune.console.Console.CMD_CLEAR = "clear";
 //------------------------------------------------------------------------------
 
 /**
- * Reference to the console's command system. Use this reference to add and 
+ * Reference to the console's command system. Use this reference to add and
  * delete console commands.
  *
  * @member {rune.console.ConsoleCommands} commands
@@ -169,13 +169,14 @@ Object.defineProperty(rune.console.Console.prototype, "indentation", {
     get : function() {
         return this.m_indentation;
     },
-    
+
     /**
      * @this rune.console.Console
      * @ignore
      */
     set : function(value) {
-        this.m_indentation = parseInt(value, 10);
+        value = parseInt(value, 10);
+        this.m_indentation = isNaN(value) ? 0 : Math.max(value, 0);
     }
 });
 
@@ -211,7 +212,7 @@ Object.defineProperty(rune.console.Console.prototype, "numLines", {
      * @ignore
      */
     get : function() {
-        return Math.ceil(this['height'] / this.m_format['charHeight']);
+        return this.m_format != null ? Math.ceil(this['height'] / this.m_format['charHeight']) : 0;
     }
 });
 
@@ -241,7 +242,10 @@ rune.console.Console.prototype.clear = function() {
  */
 rune.console.Console.prototype.execute = function(cmd) {
     if (this.m_commands != null) {
-        this.log(this.m_commands.exec(cmd));
+        var output = this.m_commands.exec(cmd);
+        if (output != null && output !== "") {
+            this.log(output);
+        }
     }
 };
 

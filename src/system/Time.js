@@ -472,8 +472,14 @@ rune.system.Time.prototype.m_tick = function() {
     if (this.m_buffer + rune.system.Time.STEP_EPSILON >= this.m_step) {
         var numUpdates = 0;
         
-        while(this.m_ticks.length > 0 && this.m_ticks[0] <= this.m_currentTime - 1000) {
-            this.m_ticks.shift();
+        var cutoff = this.m_currentTime - 1000;
+        var expired = 0;
+        while(expired < this.m_ticks.length && this.m_ticks[expired] <= cutoff) {
+            expired++;
+        }
+        
+        if (expired > 0) {
+            this.m_ticks.splice(0, expired);
         }
         
         this.m_ticks.push(this.m_currentTime);

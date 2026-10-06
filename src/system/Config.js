@@ -27,6 +27,13 @@ rune.system.Config = function(options) {
      * @ignore
      */
     options = options || {};
+
+    /**
+     * @ignore
+     */
+    var option = function(name, value) {
+        return options[name] !== undefined ? options[name] : value;
+    };
     
     //--------------------------------------------------------------------------
     // Public properties
@@ -38,7 +45,7 @@ rune.system.Config = function(options) {
      *
      * @type {string}
      */
-    this.app = options.app || '';
+    this.app = option("app", "");
     
     /**
      * The build ID is used to identify a particular version, build or state of 
@@ -48,7 +55,7 @@ rune.system.Config = function(options) {
      * @type {string}
      * @default 0.0.0
      */
-    this.build = options.build || "0.0.0";
+    this.build = option("build", "0.0.0");
     
     /**
      * Whether to execute the application in debug mode (true), or not (false).
@@ -56,7 +63,7 @@ rune.system.Config = function(options) {
      * @type {boolean}
      * @default false
      */
-    this.debug = options.debug || false;
+    this.debug = Boolean(option("debug", false));
     
     /**
      * The Developer ID is used to uniquely identify the developer/origin of 
@@ -66,7 +73,7 @@ rune.system.Config = function(options) {
      *
      * @type {string}
      */
-    this.developer = options.developer || "";
+    this.developer = option("developer", "");
     
     /**
      * Requested frame rate for the application.
@@ -74,7 +81,7 @@ rune.system.Config = function(options) {
      * @type {number}
      * @default 60
      */
-    this.framerate = options.framerate || 60;
+    this.framerate = option("framerate", 60);
     
     /**
      * Refers to the Scene to be used to load the application's resources. 
@@ -90,7 +97,7 @@ rune.system.Config = function(options) {
      * @type {number}
      * @default 5
      */
-    this.numHighscores = options.numHighscores || 5;
+    this.numHighscores = option("numHighscores", 5);
     
     /**
      * The number of highscore lists that the application should allocate.
@@ -98,7 +105,7 @@ rune.system.Config = function(options) {
      * @type {number}
      * @default 1
      */
-    this.numHighscoreTables = options.numHighscoreTables || 1;
+    this.numHighscoreTables = option("numHighscoreTables", 1);
     
     /**
      * A Requests object containing a list of the resources to be included in 
@@ -124,7 +131,7 @@ rune.system.Config = function(options) {
      * @type {number}
      * @default 384
      */
-    this.screenResolutionX = options.screenResolutionX || 400; //320; //384;
+    this.screenResolutionX = option("screenResolutionX", 400); //320; //384;
     
     /**
      * The native pixel height of the application.
@@ -132,7 +139,7 @@ rune.system.Config = function(options) {
      * @type {number}
      * @default 216
      */
-    this.screenResolutionY = options.screenResolutionY || 225; //180; //216;
+    this.screenResolutionY = option("screenResolutionY", 225); //180; //216;
     
     /**
      * If the application is to be started with support for gamepad devices.

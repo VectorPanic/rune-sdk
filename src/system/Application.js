@@ -380,10 +380,7 @@ rune.system.Application.prototype.start = function(callback) {
     if (document.readyState === "complete") {
         window.clearTimeout(this.m_timeoutID);
         this.m_timeoutID = window.setTimeout(function() {
-            m_this.m_preInit();
-            if (typeof callback === "function") {
-                callback.call(m_this);
-            }
+            m_this.m_preInit(callback);
         }, 0);
     } else {
         window.addEventListener(
@@ -439,9 +436,9 @@ rune.system.Application.prototype.stop = function(callback) {
  * @return {undefined}
  * @private
  */
-rune.system.Application.prototype.m_preInit = function() {
+rune.system.Application.prototype.m_preInit = function(callback) {
     this.m_preInitConfig();
-    this.m_preInitResources();
+    this.m_preInitResources(callback);
 };
 
 /**
@@ -452,9 +449,9 @@ rune.system.Application.prototype.m_preInit = function() {
  */
 rune.system.Application.prototype.m_preInitConfig = function() {
     var cfg = this.m_config;
-    var dID = /^([a-z]{2,3}).[a-z0-9-]{1,50}$/;
-    var aID = /^[a-zA-Z0-9-_]*$/;
-    var bID = /^[0-9].[0-9].[0-9]$/;
+    var dID = /^([a-z]{2,3})\.[a-z0-9-]{1,50}$/;
+    var aID = /^[a-zA-Z0-9-_]+$/;
+    var bID = /^[0-9]+\.[0-9]+\.[0-9]+$/;
     
     if (!dID.test(cfg.developer)) {
         throw new Error('Invalid developer-ID.');
@@ -475,7 +472,7 @@ rune.system.Application.prototype.m_preInitConfig = function() {
  * @return {undefined}
  * @private
  */
-rune.system.Application.prototype.m_preInitResources = function() {
+rune.system.Application.prototype.m_preInitResources = function(callback) {
     this.m_disposeResources();
     if (this.m_resources == null) {
         this.m_resources = new rune.resource.Resources();
@@ -483,6 +480,9 @@ rune.system.Application.prototype.m_preInitResources = function() {
             batch: new rune.data.Requests(),
             onComplete: function() {
                 this.m_init();
+                if (typeof callback === "function") {
+                    callback.call(this);
+                }
             },
             scope: this
         });

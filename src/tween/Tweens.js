@@ -2,40 +2,40 @@
 // Constructor scope
 //------------------------------------------------------------------------------
 
-/** 
+/**
  * Creates a new instance of Tweens.
- * 
+ *
  * @constructor
  *
  * @class
  * @classdesc
- * 
- * The Tweens class represents a Tween-based animation handler. With Tweens, 
- * it is possible to create and remove Tween objects that handle interpolation 
+ *
+ * The Tweens class represents a Tween-based animation handler. With Tweens,
+ * it is possible to create and remove Tween objects that handle interpolation
  * of one or more properties of an object.
  */
 rune.tween.Tweens = function() {
-	
+
 	//--------------------------------------------------------------------------
 	// Public properties
 	//--------------------------------------------------------------------------
-	
+
 	/**
-	 * If set to True, all Tween objects handled by this Tweens instance are 
+	 * If set to True, all Tween objects handled by this Tweens instance are
      * paused.
-	 * 
+	 *
 	 * @type {boolean}
 	 * @default false
 	 */
 	this.paused = false;
-	
+
 	//--------------------------------------------------------------------------
 	// Private properties
 	//--------------------------------------------------------------------------
-	
+
 	/**
 	 * List of all active tween objects.
-	 * 
+	 *
 	 * @type {Array.<rune.tween.Tween>}
 	 * @private
 	 */
@@ -47,7 +47,7 @@ rune.tween.Tweens = function() {
 //------------------------------------------------------------------------------
 
 /**
- * The number of Tween objects handled by this instance. When a Tween is 
+ * The number of Tween objects handled by this instance. When a Tween is
  * completed, it is automatically removed.
  *
  * @member {number} length
@@ -61,7 +61,7 @@ Object.defineProperty(rune.tween.Tweens.prototype, "length", {
      * @ignore
      */
     get : function() {
-        return this.m_tweens.length;
+        return this.m_tweens != null ? this.m_tweens.length : 0;
     }
 });
 
@@ -70,7 +70,7 @@ Object.defineProperty(rune.tween.Tweens.prototype, "length", {
 //------------------------------------------------------------------------------
 
 /**
- * Removes all Tween objects from this handler. Ongoing interpolations are 
+ * Removes all Tween objects from this handler. Ongoing interpolations are
  * interrupted and thus will not be completed.
  *
  * @returns {undefined}
@@ -90,7 +90,7 @@ rune.tween.Tweens.prototype.create = function(options) {
 	var tween = new rune.tween.Tween(options);
 	this.m_tweens.push(tween);
     tween.init();
-    
+
 	return tween;
 };
 
@@ -113,9 +113,10 @@ rune.tween.Tweens.prototype.remove = function(tween) {
  * @returns {undefined}
  */
 rune.tween.Tweens.prototype.removeFrom = function(target) {
-    for (var i = 0; i < this.m_tweens.length; i++) {
+    var i = this.m_tweens.length;
+    while (i--) {
         if (this.m_tweens[i]['target'] == target) {
-            this.m_tweens.splice(i, 1);
+            this.m_disposeTween(this.m_tweens[i]);
         }
     }
 };
@@ -125,7 +126,7 @@ rune.tween.Tweens.prototype.removeFrom = function(target) {
 //------------------------------------------------------------------------------
 
 /**
- * Updates calculations for all registered interpolations. Note that this is 
+ * Updates calculations for all registered interpolations. Note that this is
  * an internal process and should therefore not be called manually.
  *
  * @param {number} step The current time step.
@@ -134,7 +135,7 @@ rune.tween.Tweens.prototype.removeFrom = function(target) {
  * @ignore
  */
 rune.tween.Tweens.prototype.update = function(step) {
-	if (this.paused === false) {
+	if (this.paused === false && this.m_tweens != null) {
         this.m_updateTweens(step);
     }
 };
@@ -162,6 +163,8 @@ rune.tween.Tweens.prototype.dispose = function() {
  * @ignore
  */
 rune.tween.Tweens.prototype.m_updateTweens = function(step) {
+    if (this.m_tweens == null) return;
+
     var i = this.m_tweens.length;
     while (i--) {
         if (this.m_tweens[i].update(step)) {
@@ -177,6 +180,8 @@ rune.tween.Tweens.prototype.m_updateTweens = function(step) {
  * @private
  */
 rune.tween.Tweens.prototype.m_disposeTweens = function() {
+    if (this.m_tweens == null) return;
+
     var i = this.m_tweens.length;
     while (i--) {
         this.m_disposeTween(this.m_tweens[i]);
@@ -195,8 +200,10 @@ rune.tween.Tweens.prototype.m_disposeTweens = function() {
  */
 rune.tween.Tweens.prototype.m_disposeTween = function(tween) {
     if (tween instanceof rune.tween.Tween) {
-        tween.dispose();
         var i = this.m_tweens.indexOf(tween);
+        if (i < 0) return;
+
         this.m_tweens.splice(i, 1);
+        tween.dispose();
     } else throw new TypeError();
 };

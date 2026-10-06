@@ -25,6 +25,23 @@ rune.timer.TimerOptions = function(data) {
      * @ignore
      */
     data = data || {};
+    
+    /**
+     * @ignore
+     */
+    var callback = function(value) {
+        return typeof value == "function" ? value : function(timer) {};
+    };
+    
+    /**
+     * @ignore
+     */
+    var duration = parseFloat(data.duration);
+    
+    /**
+     * @ignore
+     */
+    var repeat = parseInt(data.repeat, 10);
 
     //--------------------------------------------------------------------------
     // Public properties
@@ -36,7 +53,7 @@ rune.timer.TimerOptions = function(data) {
      * @type {number}
      * @default 1000
      */
-    this.duration = data.duration || rune.timer.TimerOptions.DEFAULT_DURATION;
+    this.duration = isNaN(duration) == false && duration > 0 ? duration : rune.timer.TimerOptions.DEFAULT_DURATION;
     
     /**
      * This method is activated automatically when a Timer object is deleted 
@@ -44,7 +61,7 @@ rune.timer.TimerOptions = function(data) {
      *
      * @type {Function}
      */
-    this.onAbort = data.onAbort || function(timer) {};
+    this.onAbort = callback(data.onAbort);
 
     /**
      * This method is activated automatically when the Timer object is 
@@ -53,21 +70,21 @@ rune.timer.TimerOptions = function(data) {
      *
      * @type {Function}
      */
-    this.onComplete = data.onComplete || function(timer) {};
+    this.onComplete = callback(data.onComplete);
 
     /**
      * This method is activated automatically when the Timer object is paused.
      *
      * @type {Function}
      */
-    this.onPause = data.onPause || function(timer) {};
+    this.onPause = callback(data.onPause);
 
     /**
      * This method is activated automatically when the Timer object is started.
      *
      * @type {Function}
      */
-    this.onStart = data.onStart || function(timer) {};
+    this.onStart = callback(data.onStart);
 
     /**
      * This method is activated automatically when a Timer object reaches the 
@@ -76,14 +93,14 @@ rune.timer.TimerOptions = function(data) {
      *
      * @type {Function}
      */
-    this.onTick = data.onTick || function(timer) {};
+    this.onTick = callback(data.onTick);
 
     /**
      * This method is activated automatically when the Timer object is resumed.
      *
      * @type {Function}
      */
-    this.onUnpause = data.onUnpause || function(timer) {};
+    this.onUnpause = callback(data.onUnpause);
 
     /**
      * This method is automatically activated for each tick in which the Timer 
@@ -91,7 +108,7 @@ rune.timer.TimerOptions = function(data) {
      *
      * @type {Function}
      */
-    this.onUpdate = data.onUpdate || function(timer) {};
+    this.onUpdate = callback(data.onUpdate);
 
     /**
      * The number of times the timer should be repeated. A setting of 0, means 
@@ -100,7 +117,7 @@ rune.timer.TimerOptions = function(data) {
      * @type {number}
      * @default 0
      */
-    this.repeat = data.repeat || 0;
+    this.repeat = isNaN(repeat) == false && repeat > 0 ? repeat : 0;
 
     /**
      * Scope within which callback functions are executed.

@@ -129,8 +129,8 @@ rune.timer.Timers.prototype.add = function(timer, autoStart) {
  * @returns {undefined}
  */
 rune.timer.Timers.prototype.clear = function() {
-    for (var i = 0; i < this.m_timers.length; i++) {
-        this.remove(this.m_timers[i]);
+    while (this.m_timers.length > 0) {
+        this.remove(this.m_timers[0]);
     }
 };
 
@@ -179,7 +179,10 @@ rune.timer.Timers.prototype.remove = function(timer) {
  */
 rune.timer.Timers.prototype.reset = function() {
     for (var i = 0; i < this.m_timers.length; i++) {
-        if (this.m_timers[i].disposed) this.m_timers.splice(i, 1);
+        if (this.m_timers[i].disposed) {
+            this.m_timers.splice(i, 1);
+            i--;
+        }
         else this.m_timers[i].restart();
     }
 };
@@ -223,9 +226,19 @@ rune.timer.Timers.prototype.update = function(step) {
  * @private
  */
 rune.timer.Timers.prototype.m_updateTimers = function(step) {
+    if (this.paused == true) {
+        return;
+    }
+    
     for (var i = 0; i < this.m_timers.length; i++) {
-        if (this.m_timers[i].disposed) this.m_timers.splice(i, 1);
-        else if (this.m_timers[i]['complete'] === false) this.m_updateTimer(i, step);
+        if (this.m_timers[i].disposed || this.m_timers[i]['complete'] === true) {
+            this.remove(this.m_timers[i]);
+            i--;
+        } else {
+            if (this.m_updateTimer(i, step) == true) {
+                i--;
+            }
+        }
     }
 };
 
@@ -235,7 +248,7 @@ rune.timer.Timers.prototype.m_updateTimers = function(step) {
  * @param {number} index Timer index.
  * @param {number} step Current time step.
  *
- * @return {undefined}
+ * @return {boolean}
  * @private
  */
 rune.timer.Timers.prototype.m_updateTimer = function(index, step) {
@@ -243,7 +256,11 @@ rune.timer.Timers.prototype.m_updateTimer = function(index, step) {
         this.m_timers[index].dispose();
         this.m_timers[index] = null;
         this.m_timers.splice(index, 1);
+        
+        return true;
     }
+    
+    return false;
 };
 
 /**
@@ -253,12 +270,9 @@ rune.timer.Timers.prototype.m_updateTimer = function(index, step) {
  * @private
  */
 rune.timer.Timers.prototype.m_disposeTimers = function() {
-    for (var i = 0; i < this.m_timers.length; i++) {
-        this.m_timers[i].dispose();
-        this.m_timers[i] = null;
-        this.m_timers.splice(i, 1);
+    while (this.m_timers.length > 0) {
+        this.remove(this.m_timers[0]);
     }
     
-    this.m_timers.length = 0;
     this.m_timers = null;
 };

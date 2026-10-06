@@ -117,6 +117,10 @@ Object.defineProperty(rune.timer.Timer.prototype, "complete", {
      * @ignore
      */
     get : function() {
+        if (this.m_arguments == null) {
+            return true;
+        }
+        
         //@note: +1 because 1 corresponds to two ticks, 0 is one tick
         return (this.m_repeats >= this.m_arguments.repeat + 1);
     }
@@ -179,13 +183,15 @@ Object.defineProperty(rune.timer.Timer.prototype, "paused", {
      * @ignore
      */
     set : function(value) {
-        var a = value;
+        var a = Boolean(value);
         var b = this.m_paused;
         
-        this.m_paused = value;
+        this.m_paused = a;
         
-        if      (a === true  && a != b) this.m_arguments.onPause.call(this.m_arguments.scope, this);
-        else if (a === false && a != b) this.m_arguments.onUnpause.call(this.m_arguments.scope, this);
+        if (this.m_arguments != null) {
+            if      (a === true  && a != b) this.m_arguments.onPause.call(this.m_arguments.scope, this);
+            else if (a === false && a != b) this.m_arguments.onUnpause.call(this.m_arguments.scope, this);
+        }
     }
 });
 
@@ -237,7 +243,7 @@ Object.defineProperty(rune.timer.Timer.prototype, "progressTotal", {
  * @returns {undefined}
  */
 rune.timer.Timer.prototype.pause = function() {
-    this.m_paused = true;
+    this['paused'] = true;
 };
 
 /**
@@ -246,7 +252,11 @@ rune.timer.Timer.prototype.pause = function() {
  * @returns {undefined}
  */
 rune.timer.Timer.prototype.restart = function() {
-    this.m_elapsed = 0.0;
+    if (this.m_arguments != null) {
+        this.m_reset();
+        this.m_active = true;
+        this.m_arguments.onStart.call(this.m_arguments.scope, this);
+    }
 };
 
 /**
@@ -256,7 +266,7 @@ rune.timer.Timer.prototype.restart = function() {
  * @returns {undefined}
  */
 rune.timer.Timer.prototype.resume = function() {
-    this.m_paused = false;
+    this['paused'] = false;
 };
 
 /**
@@ -265,9 +275,10 @@ rune.timer.Timer.prototype.resume = function() {
  * @returns {undefined}
  */
 rune.timer.Timer.prototype.start = function() {
-    if (this.m_active === false) {
+    if (this.m_active === false && this.m_arguments != null) {
+        this.m_reset();
         this.m_active = true;
-        this.m_elapsed = 0.0;
+        this.m_arguments.onStart.call(this.m_arguments.scope, this);
     }
 };
 
@@ -278,7 +289,13 @@ rune.timer.Timer.prototype.start = function() {
  */
 rune.timer.Timer.prototype.stop = function() {
     this.m_active = false;
-    this.m_elapsed = 0.0;
+    if (this.m_arguments != null) {
+        this.m_reset();
+    } else {
+        this.m_elapsed = 0.0;
+        this.m_paused = false;
+        this.m_repeats = 0;
+    }
 };
 
 //------------------------------------------------------------------------------
@@ -349,7 +366,6 @@ rune.timer.Timer.prototype.m_initArguments = function(options) {
         this.m_arguments = new rune.timer.TimerOptions(options);
     }
     
-    this.m_arguments.onStart.call(this.m_arguments.scope, this);
 };
 
 /**
@@ -374,13 +390,20 @@ rune.timer.Timer.prototype.m_updateElapsed = function(step) {
  */
 rune.timer.Timer.prototype.m_updateComplete = function(step) {
     if (this.m_arguments != null) {
-        var repreats = parseInt(this.m_elapsed / this.m_arguments.duration, 10);
-        if (repreats > this.m_repeats) {
-            this.m_repeats = repreats;
+        var repeats = Math.min(
+            parseInt(this.m_elapsed / this.m_arguments.duration, 10),
+            this.m_arguments.repeat + 1
+        );
+        
+        while (repeats > this.m_repeats) {
+            this.m_repeats++;
             this.m_arguments.onTick.call(this.m_arguments.scope, this);
         }
         
-        if (this.complete) this.m_arguments.onComplete.call(this.m_arguments.scope, this);
+        if (this.complete) {
+            this.m_active = false;
+            this.m_arguments.onComplete.call(this.m_arguments.scope, this);
+        }
         else this.m_arguments.onUpdate.call(this.m_arguments.scope, this);
     }
 };
@@ -392,10 +415,12 @@ rune.timer.Timer.prototype.m_updateComplete = function(step) {
  * @private
  */
 rune.timer.Timer.prototype.m_disposeTrigger = function() {
-    if (this['complete'] === false && this.m_disposed === false) {
+    if (this.m_arguments != null && this['complete'] === false && this.m_disposed === false) {
         this.m_arguments.onAbort.call(this.m_arguments.scope, this);
     }
     
+    this.m_active = false;
+    this.m_paused = false;
     this.m_disposed = true;
 };
 
@@ -410,4 +435,17 @@ rune.timer.Timer.prototype.m_disposeArguments = function() {
         this.m_arguments.dispose();
         this.m_arguments = null;
     }
+};
+
+/**
+ * Resets the Timer object's runtime state.
+ *
+ * @returns {undefined}
+ * @private
+ */
+rune.timer.Timer.prototype.m_reset = function() {
+    this.m_disposed = false;
+    this.m_elapsed = 0.0;
+    this.m_paused = false;
+    this.m_repeats = 0;
 };

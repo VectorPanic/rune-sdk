@@ -12,7 +12,8 @@
  * 
  * Represents a scene manager. Multiple scenes can exist simultaneously, but 
  * only one scene can be selected at a time. Rendering is limited to the 
- * selected scene.
+ * selected scene. All scenes in the current batch are initialized and kept in 
+ * memory until a new batch is loaded.
  */
 rune.scene.Scenes = function() {
     
@@ -138,7 +139,8 @@ rune.scene.Scenes.prototype.findAndSelect = function(name) {
 
 /**
  * Activates a batch of scenes. This process removes any previous scenes and 
- * frees up allocated memory, hence the process can not be undone.
+ * frees up allocated memory, hence the process can not be undone. All scenes 
+ * in the batch are initialized on the next update tick.
  *
  * @param {Array.<rune.scene.Scene>} batch Batch to be loaded.
  *
@@ -149,6 +151,7 @@ rune.scene.Scenes.prototype.findAndSelect = function(name) {
 rune.scene.Scenes.prototype.load = function(batch) {
     if (Array.isArray(batch) === true && batch.length > 0) {
         this.m_rb = batch;
+        this.m_rs = 0;
     } else throw new Error("Invalid scene batch");
 };
 
@@ -165,7 +168,7 @@ rune.scene.Scenes.prototype.load = function(batch) {
 rune.scene.Scenes.prototype.select = function(index) {
     var batch = (this.m_rb) ? this.m_rb : this.m_cb;
     if (index > -1 && index < batch.length) {
-        if (this.m_cs != index) {
+        if (this.m_rs != index) {
             this.m_rs  = index;
         }
     } else throw new RangeError("Invalid scene index");
@@ -223,10 +226,13 @@ rune.scene.Scenes.prototype.dispose = function() {
  */
 rune.scene.Scenes.prototype.m_iniScenes = function() {
     if (this.m_rb != null && this.m_rb.length > 0) {  
+        var selection = this.m_rs;
         
         this.m_disposeScenes();
         
         this.m_cb = this.m_rb;
+        this.m_cs = 0;
+        this.m_rs = (selection > -1 && selection < this.m_cb.length) ? selection : 0;
         
         for (var i = 0; i < this.m_cb.length; i++) {
             this.m_cb[i].init();
@@ -261,7 +267,7 @@ rune.scene.Scenes.prototype.m_updateBatch = function(step) {
  * @private
  */
 rune.scene.Scenes.prototype.m_updateSelection = function(step) {
-    if (this.m_cs != this.m_rs) {
+    if (this.m_cb != null && this.m_rs > -1 && this.m_rs < this.m_cb.length && this.m_cs != this.m_rs) {
         
         var o = this.m_cb[this.m_cs];
         var n = this.m_cb[this.m_rs];
@@ -312,14 +318,21 @@ rune.scene.Scenes.prototype.m_renderScenes = function() {
  */
 rune.scene.Scenes.prototype.m_disposeScenes = function() {
     if (this.m_cb != null) {
-        rune.system.Application['instance']['sounds'].clear();
+        if (rune.system.Application['instance'] != null && rune.system.Application['instance']['sounds'] != null) {
+            rune.system.Application['instance']['sounds'].clear();
+        }
+        
         var i = this.m_cb.length;
         while (i--) {
-            this.m_cb[i].dispose();
+            if (this.m_cb[i] != null) {
+                this.m_cb[i].dispose();
+            }
+            
             this.m_cb[i] = null;
         }
         
-        this.m = null;
+        this.m_cb = [];
         this.m_cs = 0;
+        this.m_rs = 0;
     }
 };

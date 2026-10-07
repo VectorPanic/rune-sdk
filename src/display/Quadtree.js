@@ -161,8 +161,12 @@ rune.display.Quadtree.prototype.clear = function() {
  * @returns {number}
  */
 rune.display.Quadtree.prototype.getIndexOfPoint = function(point) {
-    var left = (point['x'] > this['centerX']) ? false : true;
-    var top  = (point['y'] > this['centerY']) ? false : true;
+    if (point == null) return -1;
+
+    var centerX = this['x'] + (this['width']  / 2);
+    var centerY = this['y'] + (this['height'] / 2);
+    var left = (point['x'] > centerX) ? false : true;
+    var top  = (point['y'] > centerY) ? false : true;
 
     if (left) return (top) ? rune.display.Quadtree.TOP_LEFT  : rune.display.Quadtree.BOTTOM_LEFT;
     else      return (top) ? rune.display.Quadtree.TOP_RIGHT : rune.display.Quadtree.BOTTOM_RIGHT;
@@ -179,13 +183,25 @@ rune.display.Quadtree.prototype.getIndexOfPoint = function(point) {
  * @returns {Array.<number>}
  */
 rune.display.Quadtree.prototype.getIndexOfRectangle = function(rectangle) {
-    var a = this.getIndexOfPoint(rectangle['topLeft']);
-    var b = this.getIndexOfPoint(rectangle['topRight']);
-    var c = this.getIndexOfPoint(rectangle['bottomLeft']);
-    var d = this.getIndexOfPoint(rectangle['bottomRight']);
-    var e = Array.prototype.concat(a, b, c, d);
+    if (rectangle == null) return [];
+
+    if (rectangle['width'] == null || rectangle['height'] == null || rectangle['width'] <= 0 || rectangle['height'] <= 0) {
+        var index = this.getIndexOfPoint(rectangle);
+        return (index > -1) ? [index] : [];
+    }
+
+    var hw = this['width'] / 2;
+    var hh = this['height'] / 2;
+    var x = this['x'];
+    var y = this['y'];
+    var indexes = [];
+
+    if (rune.geom.Rectangle.intersects(rectangle['x'], rectangle['y'], rectangle['width'], rectangle['height'], x,      y,      hw,               hh)) indexes.push(rune.display.Quadtree.TOP_LEFT);
+    if (rune.geom.Rectangle.intersects(rectangle['x'], rectangle['y'], rectangle['width'], rectangle['height'], x + hw, y,      this['width'] - hw, hh)) indexes.push(rune.display.Quadtree.TOP_RIGHT);
+    if (rune.geom.Rectangle.intersects(rectangle['x'], rectangle['y'], rectangle['width'], rectangle['height'], x,      y + hh, hw,               this['height'] - hh)) indexes.push(rune.display.Quadtree.BOTTOM_LEFT);
+    if (rune.geom.Rectangle.intersects(rectangle['x'], rectangle['y'], rectangle['width'], rectangle['height'], x + hw, y + hh, this['width'] - hw, this['height'] - hh)) indexes.push(rune.display.Quadtree.BOTTOM_RIGHT);
     
-    return e.filter(rune.util.Filter.unique);
+    return indexes;
 };
 
 /**
@@ -196,44 +212,37 @@ rune.display.Quadtree.prototype.getIndexOfRectangle = function(rectangle) {
  * @returns {undefined}
  */
 rune.display.Quadtree.prototype.insert = function(rectangle) {
+    if (rectangle == null) return;
+
     var corners;
-    var c = 0; // corner index
-    var l = 0; // corners length
     var o = 0; // object index
 
     if (typeof this.m_nodes[0] !== "undefined") {
-        var divide = false;
         corners = this.getIndexOfRectangle(rectangle);
-        for (c = 0, l = corners.length; c < l; c++) {
-            this.m_nodes[corners[c]].insert(rectangle);
-            divide = true;
+        if (corners.length === 1) {
+            this.m_nodes[corners[0]].insert(rectangle);
+            return;
         }
-        
-        if (divide === true) return;
     }
 
     this.m_objects.push(rectangle);
 
     if (this.m_objects.length > this.m_threshold && this.m_depth < this.m_maxDepth) {
-        if (typeof this.m_nodes[0] === "undefined") {
+        if (typeof this.m_nodes[0] === "undefined" && this.m_canSplit()) {
             this.split();
         }
         
         while (o < this.m_objects.length) {
-            var removeFromNode = false;
-            var numProcessedCorners = 0;
             var currentObject = null;
             
-            corners = this.getIndexOfRectangle(this.m_objects[o]);
-            for (c = 0, l = corners.length; c < l; c++) {
+            corners = (typeof this.m_nodes[0] !== "undefined") ? this.getIndexOfRectangle(this.m_objects[o]) : [];
+            if (corners.length === 1) {
                 currentObject = this.m_objects[o];
-                this.m_nodes[corners[c]].insert(currentObject);
-                removeFromNode = true;
-                numProcessedCorners++;
+                this.m_nodes[corners[0]].insert(currentObject);
+                this.m_objects.splice(o, 1);
+            } else {
+                o++;
             }
-            
-            if (removeFromNode === true && numProcessedCorners === corners.length) this.m_objects.splice(o, 1);
-            else o++;
         }
     }    
 };
@@ -247,11 +256,11 @@ rune.display.Quadtree.prototype.insert = function(rectangle) {
  * @returns {Array.<rune.geom.Rectangle>}
  */
 rune.display.Quadtree.prototype.retrieve = function(rectangle) {
-    if (rectangle == null || !this.intersects(rectangle)) {
+    if (rectangle == null || !this.m_intersects(rectangle)) {
         return [];
     }
     
-    var corners = (rectangle.width != undefined && rectangle.height != undefined) ? this.getIndexOfRectangle(rectangle) : [this.getIndexOfPoint(rectangle)];
+    var corners = this.getIndexOfRectangle(rectangle);
     var objects = this.m_objects;
 
     if (typeof this.m_nodes[0] !== "undefined") {
@@ -262,7 +271,7 @@ rune.display.Quadtree.prototype.retrieve = function(rectangle) {
         }
     }
     
-    return objects.filter(rune.util.Filter.unique);
+    return objects;
 };
 
 /**
@@ -271,13 +280,15 @@ rune.display.Quadtree.prototype.retrieve = function(rectangle) {
  * @returns {undefined}
  */
 rune.display.Quadtree.prototype.split = function() {
+    if (!this.m_canSplit()) return;
+
     var depth = this.m_depth + 1;
 
     var bx = this.x;
     var by = this.y;
 
-    var bwh = Math.round(this.width  >> 1);
-    var bhh = Math.round(this.height >> 1);
+    var bwh = this.width  / 2;
+    var bhh = this.height / 2;
     var bcw = bx + bwh; // border center width
     var bch = by + bhh; // border center height
 
@@ -286,14 +297,57 @@ rune.display.Quadtree.prototype.split = function() {
     );
 
     this.m_nodes[rune.display.Quadtree.TOP_RIGHT] = new rune.display.Quadtree(
-        new rune.geom.Rectangle(bcw, by, bwh, bhh), this.m_threshold, this.m_maxDepth, depth
+        new rune.geom.Rectangle(bcw, by, this.width - bwh, bhh), this.m_threshold, this.m_maxDepth, depth
     );
 
     this.m_nodes[rune.display.Quadtree.BOTTOM_LEFT] = new rune.display.Quadtree(
-        new rune.geom.Rectangle(bx, bch, bwh, bhh), this.m_threshold, this.m_maxDepth, depth
+        new rune.geom.Rectangle(bx, bch, bwh, this.height - bhh), this.m_threshold, this.m_maxDepth, depth
     );
 
     this.m_nodes[rune.display.Quadtree.BOTTOM_RIGHT] = new rune.display.Quadtree(
-        new rune.geom.Rectangle(bcw, bch, bwh, bhh), this.m_threshold, this.m_maxDepth, depth
+        new rune.geom.Rectangle(bcw, bch, this.width - bwh, this.height - bhh), this.m_threshold, this.m_maxDepth, depth
+    );
+};
+
+//------------------------------------------------------------------------------
+// Private prototype methods
+//------------------------------------------------------------------------------
+
+/**
+ * Whether this node can be divided into smaller nodes.
+ *
+ * @returns {boolean}
+ * @private
+ */
+rune.display.Quadtree.prototype.m_canSplit = function() {
+    return (this['width'] > 0 && this['height'] > 0 && isFinite(this['width']) && isFinite(this['height']));
+};
+
+/**
+ * Checks whether a rectangle or point intersects this node.
+ *
+ * @param {rune.geom.Rectangle|rune.geom.Point} rectangle Object to test against.
+ *
+ * @returns {boolean}
+ * @private
+ */
+rune.display.Quadtree.prototype.m_intersects = function(rectangle) {
+    if (!isFinite(this['x']) || !isFinite(this['y']) || !isFinite(this['width']) || !isFinite(this['height'])) {
+        return true;
+    }
+
+    if (rectangle['width'] == null || rectangle['height'] == null || rectangle['width'] <= 0 || rectangle['height'] <= 0) {
+        return this.containsPoint(rectangle);
+    }
+
+    return rune.geom.Rectangle.intersects(
+        this['x'],
+        this['y'],
+        this['width'],
+        this['height'],
+        rectangle['x'],
+        rectangle['y'],
+        rectangle['width'],
+        rectangle['height']
     );
 };

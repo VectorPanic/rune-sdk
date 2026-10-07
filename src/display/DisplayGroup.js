@@ -83,6 +83,18 @@ rune.display.DisplayGroup = function(container) {
 };
 
 //------------------------------------------------------------------------------
+// Private static constants
+//------------------------------------------------------------------------------
+
+/**
+ * Minimum number of members needed before the internal quadtree is used.
+ *
+ * @constant {number}
+ * @private
+ */
+rune.display.DisplayGroup.QUADTREE_MIN_MEMBERS = 8;
+
+//------------------------------------------------------------------------------
 // Public prototype getter and setter methods
 //------------------------------------------------------------------------------
 
@@ -343,7 +355,7 @@ rune.display.DisplayGroup.prototype.getMembers = function() {
  * @return {Array.<rune.display.DisplayObject>}
  */
 rune.display.DisplayGroup.prototype.getMembersCloseTo = function(obj) {
-    if (this.m_quadtree != null) {
+    if (this.m_quadtree != null && this.m_members != null && this.m_members.length > rune.display.DisplayGroup.QUADTREE_MIN_MEMBERS) {
         var prospects = this.m_quadtree.retrieve(obj);
         var i = prospects.indexOf(obj);
         if (i > -1) {
@@ -786,15 +798,19 @@ rune.display.DisplayGroup.prototype.m_constructQuadtree = function() {
 rune.display.DisplayGroup.prototype.m_updateQuadtree = function(step) {
     if (this.active == true && this.m_quadtree != null) {
         var rect = this.getArea();
+        var m = this.m_members || [];
         
         this.m_quadtree.clear();
+
+        if (m.length <= rune.display.DisplayGroup.QUADTREE_MIN_MEMBERS) {
+            return;
+        }
         
         this.m_quadtree.x = rect.x;
         this.m_quadtree.y = rect.y;
         this.m_quadtree.width  = rect.width;
         this.m_quadtree.height = rect.height;
                 
-        var m = this.m_members || [];
         var i = m.length;
         
         while (i--) {

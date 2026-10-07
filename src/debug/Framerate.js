@@ -54,4 +54,5 @@ rune.debug.Framerate.prototype.init = function() {
 rune.debug.Framerate.prototype.update = function(step) {
     rune.text.BitmapField.prototype.update.call(this, step);
     this['text'] = " " + this['application']['time']['currentFramerate'] + " ";
+    this['width'] = Math.max(24, this['textWidth']);
 };

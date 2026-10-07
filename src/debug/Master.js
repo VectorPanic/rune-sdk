@@ -53,5 +53,8 @@ rune.debug.Master.prototype.init = function() {
  */
 rune.debug.Master.prototype.update = function(step) {
 	rune.text.BitmapField.prototype.update.call(this, step);
-	this['text'] = " " + this['application']['sounds']['master']['length'] + " ";
+	var sounds = this['application'] ? this['application']['sounds'] : null;
+	var channel = sounds ? sounds['master'] : null;
+	this['text'] = " " + (channel ? channel['length'] : 0) + " ";
+	this['width'] = Math.max(24, this['textWidth']);
 };

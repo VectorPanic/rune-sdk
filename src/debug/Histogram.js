@@ -106,7 +106,7 @@ rune.debug.Histogram.prototype.render = function() {
  * @suppress {accessControls}
  */
 rune.debug.Histogram.prototype.m_updateInterval = function(step) {
-    this.m_delay += step;
+    this.m_delay += this['application']['time']['step'];
     if (this.m_delay >= 1000) {
         this.m_delay  = 0;
         

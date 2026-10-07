@@ -53,5 +53,8 @@ rune.debug.Sound.prototype.init = function() {
  */
 rune.debug.Sound.prototype.update = function(step) {
     rune.text.BitmapField.prototype.update.call(this, step);
-    this['text'] = " " + this['application']['sounds']['sound']['length'] + " ";
+    var sounds = this['application'] ? this['application']['sounds'] : null;
+    var channel = sounds ? sounds['sound'] : null;
+    this['text'] = " " + (channel ? channel['length'] : 0) + " ";
+    this['width'] = Math.max(24, this['textWidth']);
 };

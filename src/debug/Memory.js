@@ -18,6 +18,18 @@
 rune.debug.Memory = function() {
 
 	//--------------------------------------------------------------------------
+	// Private properties
+	//--------------------------------------------------------------------------
+
+	/**
+	 * Interval counter.
+	 *
+	 * @type {number}
+	 * @private
+	 */
+	this.m_interval = 1000;
+
+	//--------------------------------------------------------------------------
 	//  Constructor call
 	//--------------------------------------------------------------------------
 	
@@ -53,5 +65,18 @@ rune.debug.Memory.prototype.init = function() {
  */
 rune.debug.Memory.prototype.update = function(step) {
 	rune.text.BitmapField.prototype.update.call(this, step);
-	this['text'] = " " + rune.util.Math.formatBytes(window.performance.memory.usedJSHeapSize, 1) + " ";
+	this.m_interval += this['application']['time']['step'];
+	if (this.m_interval < 1000) {
+		return;
+	}
+
+	this.m_interval = 0;
+	var memory = window.performance && window.performance.memory;
+	var value = "N/A";
+	if (memory != null && typeof memory.usedJSHeapSize === "number") {
+		value = rune.util.Math.formatBytes(memory.usedJSHeapSize, 1);
+	}
+
+	this['text'] = " " + value + " ";
+	this['width'] = Math.max(54, this['textWidth']);
 };

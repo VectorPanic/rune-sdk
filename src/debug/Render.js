@@ -84,6 +84,7 @@ rune.debug.Render.prototype.update = function(step) {
 		this.m_interval  = 0;
 		
 		this['text'] = " " + this.m_peak + " ";
+		this['width'] = Math.max(24, this['textWidth']);
 		this.m_peak = 0.0;
 	}
 };

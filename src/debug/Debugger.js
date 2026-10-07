@@ -125,6 +125,7 @@ rune.debug.Debugger.TOGGLE_KEY = "D";
  */
 rune.debug.Debugger.prototype.update = function(step) {
     rune.display.DisplayObjectContainer.prototype.update.call(this, step);
+    this.m_layoutPanels();
     this.m_updateInput();
 };
 
@@ -132,6 +133,9 @@ rune.debug.Debugger.prototype.update = function(step) {
  * @inheritDoc
  */
 rune.debug.Debugger.prototype.dispose = function() {
+    this.m_disposeMaster();
+    this.m_disposeMusic();
+    this.m_disposeSound();
     this.m_disposeMemory();
     this.m_disposeRender();
     this.m_disposeUpdate();
@@ -157,6 +161,7 @@ rune.debug.Debugger.prototype.m_construct = function() {
     this.m_constructSound();
     this.m_constructMusic();
     this.m_constructMaster();
+    this.m_layoutPanels();
 };
 
 //------------------------------------------------------------------------------
@@ -309,6 +314,42 @@ rune.debug.Debugger.prototype.m_updateInput = function() {
             this['visible'] = !this['visible'];
         }
     }
+};
+
+/**
+ * Positions all debug panels based on their current size.
+ *
+ * @return {undefined}
+ * @private
+ */
+rune.debug.Debugger.prototype.m_layoutPanels = function() {
+    var x = 0;
+    x = this.m_layoutPanel(this.m_framerate, x);
+    x = this.m_layoutPanel(this.m_histogram, x);
+    x = this.m_layoutPanel(this.m_update, x);
+    x = this.m_layoutPanel(this.m_render, x);
+    x = this.m_layoutPanel(this.m_memory, x);
+    x = this.m_layoutPanel(this.m_sound, x);
+    x = this.m_layoutPanel(this.m_music, x);
+    this.m_layoutPanel(this.m_master, x);
+};
+
+/**
+ * Positions a single debug panel.
+ *
+ * @param {rune.display.DisplayObject} panel Panel to position.
+ * @param {number} x Horizontal position.
+ *
+ * @return {number}
+ * @private
+ */
+rune.debug.Debugger.prototype.m_layoutPanel = function(panel, x) {
+    if (panel != null) {
+        panel['x'] = x;
+        return x + panel['width'] + 4;
+    }
+
+    return x;
 };
 
 /**

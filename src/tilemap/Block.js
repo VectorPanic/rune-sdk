@@ -44,7 +44,14 @@ rune.tilemap.Block = function(map, value) {
      * @private
      * @ignore
      */
-    this.m_value = rune.util.Math.clamp(value - 1, 0, map['numTiles'] - 1);
+    var texture = map['texture'];
+    var tw = map['tileWidth'];
+    var th = map['tileHeight'];
+    var cols = texture && tw > 0 ? Math.floor(texture.width / tw) : 0;
+    var rows = texture && th > 0 ? Math.floor(texture.height / th) : 0;
+    var max = Math.max(cols * rows - 1, 0);
+
+    this.m_value = rune.util.Math.clamp((parseInt(value, 10) || 0) - 1, 0, max);
     
     //--------------------------------------------------------------------------
     // Super call

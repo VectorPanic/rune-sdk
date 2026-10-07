@@ -159,10 +159,12 @@ rune.tilemap.TilemapLayer.prototype.getPath = function(sx, sy, gx, gy, md) {
     var si = this.getTileIndexOf(sx, sy);
     var gi = this.getTileIndexOf(gx, gy);
     
-    var st = this.getTileAt(si);
-    var gt = this.getTileAt(gi);
+    if (!this.m_isValidIndex(si) || !this.m_isValidIndex(gi)) return null;
     
-    if ((st['allowCollisions'] > 0) && (gt['allowCollisions'] > 0)) return null;
+    var startBlocked = this.getTileAt(si)['allowCollisions'] > 0;
+    var goalBlocked  = this.getTileAt(gi)['allowCollisions'] > 0;
+
+    if (startBlocked || goalBlocked) return null;
     
     var ad = this.m_computeDistance(si, gi, md);
     if (ad == null) return null;
@@ -217,9 +219,15 @@ rune.tilemap.TilemapLayer.prototype.getTileAt = function(i) {
     var th = this.m_map['tileHeight'];
     var wt = this.m_map['widthInTiles'];
     var tt = this.m_tmpTile;
-    var tx = i % wt;
-    var ty = Math.floor(i / wt);
-    var tp = this.m_map.getTilePropertiesOf(this.getTileValueAt(i));
+    var tx = 0;
+    var ty = 0;
+    var tp = null;
+
+    if (this.m_isValidIndex(i)) {
+        tx = i % wt;
+        ty = Math.floor(i / wt);
+        tp = this.m_map.getTilePropertiesOf(this.getTileValueAt(i));
+    }
         
     tt.set(
         i,
@@ -274,22 +282,26 @@ rune.tilemap.TilemapLayer.prototype.getTileIndexesIn = function(x, y, w, h) {
     var tw = this.m_map['tileWidth'];
     var th = this.m_map['tileHeight'];
     var wt = this.m_map['widthInTiles'];
+    var ht = this.m_map['heightInTiles'];
     
-    var sx = Math.floor(x / tw);
-    var sy = Math.floor(y / th);
-    var si = sy * wt + sx;
+    if (tw <= 0 || th <= 0 || wt <= 0 || ht <= 0 || w <= 0 || h <= 0) {
+        return od;
+    }
+
+    var sx = Math.max(0, Math.floor(x / tw));
+    var sy = Math.max(0, Math.floor(y / th));
+    var ex = Math.min(wt - 1, Math.ceil((x + w) / tw) - 1);
+    var ey = Math.min(ht - 1, Math.ceil((y + h) / th) - 1);
     
-    var bx = (x % tw) ? 1 : 0;
-    var by = (y % th) ? 1 : 0;
+    if (ex < sx || ey < sy) {
+        return od;
+    }
     
-    var iw = Math.ceil(w / tw) + bx;
-    var ih = Math.ceil(h / th) + by;
     var ti = 0;
     
-    var ii = 0;
-    for (var iy = 0; iy < ih; iy++) {
-        for (var ix = 0; ix < iw; ix++) {
-            od[ti] = si + ix + (iy * wt);
+    for (var iy = sy; iy <= ey; iy++) {
+        for (var ix = sx; ix <= ex; ix++) {
+            od[ti] = ix + (iy * wt);
             ti++;
         }
     }
@@ -355,7 +367,7 @@ rune.tilemap.TilemapLayer.prototype.getTileIndexOfPoint = function(p) {
  * @returns {number}
  */
 rune.tilemap.TilemapLayer.prototype.getTileValueAt = function(i) {
-    return this.m_data[i];
+    return this.m_isValidIndex(i) ? this.m_data[i] || 0 : 0;
 };
 
 /**
@@ -504,9 +516,8 @@ rune.tilemap.TilemapLayer.prototype.hitTestObject = function(obj, callback, scop
     var tile = null;
     var tiles = this.getTileIndexesInRect(obj['hitbox']);
     for (var i = 0; i < tiles.length; i++) {
-        var value = this.getTileValueAt(tiles[i]);
-        if (value > 0) {
-            tile = this.getTileAt(tiles[i]);
+        tile = this.getTileAt(tiles[i]);
+        if (tile['allowCollisions'] > 0) {
             if (obj.hitTestObject(tile, callback, scope)) {
                 result = true;
             }
@@ -551,7 +562,7 @@ rune.tilemap.TilemapLayer.prototype.hitTestPoint = function(point, callback, sco
     var i = this.getTileIndexOfPoint(point);
     var t = this.getTileAt(i);
     
-    return t.hitTestPoint(point, callback, scope);
+    return t['allowCollisions'] > 0 && t.hitTestPoint(point, callback, scope);
 };
 
 /**
@@ -627,9 +638,8 @@ rune.tilemap.TilemapLayer.prototype.hitTestAndSeparateObject = function(obj, cal
     var tile = null;
     var tiles = this.getTileIndexesInRect(obj['hitbox']);
     for (var i = 0; i < tiles.length; i++) {
-        var value = this.getTileValueAt(tiles[i]);
-        if (value > 0) {
-            tile = this.getTileAt(tiles[i]);
+        tile = this.getTileAt(tiles[i]);
+        if (tile['allowCollisions'] > 0) {
             if (obj.hitTestAndSeparateObject(tile, callback, scope)) {
                 result = true;
             }
@@ -668,7 +678,9 @@ rune.tilemap.TilemapLayer.prototype.hitTestAndSeparateGroup = function(group, ca
  * @returns {undefined}
  */
 rune.tilemap.TilemapLayer.prototype.setTileValueAt = function(i, v) {
-    this.m_data[i] = parseInt(v, 10);
+    if (this.m_isValidIndex(i)) {
+        this.m_data[i] = parseInt(v, 10) || 0;
+    }
 };
 
 /**
@@ -718,10 +730,9 @@ rune.tilemap.TilemapLayer.prototype.setTileValueInRect = function(r, v) {
  * @returns {undefined}
  */
 rune.tilemap.TilemapLayer.prototype.setTileValueOf = function(x, y, v) {
-    var td = this.m_data;
     var ti = this.getTileIndexOf(x, y);
     
-    td[ti] = v;
+    this.setTileValueAt(ti, v);
 };
 
 /**
@@ -752,8 +763,10 @@ rune.tilemap.TilemapLayer.prototype.setTileValueOfPoint = function(p, v) {
  */
 rune.tilemap.TilemapLayer.prototype.dispose = function() {
     this.clear();
+    this.m_paths.clear();
     this.m_data = null;
     this.m_map = null;
+    this.m_paths = null;
     this.m_tmpTile = null;
 };
 
@@ -783,7 +796,7 @@ rune.tilemap.TilemapLayer.prototype.m_construct = function() {
  * @private
  */
 rune.tilemap.TilemapLayer.prototype.m_constructData = function() {
-    if (this.m_data == null) {
+    if (this.m_data == null || this.m_data.length == 0) {
         this.clear();
     } else {
         if ((this.m_data.length > 0) && (this.m_data.length !== this.m_map['numTiles'])) {
@@ -806,6 +819,11 @@ rune.tilemap.TilemapLayer.prototype.m_computeDistance = function(si, gi, md) {
     var wt = this.m_map['widthInTiles'];
     var ht = this.m_map['heightInTiles'];
     var ms = this.m_map['numTiles'];
+
+    if (!this.m_isValidIndex(si) || !this.m_isValidIndex(gi) || wt <= 0 || ht <= 0) {
+        return null;
+    }
+
     var ad = Array(ms);
     var td = 1;
     var tn = [si];
@@ -851,10 +869,13 @@ rune.tilemap.TilemapLayer.prototype.m_computeDistance = function(si, gi, md) {
                 break;
             }
             
-            dl = (ci % wt > 0);
-            dr = (ci % wt < wt - 1);
-            du = (ci / wt > 0);
-            dd = (ci / wt < ht - 1);
+            var cx = ci % wt;
+            var cy = Math.floor(ci / wt);
+
+            dl = (cx > 0);
+            dr = (cx < wt - 1);
+            du = (cy > 0);
+            dd = (cy < ht - 1);
               
             if (du) {
                 ni = ci - wt;
@@ -959,10 +980,12 @@ rune.tilemap.TilemapLayer.prototype.m_walk = function(ad, si, ap, md) {
     
     if (ad[si] == 0) return;
     
-    var dl = (si % wt > 0);
-    var dr = (si % wt < wt - 1);
-    var du = (si / wt > 0);
-    var dd = (si / wt < ht - 1);
+    var sx = si % wt;
+    var sy = Math.floor(si / wt);
+    var dl = (sx > 0);
+    var dr = (sx < wt - 1);
+    var du = (sy > 0);
+    var dd = (sy < ht - 1);
     
     var cd = ad[si];
     var ci = 0;
@@ -1033,4 +1056,24 @@ rune.tilemap.TilemapLayer.prototype.m_walk = function(ad, si, ap, md) {
             }
         }   
     }        
+};
+
+/**
+ * Evaluates whether a tile index exists within the layer data.
+ *
+ * @param {number} i Tile index.
+ *
+ * @returns {boolean}
+ * @private
+ */
+rune.tilemap.TilemapLayer.prototype.m_isValidIndex = function(i) {
+    i = Number(i);
+
+    return (
+        this.m_data != null &&
+        this.m_map != null &&
+        i === Math.floor(i) &&
+        i >= 0 &&
+        i < this.m_map['numTiles']
+    );
 };

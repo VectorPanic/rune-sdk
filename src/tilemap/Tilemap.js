@@ -263,7 +263,9 @@ Object.defineProperty(rune.tilemap.Tilemap.prototype, "texture", {
      * @ignore
      */
     get : function() {
-        return this['application']['resources'].get(this.m_texture)['data'];
+        var resource = this['application']['resources'].get(this.m_texture);
+
+        return resource ? resource['data'] : null;
     }
 });
 
@@ -415,12 +417,31 @@ rune.tilemap.Tilemap.prototype.getBlock = function(v) {
  * @returns {rune.geom.Rectangle}
  */
 rune.tilemap.Tilemap.prototype.getTileTextureRectOf = function(v) {
+    var texture = this['texture'];
+    var tw = this['tileWidth'];
+    var th = this['tileHeight'];
+
+    this.m_tmpRect.x = 0;
+    this.m_tmpRect.y = 0;
+    this.m_tmpRect.width  = 0;
+    this.m_tmpRect.height = 0;
+
+    if (texture == null || tw <= 0 || th <= 0) {
+        return this.m_tmpRect;
+    }
+
     if (v > 0) v -= 1; //@note: Offset tile atlas
     
-    this.m_tmpRect.x = Math.floor(v * this['tileWidth']) % this['texture'].width;
-    this.m_tmpRect.y = Math.floor(v / (this['texture'].width / this['tileWidth'])) * this['tileHeight'];
-    this.m_tmpRect.width  = this.m_tileWidth;
-    this.m_tmpRect.height = this.m_tileHeight;
+    var cols = Math.floor(texture.width / tw) || 1;
+    var rows = Math.floor(texture.height / th) || 1;
+    var max = cols * rows - 1;
+
+    v = rune.util.Math.clamp(parseInt(v, 10) || 0, 0, max);
+
+    this.m_tmpRect.x = (v % cols) * tw;
+    this.m_tmpRect.y = Math.floor(v / cols) * th;
+    this.m_tmpRect.width  = tw;
+    this.m_tmpRect.height = th;
     
     return this.m_tmpRect;
 };
@@ -459,6 +480,7 @@ rune.tilemap.Tilemap.prototype.load = function(name) {
     var map = this['application']['resources'].get(name);
     if (map) {
         map = map['data'];
+        this.m_disposeBuffers();
         
         this.m_name          = map['name']       || name;
         this.m_texture       = map['texture']    || "";
@@ -485,6 +507,7 @@ rune.tilemap.Tilemap.prototype.load = function(name) {
  * @ignore
  */
 rune.tilemap.Tilemap.prototype.dispose = function() {
+    this.m_disposeBuffers();
     this.clear();
     
     this.m_tmpArray = null;
@@ -585,4 +608,22 @@ rune.tilemap.Tilemap.prototype.getFrontBufferInRect = function(r) {
  */
 rune.tilemap.Tilemap.prototype.m_construct = function() {
     //@note: Nothing ATM.
+};
+
+/**
+ * Removes the tilemap's layer buffers.
+ *
+ * @returns {undefined}
+ * @private
+ */
+rune.tilemap.Tilemap.prototype.m_disposeBuffers = function() {
+    if (this.m_bufferA) {
+        this.m_bufferA.dispose();
+        this.m_bufferA = null;
+    }
+
+    if (this.m_bufferB) {
+        this.m_bufferB.dispose();
+        this.m_bufferB = null;
+    }
 };

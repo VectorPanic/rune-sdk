@@ -567,14 +567,16 @@ rune.display.Canvas.prototype.renderTiles = function(map, rect, buffer) {
 
 	var ti = (buffer == 0) ? map.getBackBufferInRect(rect) : map.getFrontBufferInRect(rect);
 	var wt = map['widthInTiles'];
-	var ht = map['heightInTiles'];
 	var tw = map['tileWidth'];
 	var th = map['tileHeight'];
+	var texture = map['texture'];
 	var ox = rect['x'] % tw;
 	var oy = rect['y'] % th;
 	var tv = 0;
 	var tp = null;
 	
+	if (texture == null || wt <= 0 || tw <= 0 || th <= 0) return;
+
 	if (ox < 0) {
 		ox = tw + ox;
 	}
@@ -592,7 +594,7 @@ rune.display.Canvas.prototype.renderTiles = function(map, rect, buffer) {
 		if (tv > 0) {
 			tp = map.getTileTextureRectOf(tv);
 			this.m_context.drawImage(
-				map['texture'],
+				texture,
 				tp.x,
 				tp.y,
 				tw,

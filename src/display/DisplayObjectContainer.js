@@ -121,22 +121,7 @@ Object.defineProperty(rune.display.DisplayObjectContainer.prototype, "numChildre
  * @returns {rune.display.DisplayObject} The DisplayObject instance that you pass in the child parameter.
  */
 rune.display.DisplayObjectContainer.prototype.addChild = function(child) {
-    if (child instanceof rune.display.DisplayObject) {
-        if (child != this) {
-            if (child['parent'] != null) {
-                var group = child['group'];
-                child['parent'].removeChild(child, false);
-                
-                if (group != null && group['container'] == this) {
-                    group.include(child);
-                }
-            }
-            
-            this.addChildAt(child, this['numChildren']);
-        } else throw new Error();
-    } else throw new TypeError();
-    
-    return child;
+    return this.addChildAt(child, this['numChildren']);
 };
 
 /**
@@ -155,28 +140,40 @@ rune.display.DisplayObjectContainer.prototype.addChild = function(child) {
  */
 rune.display.DisplayObjectContainer.prototype.addChildAt = function(child, index) {
     if (this.m_children == null) throw new Error("DisplayObjectContainer is disposed.");
+    if (!(child instanceof rune.display.DisplayObject)) throw new TypeError();
+    if (child == this) throw new Error();
+    if (index < 0 || index > this.m_children.length) throw new RangeError();
 
-    if (child instanceof rune.display.DisplayObject) {
-        var group = child['group'];
-        if (child['parent'] != null) {
-            child['parent'].removeChild(child, false);
+    var currentIndex = this.m_children.indexOf(child);
+    if (currentIndex > -1) {
+        if (index > currentIndex) {
+            index--;
         }
         
-        if (index > -1 && index <= this.m_children.length) {
-            if (child != this) {
-                this.m_children.splice(index, 0, child);
-                
-                if (group != null && group['container'] == this) {
-                    group.include(child);
-                }
-                
-                child.setParent(this);
-                child.init();
-                
-                this.breakCache();
-            } else throw new Error();
-        } else throw new RangeError();
-    } else throw new TypeError();
+        if (currentIndex != index) {
+            this.m_children.splice(currentIndex, 1);
+            this.m_children.splice(index, 0, child);
+            this.breakCache();
+        }
+        
+        return child;
+    }
+
+    var group = child['group'];
+    if (child['parent'] != null) {
+        child['parent'].removeChild(child, false);
+    }
+
+    this.m_children.splice(index, 0, child);
+
+    if (group != null && group['container'] == this) {
+        group.include(child);
+    }
+
+    child.setParent(this);
+    child.init();
+
+    this.breakCache();
     
     return child;
 };
@@ -191,10 +188,27 @@ rune.display.DisplayObjectContainer.prototype.addChildAt = function(child, index
  */
 rune.display.DisplayObjectContainer.prototype.forEachChild = function(callback, scope) {
     if (this.m_children != null && typeof callback === "function") {
-        for (var i = 0; i < this.m_children.length; i++) {
-            callback.call(scope, this.m_children[i], i);
+        var children = this.m_children.slice();
+        for (var i = 0; i < children.length; i++) {
+            if (children[i] != null && children[i]['parent'] == this) {
+                callback.call(scope, children[i], i);
+            }
         }
     }
+};
+
+/**
+ * Moves a child DisplayObject to the top of this DisplayObjectContainer's
+ * child list.
+ *
+ * @param {rune.display.DisplayObject} child The child DisplayObject to move.
+ *
+ * @returns {rune.display.DisplayObject}
+ */
+rune.display.DisplayObjectContainer.prototype.bringChildToFront = function(child) {
+    if (this.getChildIndex(child) == -1) throw new Error();
+
+    return this.addChildAt(child, this['numChildren']);
 };
 
 /**
@@ -210,6 +224,28 @@ rune.display.DisplayObjectContainer.prototype.getChildAt = function(index) {
     if (this.m_children != null && index > -1 && index < this.m_children.length) {
         return this.m_children[index];
     } else throw new RangeError();
+};
+
+/**
+ * Returns the child display object instance at the back (bottom) of the child list.
+ *
+ * @throws {RangeError} Throws if the child list is empty.
+ *
+ * @returns {rune.display.DisplayObject}
+ */
+rune.display.DisplayObjectContainer.prototype.getFirstChild = function() {
+    return this.getChildAt(0);
+};
+
+/**
+ * Returns the child display object instance at the front (top) of the child list.
+ *
+ * @throws {RangeError} Throws if the child list is empty.
+ *
+ * @returns {rune.display.DisplayObject}
+ */
+rune.display.DisplayObjectContainer.prototype.getLastChild = function() {
+    return this.getChildAt(this['numChildren'] - 1);
 };
 
 /**
@@ -253,7 +289,12 @@ rune.display.DisplayObjectContainer.prototype.hasChild = function(child) {
  * @return {boolean}
  */
 rune.display.DisplayObjectContainer.prototype.contains = function(child) {
-    return this.hasChild(child);
+    while (child != null) {
+        if (child == this) return true;
+        child = child['parent'];
+    }
+
+    return false;
 };
 
 /**
@@ -340,10 +381,32 @@ rune.display.DisplayObjectContainer.prototype.removeChildren = function(dispose)
  * @returns {boolean}
  */
 rune.display.DisplayObjectContainer.prototype.setChildIndex = function(child, index) {
-    var sibling = this.getChildAt(index);
-    if (this.getChildIndex(child) > -1) {
-        return this.swapChildren(child, sibling);
+    if (index < 0 || index >= this['numChildren']) throw new RangeError();
+
+    var currentIndex = this.getChildIndex(child);
+    if (currentIndex > -1) {
+        if (currentIndex != index) {
+            this.m_children.splice(currentIndex, 1);
+            this.m_children.splice(index, 0, child);
+            this.breakCache();
+        }
+        
+        return true;
     } else throw new Error();
+};
+
+/**
+ * Moves a child DisplayObject to the bottom of this DisplayObjectContainer's
+ * child list.
+ *
+ * @param {rune.display.DisplayObject} child The child DisplayObject to move.
+ *
+ * @returns {rune.display.DisplayObject}
+ */
+rune.display.DisplayObjectContainer.prototype.sendChildToBack = function(child) {
+    if (this.getChildIndex(child) == -1) throw new Error();
+
+    return this.addChildAt(child, 0);
 };
 
 /**
@@ -380,11 +443,6 @@ rune.display.DisplayObjectContainer.prototype.swapChildren = function(a, b) {
     var bi = this.getChildIndex(b);
 
     if ((ai !== -1) && (bi !== -1)) {
-        var tz = a.z;
-        
-        a.z = b.z;
-        b.z = tz;
-        
         this.m_children[ai] = b;
         this.m_children[bi] = a;
         
@@ -446,15 +504,18 @@ rune.display.DisplayObjectContainer.prototype.dispose = function() {
 rune.display.DisplayObjectContainer.prototype.m_updateChildren = function(step) {
     var c = this.m_children;
     if (c == null) return;
-
-    var i = c.length;
     
     if (this.sort != null) {
         this.sortChildren(this.sort);
     }
     
+    c = c.slice();
+    var i = c.length;
+
     while (i--) {
-        this.m_updateChild(c[i], step);
+        if (c[i] != null && c[i]['parent'] == this) {
+            this.m_updateChild(c[i], step);
+        }
     }
 };
 

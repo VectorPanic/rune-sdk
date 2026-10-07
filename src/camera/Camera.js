@@ -660,7 +660,7 @@ rune.camera.Camera.prototype.m_renderInputDebug = function(obj) {
         );   
     }
     
-    if (obj['hitbox'].debug == true) {
+    if (obj['hitbox'] != null && obj['hitbox'].debug == true) {
         this.m_canvas.drawRect(
             obj['hitbox']['x'] - this.m_viewportOffset['x'],
             obj['hitbox']['y'] - this.m_viewportOffset['y'],

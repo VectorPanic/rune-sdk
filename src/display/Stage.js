@@ -10,19 +10,19 @@
  *
  * @class
  * @classdesc
- * 
- * The rune.display.Stage class represents a metaphorical stage, i.e. the 
- * visual output of the application. For a display object to be rendered, it 
- * must be placed on the stage, or included in the display list of another 
- * object that is placed on the stage. Note that all scenes have access to 
+ *
+ * The rune.display.Stage class represents a metaphorical stage, i.e. the
+ * visual output of the application. For a display object to be rendered, it
+ * must be placed on the stage, or included in the display list of another
+ * object that is placed on the stage. Note that all scenes have access to
  * their own stage.
  */
 rune.display.Stage = function() {
-	
+
 	//--------------------------------------------------------------------------
 	// Private properties
 	//--------------------------------------------------------------------------
-	
+
 	/**
 	 * ...
 	 *
@@ -30,11 +30,11 @@ rune.display.Stage = function() {
 	 * @private
 	 */
 	this.m_map = null;
-	
+
 	//--------------------------------------------------------------------------
 	// Super call
 	//--------------------------------------------------------------------------
-	
+
 	/**
 	 * Extend DisplayObjectContainer.
 	 */
@@ -53,8 +53,8 @@ rune.display.Stage.prototype.constructor = rune.display.Stage;
 //------------------------------------------------------------------------------
 
 /**
- * Indicates the alpha transparency value of the stage. This value is always 
- * 1.0 and can not be changed. Attempting to change the value results in a 
+ * Indicates the alpha transparency value of the stage. This value is always
+ * 1.0 and can not be changed. Attempting to change the value results in a
  * runtime error.
  *
  * @member {number} alpha
@@ -70,7 +70,35 @@ Object.defineProperty(rune.display.Stage.prototype, "alpha", {
 	get : function() {
 		return this.m_alpha;
 	},
-	
+
+	/**
+	 * @this rune.display.Stage
+	 * @suppress {accessControls}
+	 * @ignore
+	 */
+	set : function(value) {
+		throw new Error("Illegal operation");
+	}
+});
+
+/**
+ * The stage is conceptually infinite in height and can not be resized.
+ * Attempting to change the value results in a runtime error.
+ *
+ * @member {number} height
+ * @memberof rune.display.Stage
+ * @instance
+ */
+Object.defineProperty(rune.display.Stage.prototype, "height", {
+	/**
+	 * @this rune.display.Stage
+	 * @suppress {accessControls}
+	 * @ignore
+	 */
+	get : function() {
+		return this.m_height;
+	},
+
 	/**
 	 * @this rune.display.Stage
 	 * @suppress {accessControls}
@@ -93,7 +121,109 @@ Object.defineProperty(rune.display.Stage.prototype, "rotation", {
 	get : function() {
 		return this.m_rotation;
 	},
-	
+
+	/**
+	 * @this rune.display.Stage
+	 * @suppress {accessControls}
+	 * @ignore
+	 */
+	set : function(value) {
+		throw new Error("Illegal operation");
+	}
+});
+
+/**
+ * @inheritDoc
+ */
+Object.defineProperty(rune.display.Stage.prototype, "scaleX", {
+	/**
+	 * @this rune.display.Stage
+	 * @suppress {accessControls}
+	 * @ignore
+	 */
+	get : function() {
+		return this.m_scale.x;
+	},
+
+	/**
+	 * @this rune.display.Stage
+	 * @suppress {accessControls}
+	 * @ignore
+	 */
+	set : function(value) {
+		throw new Error("Illegal operation");
+	}
+});
+
+/**
+ * @inheritDoc
+ */
+Object.defineProperty(rune.display.Stage.prototype, "scaleY", {
+	/**
+	 * @this rune.display.Stage
+	 * @suppress {accessControls}
+	 * @ignore
+	 */
+	get : function() {
+		return this.m_scale.y;
+	},
+
+	/**
+	 * @this rune.display.Stage
+	 * @suppress {accessControls}
+	 * @ignore
+	 */
+	set : function(value) {
+		throw new Error("Illegal operation");
+	}
+});
+
+/**
+ * The unscaled stage height is conceptually infinite and can not be resized.
+ * Attempting to change the value results in a runtime error.
+ *
+ * @member {number} unscaledHeight
+ * @memberof rune.display.Stage
+ * @instance
+ */
+Object.defineProperty(rune.display.Stage.prototype, "unscaledHeight", {
+	/**
+	 * @this rune.display.Stage
+	 * @suppress {accessControls}
+	 * @ignore
+	 */
+	get : function() {
+		return this.m_height;
+	},
+
+	/**
+	 * @this rune.display.Stage
+	 * @suppress {accessControls}
+	 * @ignore
+	 */
+	set : function(value) {
+		throw new Error("Illegal operation");
+	}
+});
+
+/**
+ * The unscaled stage width is conceptually infinite and can not be resized.
+ * Attempting to change the value results in a runtime error.
+ *
+ * @member {number} unscaledWidth
+ * @memberof rune.display.Stage
+ * @instance
+ */
+Object.defineProperty(rune.display.Stage.prototype, "unscaledWidth", {
+	/**
+	 * @this rune.display.Stage
+	 * @suppress {accessControls}
+	 * @ignore
+	 */
+	get : function() {
+		return this.m_width;
+	},
+
 	/**
 	 * @this rune.display.Stage
 	 * @suppress {accessControls}
@@ -116,7 +246,35 @@ Object.defineProperty(rune.display.Stage.prototype, "visible", {
 	get : function() {
 		return this.m_visible;
 	},
-	
+
+	/**
+	 * @this rune.display.Stage
+	 * @suppress {accessControls}
+	 * @ignore
+	 */
+	set : function(value) {
+		throw new Error("Illegal operation");
+	}
+});
+
+/**
+ * The stage is conceptually infinite in width and can not be resized.
+ * Attempting to change the value results in a runtime error.
+ *
+ * @member {number} width
+ * @memberof rune.display.Stage
+ * @instance
+ */
+Object.defineProperty(rune.display.Stage.prototype, "width", {
+	/**
+	 * @this rune.display.Stage
+	 * @suppress {accessControls}
+	 * @ignore
+	 */
+	get : function() {
+		return this.m_width;
+	},
+
 	/**
 	 * @this rune.display.Stage
 	 * @suppress {accessControls}
@@ -139,7 +297,7 @@ Object.defineProperty(rune.display.Stage.prototype, "x", {
 	get : function() {
 		return this.m_x;
 	},
-	
+
 	/**
 	 * @this rune.display.Stage
 	 * @suppress {accessControls}
@@ -162,7 +320,7 @@ Object.defineProperty(rune.display.Stage.prototype, "y", {
 	get : function() {
 		return this.m_y;
 	},
-	
+
 	/**
 	 * @this rune.display.Stage
 	 * @suppress {accessControls}
@@ -178,7 +336,7 @@ Object.defineProperty(rune.display.Stage.prototype, "y", {
 //------------------------------------------------------------------------------
 
 /**
- * Each Scene has access to its own Tilemap object. Use this reference to load 
+ * Each Scene has access to its own Tilemap object. Use this reference to load
  * and manage maps and included Tiles.
  *
  * @member {rune.tilemap.Tilemap} map

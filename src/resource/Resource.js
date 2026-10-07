@@ -38,7 +38,7 @@ rune.resource.Resource = function(name, data) {
 	 * @type {string}
 	 * @private
 	 */
-	this.m_name = name.toLowerCase();
+	this.m_name = (name == null) ? "" : name.toString().toLowerCase();
 };
 
 //------------------------------------------------------------------------------

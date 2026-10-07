@@ -63,7 +63,7 @@ Object.defineProperty(rune.resource.Resources.prototype, "length", {
 	 * @ignore
 	 */
 	get : function() {
-		return this.m_resources.length;
+		return this.m_resources != null ? this.m_resources.length : 0;
 	}
 });
 
@@ -80,6 +80,7 @@ Object.defineProperty(rune.resource.Resources.prototype, "length", {
  * @returns {undefined}
  */
 rune.resource.Resources.prototype.add = function(name, data) {
+	if (this.m_resources == null) return;
 	if (this.get(name) == null) {
 		this.m_resources.push(
 			new rune.resource.Resource(name, data)
@@ -93,6 +94,7 @@ rune.resource.Resources.prototype.add = function(name, data) {
  * @returns {undefined}
  */
 rune.resource.Resources.prototype.clear = function() {
+	if (this.m_resources == null) return;
 	while (this.m_resources.length) {
 		this.m_resources[0].dispose();
 		this.m_resources[0] = null;
@@ -110,9 +112,12 @@ rune.resource.Resources.prototype.clear = function() {
  * @returns {rune.resource.Resource}
  */
 rune.resource.Resources.prototype.get = function(name) {
+	if (this.m_resources == null || name == null) return null;
+	name = name.toString().toLowerCase();
+
 	var i = this.m_resources.length;
 	while (i--) {
-		if (this.m_resources[i]['name'] == name.toLowerCase()) {
+		if (this.m_resources[i]['name'] == name) {
 			return this.m_resources[i];
 		}
 	}
@@ -129,9 +134,12 @@ rune.resource.Resources.prototype.get = function(name) {
  * @returns {boolean}
  */
 rune.resource.Resources.prototype.remove = function(name) {
+	if (this.m_resources == null || name == null) return false;
+	name = name.toString().toLowerCase();
+
 	var i = this.m_resources.length;
 	while (i--) {
-		if (this.m_resources[i]['name'] == name.toLowerCase()) {
+		if (this.m_resources[i]['name'] == name) {
 			this.m_resources[i].dispose();
 			this.m_resources[i] = null;
 			this.m_resources.splice(i, 1);
@@ -151,7 +159,9 @@ rune.resource.Resources.prototype.remove = function(name) {
  * @returns {undefined}
  */
 rune.resource.Resources.prototype.request = function(options) {
-	this.m_requester.load(options);
+	if (this.m_requester instanceof rune.resource.Requester) {
+		this.m_requester.load(options);
+	}
 };
 
 //------------------------------------------------------------------------------
@@ -165,6 +175,7 @@ rune.resource.Resources.prototype.request = function(options) {
  * @ignore
  */
 rune.resource.Resources.prototype.dispose = function() {
+	this.m_disposeLoader();
 	this.clear();
 	this.m_resources = null;
 };

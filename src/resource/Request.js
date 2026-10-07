@@ -31,7 +31,7 @@ rune.resource.Request = function(name, path) {
 	 * @type {string}
 	 * @private
 	 */
-	this.m_name = name.toLowerCase();
+	this.m_name = (name == null) ? "" : name.toString().toLowerCase();
 	
 	/**
 	 * Resource path.
@@ -39,7 +39,7 @@ rune.resource.Request = function(name, path) {
 	 * @type {string}
 	 * @private
 	 */
-	this.m_path = path;
+	this.m_path = path || "";
 };
 
 //------------------------------------------------------------------------------

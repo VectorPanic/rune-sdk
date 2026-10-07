@@ -55,7 +55,7 @@ Object.defineProperty(rune.resource.Requests.prototype, "length", {
 	 * @ignore
 	 */
 	get : function() {
-		return this.m_requests.length;
+		return this.m_requests != null ? this.m_requests.length : 0;
 	}
 });
 
@@ -72,6 +72,7 @@ Object.defineProperty(rune.resource.Requests.prototype, "length", {
  * @returns {undefined}
  */
 rune.resource.Requests.prototype.add = function(name, path) {
+	if (this.m_requests == null) return;
 	if (this.get(name) == null) {
 		this.m_requests.push(
 			new rune.resource.Request(name, path)
@@ -85,6 +86,7 @@ rune.resource.Requests.prototype.add = function(name, path) {
  * @returns {undefined}
  */
 rune.resource.Requests.prototype.clear = function() {
+	if (this.m_requests == null) return;
 	while (this.m_requests.length) {
 		this.m_requests[0].dispose();
 		this.m_requests[0] = null;
@@ -100,9 +102,12 @@ rune.resource.Requests.prototype.clear = function() {
  * @returns {rune.resource.Request}
  */
 rune.resource.Requests.prototype.get = function(name) {
+	if (this.m_requests == null || name == null) return null;
+	name = name.toString().toLowerCase();
+
 	var i = this.m_requests.length;
 	while (i--) {
-		if (this.m_requests[i]['name'] == name.toLowerCase()) {
+		if (this.m_requests[i]['name'] == name) {
 			return this.m_requests[i];
 		}
 	}
@@ -122,7 +127,7 @@ rune.resource.Requests.prototype.get = function(name) {
  * @ignore
  */
 rune.resource.Requests.prototype.shift = function() {
-	return this.m_requests.shift();
+	return this.m_requests != null ? this.m_requests.shift() : null;
 };
 
 //------------------------------------------------------------------------------

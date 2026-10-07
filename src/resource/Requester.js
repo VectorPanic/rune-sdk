@@ -90,6 +90,7 @@ rune.resource.Requester.prototype.abort = function() {
     this.m_disposeLoader();
     if (this.m_arguments) {
         this.m_arguments.exec("onAbort");
+        this.m_disposeArguments();
     }
 };
 
@@ -165,6 +166,7 @@ rune.resource.Requester.prototype.m_disposeArguments = function() {
     if (this.m_arguments instanceof rune.resource.RequesterOptions) {
         this.m_arguments.dispose();
         this.m_arguments = null;
+        this.m_numRequests = 0;
     }
 };
 
@@ -197,11 +199,18 @@ rune.resource.Requester.prototype.m_processRequests = function() {
         } else {
             if (this.m_numRequests == 0) {
                 var m_this = this;
+                var args = this.m_arguments;
                 window.setTimeout(function() {
-                    m_this.m_arguments.exec("onComplete");
+                    if (m_this.m_arguments === args) {
+                        args.exec("onComplete");
+                        m_this.m_disposeLoader();
+                        m_this.m_disposeArguments();
+                    }
                 }, 0);
             } else {
                 this.m_arguments.exec("onComplete");
+                this.m_disposeLoader();
+                this.m_disposeArguments();
             }
         }
     } else throw new Error();
@@ -220,28 +229,53 @@ rune.resource.Requester.prototype.m_processRequest = function(request) {
         this.m_loader.load({
             url: request['path'],
             onComplete: function(response) {
-                response.asEncodedResource(function(obj) {
-                    this.m_resources.add(request['name'], obj);
-                    this.m_arguments.exec("onProgress", [
-                        this['progress'], 
-                        request['name'], 
-                        response['size'],
-                        response['type'],
-                        obj
-                    ]);
-                    
-                    request.dispose();
+                try {
+                    response.asEncodedResource(function(obj) {
+                        this.m_resources.add(request['name'], obj);
+                        this.m_arguments.exec("onProgress", [
+                            this['progress'],
+                            request['name'],
+                            response['size'],
+                            response['type'],
+                            obj
+                        ]);
+                        
+                        request.dispose();
+                        request = null;
+                        
+                        this.m_processRequests();
+                    }, this);
+                } catch (error) {
+                    this.m_execRequestError(request);
                     request = null;
-                    
-                    this.m_processRequests();
-                }, this);
+                }
             },
             onError: function() {
-                this.m_arguments.exec("onError", [
-                    request['name']
-                ]);
+                this.m_execRequestError(request);
+                request = null;
             },
             scope: this
         });   
     } else throw new Error();
+};
+
+/**
+ * Executes request error handling.
+ *
+ * @param {rune.resource.Request} request Request that failed.
+ *
+ * @returns {undefined}
+ * @private
+ */
+rune.resource.Requester.prototype.m_execRequestError = function(request) {
+    if (this.m_arguments != null && request != null) {
+        this.m_arguments.exec("onError", [
+            request['name']
+        ]);
+
+        request.dispose();
+    }
+
+    this.m_disposeLoader();
+    this.m_disposeArguments();
 };

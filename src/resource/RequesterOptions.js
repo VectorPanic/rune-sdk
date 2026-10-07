@@ -96,9 +96,9 @@ rune.resource.RequesterOptions = function(data) {
  * @ignore
  */
 rune.resource.RequesterOptions.prototype.dispose = function() {
-    if (this.requests) {
-        this.requests.clear();
-        this.requests = null;
+    if (this.batch) {
+        this.batch.clear();
+        this.batch = null;
     }
     
     this.onAbort = null;
@@ -120,6 +120,6 @@ rune.resource.RequesterOptions.prototype.dispose = function() {
  */
 rune.resource.RequesterOptions.prototype.exec = function(func, args) {
     if (typeof this[func] === "function") {
-        this[func].apply(this.scope, args);
+        this[func].apply(this.scope, args || []);
     }
 };

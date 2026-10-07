@@ -135,4 +135,5 @@ rune.data.LoaderDebug.prototype.m_onComplete = function() {
  */
 rune.data.LoaderDebug.prototype.m_onError = function(request) {
 	this['console'].log("Error: Could not load " + request + ".");
+	this['console'].passive = false;
 };

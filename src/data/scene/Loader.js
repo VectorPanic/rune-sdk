@@ -243,7 +243,12 @@ rune.data.Loader.prototype.m_disposeSound = function() {
  */
 rune.data.Loader.prototype.m_disposeProgressbar = function() {
     if (this.m_progressbar != null) {
-        this.m_progressbar.parent.removeChild(this.m_progressbar, true);
+        if (this.m_progressbar['parent'] != null) {
+            this.m_progressbar['parent'].removeChild(this.m_progressbar, true);
+        } else if (typeof this.m_progressbar.dispose === "function") {
+            this.m_progressbar.dispose();
+        }
+
         this.m_progressbar = null;
     }
 };
@@ -256,7 +261,12 @@ rune.data.Loader.prototype.m_disposeProgressbar = function() {
  */
 rune.data.Loader.prototype.m_disposeLogo = function() {
     if (this.m_logo != null) {
-        this.m_logo['parent'].removeChild(this.m_logo, true);
+        if (this.m_logo['parent'] != null) {
+            this.m_logo['parent'].removeChild(this.m_logo, true);
+        } else if (typeof this.m_logo.dispose === "function") {
+            this.m_logo.dispose();
+        }
+
         this.m_logo = null;
     }
 };
@@ -274,9 +284,13 @@ rune.data.Loader.prototype.m_fadeIn = function() {
             this.m_onFadeInComplete,
             this
         );
+    } else {
+        this.m_onFadeInComplete();
     }
-    
-    this.m_sound.play();
+
+    if (this.m_sound != null) {
+        this.m_sound.play();
+    }
 };
 
 /**
@@ -309,6 +323,7 @@ rune.data.Loader.prototype.m_loadResources = function() {
     this['application']['resources'].request({
         batch: new Batch(),
         onComplete: this.m_onLoadComplete,
+        onError: this.m_onLoadError,
         onProgress: this.m_onResourcesProgress,
         scope: this
     });
@@ -324,6 +339,23 @@ rune.data.Loader.prototype.m_loadResources = function() {
 rune.data.Loader.prototype.m_onLoadComplete = function() {
     if (++this.m_numStepCompleted === 2) {
         this.m_fadeOut();
+    }
+};
+
+/**
+ * Called when a requested resource cannot be loaded by the application.
+ *
+ * @param {string} name The name of the failed resource.
+ *
+ * @returns {undefined}
+ * @private
+ */
+rune.data.Loader.prototype.m_onLoadError = function(name) {
+    var message = "Error: Could not load " + name + ".";
+    if (this['console'] != null) {
+        this['console'].log(message);
+        this['console'].passive = false;
+        this['console'].set(1.0);
     }
 };
 
@@ -359,10 +391,12 @@ rune.data.Loader.prototype.m_fadeOut = function() {
             this.m_onFadeOutComplete,
             this
         );
-        
-        if (this.m_progressbar != null) {
-            this.m_progressbar.progress = 1.0;
-        }
+    } else {
+        this.m_onFadeOutComplete();
+    }
+
+    if (this.m_progressbar != null) {
+        this.m_progressbar.progress = 1.0;
     }
 };
 

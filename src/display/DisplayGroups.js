@@ -51,6 +51,8 @@ rune.display.DisplayGroups = function() {
  * @returns {rune.display.DisplayGroup}
  */
 rune.display.DisplayGroups.prototype.add = function(group) {
+    if (this.m_groups == null) throw new Error("DisplayGroups is disposed.");
+
     var index = this.m_groups.indexOf(group);
     if (index === -1) {
         this.m_groups.push(group);
@@ -86,6 +88,8 @@ rune.display.DisplayGroups.prototype.create = function(target) {
  * @returns {rune.display.DisplayGroup}
  */
 rune.display.DisplayGroups.prototype.remove = function(group, dispose) {
+    if (this.m_groups == null) return (dispose === true) ? null : group;
+
     var index = this.m_groups.indexOf(group);
     if (index > -1) {
         this.m_groups.splice(index, 1);
@@ -170,6 +174,8 @@ rune.display.DisplayGroups.prototype.m_constructGroups = function() {
  */
 rune.display.DisplayGroups.prototype.m_updateGroups = function(step) {
     var groups = this.m_groups;
+    if (groups == null) return;
+
     for (var i = 0; i < groups.length; i++) {
         if (groups[i].active == true) {
             groups[i].preUpdate(step);

@@ -235,11 +235,13 @@ Object.defineProperty(rune.display.DisplayObject.prototype, "height", {
      * @suppress {accessControls}
      */
     set : function(value) {
-        value = value / this.m_scale.y;
+        value = (this.m_scale.y != 0) ? value / this.m_scale.y : value;
         if (this.m_height != value) {
             this.m_height  = value;
             
-            this.m_canvas['height'] = value;
+            if (this.m_canvas != null) {
+                this.m_canvas['height'] = value;
+            }
             this.breakCache();
         }
     }
@@ -268,11 +270,13 @@ Object.defineProperty(rune.display.DisplayObject.prototype, "width", {
      * @suppress {accessControls}
      */
     set : function(value) {
-        value = value / this.m_scale.x;
+        value = (this.m_scale.x != 0) ? value / this.m_scale.x : value;
         if (this.m_width != value) {
             this.m_width  = value;
             
-            this.m_canvas['width'] = value;
+            if (this.m_canvas != null) {
+                this.m_canvas['width'] = value;
+            }
             this.breakCache();
         }
     }
@@ -640,7 +644,7 @@ Object.defineProperty(rune.display.DisplayObject.prototype, "hidden", {
      * @ignore
      */
     get : function() {
-        return (!this['visible'] || !this.m_flicker['visible']);
+        return (!this['visible'] || (this.m_flicker != null && !this.m_flicker['visible']));
     }
 });
 
@@ -686,7 +690,7 @@ Object.defineProperty(rune.display.DisplayObject.prototype, "pivotX", {
      * @ignore
      */
     set : function(value) {
-        value = value / this['width'];
+        value = (this['width'] != 0) ? value / this['width'] : 0;
         value = rune.util.Math.clamp(value, 0, 1.0);
         
         if (this.m_pivot.x != value) {
@@ -720,7 +724,7 @@ Object.defineProperty(rune.display.DisplayObject.prototype, "pivotY", {
      * @ignore
      */
     set : function(value) {
-        value = value / this['height'];
+        value = (this['height'] != 0) ? value / this['height'] : 0;
         value = rune.util.Math.clamp(value, 0, 1.0);
         
         if (this.m_pivot.y != value) {
@@ -787,7 +791,8 @@ Object.defineProperty(rune.display.DisplayObject.prototype, "scaleX", {
      * @ignore
      */
     set : function(value) {
-        value = rune.util.Math.clamp(value, 0, Infinity);
+        value = Number(value);
+        value = (isFinite(value) && value >= 0) ? value : 0;
         if (this.m_scale.x != value) {
             this.m_scale.x  = value;
             
@@ -820,7 +825,8 @@ Object.defineProperty(rune.display.DisplayObject.prototype, "scaleY", {
      * @ignore
      */
     set : function(value) {
-        value = rune.util.Math.clamp(value, 0, Infinity);
+        value = Number(value);
+        value = (isFinite(value) && value >= 0) ? value : 0;
         if (this.m_scale.y != value) {
             this.m_scale.y  = value;
             
@@ -882,7 +888,9 @@ Object.defineProperty(rune.display.DisplayObject.prototype, "unscaledHeight", {
         if (this.m_height != value) {
             this.m_height  = value;
             
-            this.m_canvas.height = this.m_height;
+            if (this.m_canvas != null) {
+                this.m_canvas.height = this.m_height;
+            }
             
             this.breakCache();
         }
@@ -915,7 +923,9 @@ Object.defineProperty(rune.display.DisplayObject.prototype, "unscaledWidth", {
         if (this.m_width != value) {
             this.m_width  = value;
             
-            this.m_canvas.width = this.m_width;
+            if (this.m_canvas != null) {
+                this.m_canvas.width = this.m_width;
+            }
             
             this.breakCache();
         }
@@ -1008,6 +1018,21 @@ rune.display.DisplayObject.prototype.getGlobalRect = function(rect) {
     return rect;
 };
 
+/**
+ * Removes this object from its current parent display object container.
+ *
+ * @param {boolean} [dispose=false] Whether this object should be destroyed when it is removed.
+ *
+ * @returns {rune.display.DisplayObject}
+ */
+rune.display.DisplayObject.prototype.removeFromParent = function(dispose) {
+    if (this.m_parent != null) {
+        return this.m_parent.removeChild(this, dispose);
+    }
+
+    return (dispose) ? null : this;
+};
+
 //------------------------------------------------------------------------------
 // Public prototype methods (ENGINE)
 //------------------------------------------------------------------------------
@@ -1083,6 +1108,19 @@ rune.display.DisplayObject.prototype.breakCache = function() {
  * @ignore
  */
 rune.display.DisplayObject.prototype.getRenderFrame = function() {
+    if (this.m_canvas == null) {
+        this.m_frame['x'] = this.m_x;
+        this.m_frame['y'] = this.m_y;
+        this.m_frame['width']  = 0;
+        this.m_frame['height'] = 0;
+        this.m_frame['clipping']['x'] = 0;
+        this.m_frame['clipping']['y'] = 0;
+        this.m_frame['clipping']['width']  = 0;
+        this.m_frame['clipping']['height'] = 0;
+
+        return this.m_frame;
+    }
+
     this.m_frame['x'] = this.m_x;
     this.m_frame['y'] = this.m_y;
     this.m_frame['width']  = this.m_canvas['width']  * this['scaleX'];

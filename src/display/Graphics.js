@@ -86,7 +86,7 @@ Object.defineProperty(rune.display.Graphics.prototype, "numOperations", {
      * @ignore
      */
     get: function() {
-        return this.m_queue['length'];
+        return this.m_queue != null ? this.m_queue['length'] : 0;
     }
 });
 
@@ -100,7 +100,9 @@ Object.defineProperty(rune.display.Graphics.prototype, "numOperations", {
  * @returns {undefined}
  */
 rune.display.Graphics.prototype.clear = function() {
-	this.m_queue.clear();
+	if (this.m_queue != null) {
+		this.m_queue.clear();
+	}
 };
 
 /**
@@ -120,7 +122,7 @@ rune.display.Graphics.prototype.clear = function() {
  * @returns {undefined}
  */
 rune.display.Graphics.prototype.drawArc = function(x, y, r, sa, ea, c, s, a) {
-	if (this.m_displayObject != null) {
+	if (this.m_displayObject != null && this.m_displayObject["canvas"] != null && this.m_queue != null) {
 		this.m_displayObject.breakCache();
 		var scope = this.m_displayObject["canvas"];
 		this.m_queue.add(scope.drawArc, scope, [x, y, r, sa, ea, c, s, a]);
@@ -135,7 +137,7 @@ rune.display.Graphics.prototype.drawArc = function(x, y, r, sa, ea, c, s, a) {
  * @returns {undefined}
  */
 rune.display.Graphics.prototype.drawFill = function(c) {
-	if (this.m_displayObject != null) {
+	if (this.m_displayObject != null && this.m_displayObject["canvas"] != null && this.m_queue != null) {
 		this.m_displayObject.breakCache();
 		var scope = this.m_displayObject["canvas"];
 		this.m_queue.add(scope.drawFill, scope, [c]);
@@ -158,7 +160,7 @@ rune.display.Graphics.prototype.drawFill = function(c) {
  * @returns {undefined}
  */
 rune.display.Graphics.prototype.drawImage = function(img, ox, oy, ow, oh, cx, cy, cw, ch) {
-	if (this.m_displayObject != null) {
+	if (this.m_displayObject != null && this.m_displayObject["canvas"] != null && this.m_queue != null) {
 		this.m_displayObject.breakCache();
 		var scope = this.m_displayObject["canvas"];
 		this.m_queue.add(scope.drawImage, scope, [img, ox, oy, ow, oh, cx, cy, cw, ch]);
@@ -177,7 +179,7 @@ rune.display.Graphics.prototype.drawImage = function(img, ox, oy, ow, oh, cx, cy
  * @returns {undefined}
  */
 rune.display.Graphics.prototype.drawImageFill = function(img, x, y, w, h) {
-	if (this.m_displayObject != null) {
+	if (this.m_displayObject != null && this.m_displayObject["canvas"] != null && this.m_queue != null) {
 		this.m_displayObject.breakCache();
 		var scope = this.m_displayObject["canvas"];
 		this.m_queue.add(scope.drawImageFill, scope, [img, x, y, w, h]);
@@ -197,7 +199,7 @@ rune.display.Graphics.prototype.drawImageFill = function(img, x, y, w, h) {
  * @returns {undefined}
  */
 rune.display.Graphics.prototype.drawLine = function(x1, y1, x2, y2, c, s) {
-	if (this.m_displayObject != null) {
+	if (this.m_displayObject != null && this.m_displayObject["canvas"] != null && this.m_queue != null) {
 		this.m_displayObject.breakCache();
 		var scope = this.m_displayObject["canvas"];
 		this.m_queue.add(scope.drawLine, scope, [x1, y1, x2, y2, c, s]);
@@ -217,7 +219,7 @@ rune.display.Graphics.prototype.drawLine = function(x1, y1, x2, y2, c, s) {
  * @returns {undefined}
  */
 rune.display.Graphics.prototype.drawRect = function(x, y, w, h, c, s) {
-	if (this.m_displayObject != null) {
+	if (this.m_displayObject != null && this.m_displayObject["canvas"] != null && this.m_queue != null) {
 		this.m_displayObject.breakCache();
 		var scope = this.m_displayObject["canvas"];
 		this.m_queue.add(scope.drawRect, scope, [x, y, w, h, c, s]);
@@ -236,7 +238,7 @@ rune.display.Graphics.prototype.drawRect = function(x, y, w, h, c, s) {
  * @returns {undefined}
  */
 rune.display.Graphics.prototype.drawRectFill = function(x, y, w, h, c) {
-	if (this.m_displayObject != null) {
+	if (this.m_displayObject != null && this.m_displayObject["canvas"] != null && this.m_queue != null) {
 		this.m_displayObject.breakCache();
 		var scope = this.m_displayObject["canvas"];
 		this.m_queue.add(scope.drawRectFill, scope, [x, y, w, h, c]);
@@ -256,6 +258,7 @@ rune.display.Graphics.prototype.drawRectFill = function(x, y, w, h, c) {
  */
 rune.display.Graphics.prototype.dispose = function() {
 	this.m_disposeQueue();
+	this.m_displayObject = null;
 };
 
 /**
@@ -267,7 +270,7 @@ rune.display.Graphics.prototype.dispose = function() {
  */
 rune.display.Graphics.prototype.render = function() {
 	this.m_renderQueue();
-    if (this.autoClear == true) {
+    if (this.autoClear == true && this.m_queue != null) {
         this.clear();
     }
 };

@@ -195,7 +195,7 @@ Object.defineProperty(rune.display.DisplayGroup.prototype, "numMembers", {
      * @ignore
      */
     get : function() {
-        return this.m_members.length;
+        return this.m_members != null ? this.m_members.length : 0;
     }
 });
 
@@ -249,6 +249,8 @@ Object.defineProperty(rune.display.DisplayGroup.prototype, "useQuadtree", {
  * @returns {boolean}
  */
 rune.display.DisplayGroup.prototype.addMember = function(member) {
+    if (this.m_members == null || this.m_container == null) return false;
+
     var index = this.m_members.indexOf(member);
     if (index === -1) {
         if (this.m_container.hasChild(member) == false) {
@@ -275,8 +277,10 @@ rune.display.DisplayGroup.prototype.addMember = function(member) {
  * @returns {undefined}
  */
 rune.display.DisplayGroup.prototype.forEachMember = function(callback, scope) {
-    for (var i = 0; i < this.m_members.length; i++) {
-        callback.call(scope, this.m_members[i], i);
+    if (this.m_members != null && typeof callback === "function") {
+        for (var i = 0; i < this.m_members.length; i++) {
+            callback.call(scope, this.m_members[i], i);
+        }
     }
 };
 
@@ -313,7 +317,7 @@ rune.display.DisplayGroup.prototype.getArea = function(rect) {
  * @returns {rune.display.DisplayObject} The member object at the specified index position.
  */
 rune.display.DisplayGroup.prototype.getMemberAt = function(index) {
-    if (index > -1 && index < this.m_members.length) {
+    if (this.m_members != null && index > -1 && index < this.m_members.length) {
         return this.m_members[index];
     } else throw new RangeError();
 };
@@ -326,7 +330,7 @@ rune.display.DisplayGroup.prototype.getMemberAt = function(index) {
  * @returns {Array.<rune.display.DisplayObject>}
  */
 rune.display.DisplayGroup.prototype.getMembers = function() {
-    return this.m_members;
+    return this.m_members || [];
 };
 
 /**
@@ -360,7 +364,7 @@ rune.display.DisplayGroup.prototype.getMembersCloseTo = function(obj) {
  * @returns {boolean}
  */
 rune.display.DisplayGroup.prototype.hasMember = function(prospect) {
-    return (this.m_members.indexOf(prospect) > -1) ? true : false;
+    return (this.m_members != null && this.m_members.indexOf(prospect) > -1) ? true : false;
 };
 
 /**
@@ -591,6 +595,8 @@ rune.display.DisplayGroup.prototype.hitTestPoint = function(point, callback, sco
  * @returns {rune.display.DisplayObject}
  */
 rune.display.DisplayGroup.prototype.removeMember = function(member, dispose) {
+    if (this.m_members == null) return (dispose) ? null : member;
+
     var index = this.m_members.indexOf(member);
     if (index > -1) {
         
@@ -598,6 +604,10 @@ rune.display.DisplayGroup.prototype.removeMember = function(member, dispose) {
         
         if (member['parent'] == this.m_container) {
             this.m_container.removeChild(member, false);
+        }
+
+        if (member != null && member['group'] == this) {
+            member.setGroup(null);
         }
         
         if (dispose == true) {
@@ -617,7 +627,7 @@ rune.display.DisplayGroup.prototype.removeMember = function(member, dispose) {
  * @returns {undefined}
  */
 rune.display.DisplayGroup.prototype.removeMembers = function(dispose) {
-    while (this.m_members.length > 0) {
+    while (this.m_members != null && this.m_members.length > 0) {
         this.removeMember(this.getMemberAt(0), dispose);
     }
 };
@@ -687,6 +697,9 @@ rune.display.DisplayGroup.prototype.postUpdate = function(step) {
 rune.display.DisplayGroup.prototype.dispose = function() {
     this.removeMembers(true);
     this.m_disposeQuadtree();
+    this.m_area = null;
+    this.m_container = null;
+    this.m_members = null;
 };
 
 //------------------------------------------------------------------------------
@@ -705,6 +718,8 @@ rune.display.DisplayGroup.prototype.dispose = function() {
  * @ignore
  */
 rune.display.DisplayGroup.prototype.include = function(member) {
+    if (this.m_members == null || member == null) return false;
+
     var index = this.m_members.indexOf(member);
     if (index === -1) {
         this.m_members.push(member);
@@ -728,6 +743,8 @@ rune.display.DisplayGroup.prototype.include = function(member) {
  * @ignore
  */
 rune.display.DisplayGroup.prototype.exclude = function(member) {
+    if (this.m_members == null || member == null) return false;
+
     var index = this.m_members.indexOf(member);
     if (index > -1) {
         this.m_members.splice(index, 1);
@@ -777,7 +794,7 @@ rune.display.DisplayGroup.prototype.m_updateQuadtree = function(step) {
         this.m_quadtree.width  = rect.width;
         this.m_quadtree.height = rect.height;
                 
-        var m = this.m_members;
+        var m = this.m_members || [];
         var i = m.length;
         
         while (i--) {
@@ -822,19 +839,19 @@ rune.display.DisplayGroup.prototype.m_disposeQuadtree = function() {
  * @private
  */
 rune.display.DisplayGroup.prototype.m_calculateArea = function(rect) {
-    //@todo Does not work correctly within negative coordinates
     rect = rect || new rune.geom.Rectangle();
     
     var min = new rune.geom.Point(Number.MAX_VALUE, Number.MAX_VALUE);
-    var max = new rune.geom.Point(Number.MIN_VALUE, Number.MIN_VALUE);
+    var max = new rune.geom.Point(-Number.MAX_VALUE, -Number.MAX_VALUE);
     
-    var i = this.m_members.length;
+    var members = this.m_members || [];
+    var i = members.length;
     if (i > 0) {
         while (i--) {
-            min['x'] = Math.min(min['x'], this.m_members[i]['left']);
-            min['y'] = Math.min(min['y'], this.m_members[i]['top']);
-            max['x'] = Math.max(max['x'], this.m_members[i]['right']);
-            max['y'] = Math.max(max['y'], this.m_members[i]['bottom']);
+            min['x'] = Math.min(min['x'], members[i]['left']);
+            min['y'] = Math.min(min['y'], members[i]['top']);
+            max['x'] = Math.max(max['x'], members[i]['right']);
+            max['y'] = Math.max(max['y'], members[i]['bottom']);
         }
     } else {
         min['x'] = 0;

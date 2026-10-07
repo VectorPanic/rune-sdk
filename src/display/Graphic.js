@@ -79,6 +79,18 @@ Object.defineProperty(rune.display.Graphic.prototype, "texture", {
 });
 
 //------------------------------------------------------------------------------
+// Override public prototype methods (ENGINE)
+//------------------------------------------------------------------------------
+
+/**
+ * @inheritDoc
+ */
+rune.display.Graphic.prototype.dispose = function() {
+	this.m_disposeTexture();
+	rune.display.DisplayObjectContainer.prototype.dispose.call(this);
+};
+
+//------------------------------------------------------------------------------
 // Override protected prototype methods
 //------------------------------------------------------------------------------
 
@@ -111,13 +123,29 @@ rune.display.Graphic.prototype.render = function() {
  * @ignore
  */
 rune.display.Graphic.prototype.m_renderTexture = function() {
-	this.m_canvas.drawImage(
-		this.m_texture["data"],
-		0,
-		0,
-		this.m_texture["data"].width,
-		this.m_texture["data"].height
-	);
+	if (this.m_canvas != null && this.m_texture != null && this.m_texture["data"] != null) {
+		this.m_canvas.drawImage(
+			this.m_texture["data"],
+			0,
+			0,
+			this.m_texture["data"].width,
+			this.m_texture["data"].height
+		);
+	}
+};
+
+/**
+ * Destroys texture data.
+ *
+ * @return {undefined}
+ * @protected
+ * @ignore
+ */
+rune.display.Graphic.prototype.m_disposeTexture = function() {
+	if (this.m_texture != null) {
+		this.m_texture.dispose();
+		this.m_texture = null;
+	}
 };
 
 //------------------------------------------------------------------------------

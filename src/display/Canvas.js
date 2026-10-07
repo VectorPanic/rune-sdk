@@ -123,7 +123,7 @@ Object.defineProperty(rune.display.Canvas.prototype, "height", {
 	 * @ignore
 	 */
 	get : function() {
-		return this.m_canvas.height;
+		return this.m_canvas != null ? this.m_canvas.height : 0;
 	},
 	
 	/**
@@ -131,7 +131,9 @@ Object.defineProperty(rune.display.Canvas.prototype, "height", {
 	 * @ignore
 	 */
 	set : function(value) {
-		this.m_canvas.height = value;
+		if (this.m_canvas != null) {
+			this.m_canvas.height = value;
+		}
 	}
 });
 
@@ -151,7 +153,7 @@ Object.defineProperty(rune.display.Canvas.prototype, "smoothing", {
 	 * @ignore
 	 */
 	get : function() {
-		return (this.m_canvas.style.imageRendering == "pixelated") ? false : true;
+		return (this.m_canvas != null && this.m_canvas.style.imageRendering == "pixelated") ? false : true;
 	},
 	
 	/**
@@ -159,6 +161,8 @@ Object.defineProperty(rune.display.Canvas.prototype, "smoothing", {
 	 * @ignore
 	 */
 	set : function(value) {
+		if (this.m_canvas == null || this.m_context == null) return;
+
 		if (value == true) {
 			this.m_canvas.style.imageRendering = "auto";
 			this.m_context.imageSmoothingEnabled = true;
@@ -182,7 +186,7 @@ Object.defineProperty(rune.display.Canvas.prototype, "width", {
 	 * @ignore
 	 */
 	get : function() {
-		return this.m_canvas.width;
+		return this.m_canvas != null ? this.m_canvas.width : 0;
 	},
 	
 	/**
@@ -190,7 +194,9 @@ Object.defineProperty(rune.display.Canvas.prototype, "width", {
 	 * @ignore
 	 */
 	set : function(value) {
-		this.m_canvas.width = value;
+		if (this.m_canvas != null) {
+			this.m_canvas.width = value;
+		}
 	}
 });
 
@@ -219,6 +225,8 @@ rune.display.Canvas.prototype.attach = function(element) {
  * @return {undefined}
  */
 rune.display.Canvas.prototype.clear = function() {
+	if (this.m_context == null || this.m_canvas == null) return;
+
 	this.m_context.clearRect(
 		0,
 		0,
@@ -267,6 +275,8 @@ rune.display.Canvas.prototype.dispose = function() {
  * @return {undefined}
  */
 rune.display.Canvas.prototype.drawArc = function(x, y, r, sa, ea, c, s, a) {
+	if (this.m_context == null) return;
+
 	this.m_context.save();
 	this.m_context.lineWidth = s;
 	this.m_context.strokeStyle = c;
@@ -284,6 +294,8 @@ rune.display.Canvas.prototype.drawArc = function(x, y, r, sa, ea, c, s, a) {
  * @return {undefined}
  */
 rune.display.Canvas.prototype.drawFill = function(c) {
+	if (this.m_context == null || this.m_canvas == null) return;
+
 	this.m_context.fillStyle = c;
 	this.m_context.fillRect(
 		0,
@@ -309,6 +321,8 @@ rune.display.Canvas.prototype.drawFill = function(c) {
  * @return {undefined}
  */
 rune.display.Canvas.prototype.drawImage = function(img, ox, oy, ow, oh, cx, cy, cw, ch) {
+	if (this.m_context == null || img == null) return;
+
 	this.m_context.save();
 	this.m_context.drawImage(
 		img,
@@ -337,6 +351,8 @@ rune.display.Canvas.prototype.drawImage = function(img, ox, oy, ow, oh, cx, cy, 
  * @return {undefined}
  */
 rune.display.Canvas.prototype.drawImageFill = function(img, x, y, w, h) {
+	if (this.m_context == null || img == null) return;
+
 	this.m_context.save();
 	this.m_context.fillStyle = this.m_context.createPattern(img, "repeat");
 	this.m_context.translate(-x, -y);
@@ -358,8 +374,10 @@ rune.display.Canvas.prototype.drawImageFill = function(img, x, y, w, h) {
  * @return {undefined}
  */
 rune.display.Canvas.prototype.drawLine = function(x1, y1, x2, y2, c, s, a) {
+	if (this.m_context == null) return;
+
 	this.m_context.save();
-	this.m_context.globalAlpha = a;
+	this.m_context.globalAlpha = (typeof a === "number" && isFinite(a)) ? a : 1.0;
 	this.m_context.beginPath();
 	this.m_context.translate(0.5, 0.5);
 	this.m_context.strokeStyle = c;
@@ -383,6 +401,8 @@ rune.display.Canvas.prototype.drawLine = function(x1, y1, x2, y2, c, s, a) {
  * @return {undefined}
  */
 rune.display.Canvas.prototype.drawRect = function(x, y, w, h, c, s) {
+	if (this.m_context == null) return;
+
 	this.m_context.save();
 	this.m_context.translate(0.5, 0.5);
 	this.m_context.strokeStyle = c;
@@ -410,8 +430,10 @@ rune.display.Canvas.prototype.drawRect = function(x, y, w, h, c, s) {
  * @return {undefined}
  */
 rune.display.Canvas.prototype.drawRectFill = function(x, y, w, h, c, a) {
+	if (this.m_context == null) return;
+
 	this.m_context.save();
-	this.m_context.globalAlpha = a;
+	this.m_context.globalAlpha = (typeof a === "number" && isFinite(a)) ? a : 1.0;
 	this.m_context.fillStyle = c;
 	this.m_context.fillRect(
 		x,
@@ -432,6 +454,8 @@ rune.display.Canvas.prototype.drawRectFill = function(x, y, w, h, c, a) {
  * @return {boolean} A value of true if the specified object intersects with this Rectangle object; otherwise false.
  */
 rune.display.Canvas.prototype.intersects = function(rect) {
+	if (this.m_canvas == null || rect == null) return false;
+
 	return rune.geom.Rectangle.intersects(
 		0,
 		0,
@@ -455,6 +479,8 @@ rune.display.Canvas.prototype.intersects = function(rect) {
  * @return {undefined}
  */
 rune.display.Canvas.prototype.renderDisplayObject = function(obj, offsetX, offsetY) {
+	if (this.m_context == null || obj == null || obj['canvas'] == null) return;
+
 	if (obj['hidden'] == false) {
 		var frame = obj.getRenderFrame();
 			frame.x -= offsetX || 0;
@@ -501,6 +527,8 @@ rune.display.Canvas.prototype.renderDisplayObject = function(obj, offsetX, offse
  * @return {undefined}
  */
 rune.display.Canvas.prototype.renderPath = function(path, offsetX, offsetY) {
+	if (path == null) return;
+
 	offsetX = offsetX || 0;
 	offsetY = offsetY || 0;
 	
@@ -535,6 +563,8 @@ rune.display.Canvas.prototype.renderPath = function(path, offsetX, offsetY) {
  * @return {undefined}
  */
 rune.display.Canvas.prototype.renderTiles = function(map, rect, buffer) {
+	if (this.m_context == null || map == null || rect == null) return;
+
 	var ti = (buffer == 0) ? map.getBackBufferInRect(rect) : map.getFrontBufferInRect(rect);
 	var wt = map['widthInTiles'];
 	var ht = map['heightInTiles'];
@@ -585,8 +615,10 @@ rune.display.Canvas.prototype.renderTiles = function(map, rect, buffer) {
  * @return {undefined}
  */
 rune.display.Canvas.prototype.resize = function(width, height) {
-	this.m_canvas.width = width;
-	this.m_canvas.height = height;
+	if (this.m_canvas != null) {
+		this.m_canvas.width = width;
+		this.m_canvas.height = height;
+	}
 };
 
 //------------------------------------------------------------------------------

@@ -89,7 +89,7 @@ Object.defineProperty(rune.display.Texture.prototype, "height", {
 	 * @ignore
 	 */
 	get : function() {
-		return this.data.height;
+		return this.data != null ? this.data.height : 0;
 	}
 });
 
@@ -128,7 +128,7 @@ Object.defineProperty(rune.display.Texture.prototype, "width", {
 	 * @ignore
 	 */
 	get : function() {
-		return this.data.width;
+		return this.data != null ? this.data.width : 0;
 	}
 });
 
@@ -148,7 +148,11 @@ Object.defineProperty(rune.display.Texture.prototype, "width", {
  * @return {undefined}
  */
 rune.display.Texture.prototype.replaceColor = function(c1, c2) {
+	if (this.m_resource == null && this.m_canvas == null) return;
+
 	if (this['unique'] == false) this.m_constructCanvas();
+	if (this.m_canvas == null) return;
+
 	var image = this.m_canvas['context'].getImageData(0, 0, this.m_canvas.width, this.m_canvas.height);
 	for (var i = 0; i < image.data.length; i += 4) {
 		  if (image.data[i    ] == c1['r']['value'] &&
@@ -161,7 +165,9 @@ rune.display.Texture.prototype.replaceColor = function(c1, c2) {
 	}
 	
 	this.m_canvas['context'].putImageData(image, 0, 0);
-	this.m_graphic.breakCache();
+	if (this.m_graphic != null) {
+		this.m_graphic.breakCache();
+	}
 };
 
 //------------------------------------------------------------------------------
@@ -177,6 +183,8 @@ rune.display.Texture.prototype.replaceColor = function(c1, c2) {
  */
 rune.display.Texture.prototype.dispose = function() {
 	this.m_disposeCanvas();
+	this.m_graphic = null;
+	this.m_resource = null;
 };
 
 //------------------------------------------------------------------------------
@@ -208,7 +216,7 @@ rune.display.Texture.prototype.m_construct = function() {
  */
 rune.display.Texture.prototype.m_constructCanvas = function() {
 	this.m_disposeCanvas();
-	if (this.m_canvas == null) {
+	if (this.m_canvas == null && this.m_resource != null) {
 		this.m_canvas = new rune.display.Canvas(
 			this.m_resource.width,
 			this.m_resource.height

@@ -223,7 +223,7 @@ Object.defineProperty(rune.display.InteractiveObject.prototype, "height", {
      * @suppress {accessControls}
      */
     set : function(value) {
-        value = value / this.m_scale.y;
+        value = (this.m_scale.y != 0) ? value / this.m_scale.y : value;
         this.m_height = value;
     }
 });
@@ -251,7 +251,7 @@ Object.defineProperty(rune.display.InteractiveObject.prototype, "width", {
      * @suppress {accessControls}
      */
     set : function(value) {
-        value = value / this.m_scale.x;
+        value = (this.m_scale.x != 0) ? value / this.m_scale.x : value;
         this.m_width = value;
     }
 });
@@ -526,8 +526,8 @@ Object.defineProperty(rune.display.InteractiveObject.prototype, "scaleX", {
      * @ignore
      */
     set : function(value) {
-        value = rune.util.Math.clamp(value, 0, Infinity);
-        this.m_scale.x = value;
+        value = Number(value);
+        this.m_scale.x = (isFinite(value) && value >= 0) ? value : 0;
     }
 });
 
@@ -553,8 +553,8 @@ Object.defineProperty(rune.display.InteractiveObject.prototype, "scaleY", {
      * @ignore
      */
     set : function(value) {
-        value = rune.util.Math.clamp(value, 0, Infinity);
-        this.m_scale.y = value;
+        value = Number(value);
+        this.m_scale.y = (isFinite(value) && value >= 0) ? value : 0;
     }
 });
 
@@ -974,7 +974,7 @@ rune.display.InteractiveObject.prototype.hitTestAndSeparateTilemapLayer = functi
  * @returns {boolean} true if the display object overlaps or intersects with the specified point; false otherwise.
  */
 rune.display.InteractiveObject.prototype.hitTestPoint = function(point, callback, scope) {
-    if (rune.geom.Rectangle.containsPoint(
+    if (point != null && this['hitbox'] != null && rune.geom.Rectangle.containsPoint(
         this['hitbox']['x'],
         this['hitbox']['y'],
         this['hitbox']['width'],

@@ -68,7 +68,7 @@ rune.display.Frame.prototype.constructor = rune.display.Frame;
  * @instance
  * @readonly
  */
-Object.defineProperty(rune.geom.Rectangle.prototype, "clipping", {
+Object.defineProperty(rune.display.Frame.prototype, "clipping", {
     /**
      * @this rune.display.Frame
      * @ignore

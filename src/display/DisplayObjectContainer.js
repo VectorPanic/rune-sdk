@@ -99,7 +99,7 @@ Object.defineProperty(rune.display.DisplayObjectContainer.prototype, "numChildre
      * @ignore
      */
     get : function() {
-        return this.m_children.length;
+        return this.m_children != null ? this.m_children.length : 0;
     }
 });
 
@@ -154,6 +154,8 @@ rune.display.DisplayObjectContainer.prototype.addChild = function(child) {
  * @returns {rune.display.DisplayObject} The DisplayObject instance that you pass in the child parameter.
  */
 rune.display.DisplayObjectContainer.prototype.addChildAt = function(child, index) {
+    if (this.m_children == null) throw new Error("DisplayObjectContainer is disposed.");
+
     if (child instanceof rune.display.DisplayObject) {
         var group = child['group'];
         if (child['parent'] != null) {
@@ -188,8 +190,10 @@ rune.display.DisplayObjectContainer.prototype.addChildAt = function(child, index
  * @returns {undefined}
  */
 rune.display.DisplayObjectContainer.prototype.forEachChild = function(callback, scope) {
-    for (var i = 0; i < this.m_children.length; i++) {
-        callback.call(scope, this.m_children[i], i);
+    if (this.m_children != null && typeof callback === "function") {
+        for (var i = 0; i < this.m_children.length; i++) {
+            callback.call(scope, this.m_children[i], i);
+        }
     }
 };
 
@@ -203,7 +207,7 @@ rune.display.DisplayObjectContainer.prototype.forEachChild = function(callback, 
  * @returns {rune.display.DisplayObject} The child display object at the specified index position.
  */
 rune.display.DisplayObjectContainer.prototype.getChildAt = function(index) {
-    if (index > -1 && index < this.m_children.length) {
+    if (this.m_children != null && index > -1 && index < this.m_children.length) {
         return this.m_children[index];
     } else throw new RangeError();
 };
@@ -216,7 +220,7 @@ rune.display.DisplayObjectContainer.prototype.getChildAt = function(index) {
  * @returns {number} The index position of the child display object to identify.
  */
 rune.display.DisplayObjectContainer.prototype.getChildIndex = function(child) {
-    return this.m_children.indexOf(child);
+    return this.m_children != null ? this.m_children.indexOf(child) : -1;
 };
 
 /**
@@ -226,7 +230,7 @@ rune.display.DisplayObjectContainer.prototype.getChildIndex = function(child) {
  * @returns {Array.<rune.display.DisplayObject>}
  */
 rune.display.DisplayObjectContainer.prototype.getChildren = function() {
-    return this.m_children;
+    return this.m_children || [];
 };
 
 /**
@@ -242,6 +246,17 @@ rune.display.DisplayObjectContainer.prototype.hasChild = function(child) {
 };
 
 /**
+ * Checks whether a display object exists in this container.
+ *
+ * @param {rune.display.DisplayObject} child Child object to check.
+ *
+ * @return {boolean}
+ */
+rune.display.DisplayObjectContainer.prototype.contains = function(child) {
+    return this.hasChild(child);
+};
+
+/**
  * Removes the specified child DisplayObject instance from the child list of 
  * the DisplayObjectContainer instance. The parent property of the removed 
  * child is set to null , and the object is garbage collected if no other 
@@ -254,6 +269,8 @@ rune.display.DisplayObjectContainer.prototype.hasChild = function(child) {
  * @returns {rune.display.DisplayObject}
  */
 rune.display.DisplayObjectContainer.prototype.removeChild = function(child, dispose) {
+    if (this.m_children == null) return (dispose) ? null : child;
+
     var i = this.m_children.indexOf(child);
     if (i != -1) {
         
@@ -305,7 +322,7 @@ rune.display.DisplayObjectContainer.prototype.removeChildAt = function(index, di
  * @returns {undefined}
  */
 rune.display.DisplayObjectContainer.prototype.removeChildren = function(dispose) {
-    while (this.m_children.length > 0) {
+    while (this.m_children != null && this.m_children.length > 0) {
         this.removeChild(this.getChildAt(0), dispose);
     }
 };
@@ -341,8 +358,10 @@ rune.display.DisplayObjectContainer.prototype.setChildIndex = function(child, in
  */
 rune.display.DisplayObjectContainer.prototype.sortChildren = function(func) {
     if (typeof func === "function") {
-        this.m_children.sort(func);
-        this.breakCache();
+        if (this.m_children != null) {
+            this.m_children.sort(func);
+            this.breakCache();
+        }
     } else throw new TypeError();
 };
 
@@ -426,6 +445,8 @@ rune.display.DisplayObjectContainer.prototype.dispose = function() {
  */
 rune.display.DisplayObjectContainer.prototype.m_updateChildren = function(step) {
     var c = this.m_children;
+    if (c == null) return;
+
     var i = c.length;
     
     if (this.sort != null) {
@@ -466,6 +487,8 @@ rune.display.DisplayObjectContainer.prototype.m_updateChild = function(child, st
  */
 rune.display.DisplayObjectContainer.prototype.m_renderChildren = function() {
     var children = this.m_children;
+    if (children == null) return;
+
     for (var i = 0, l = children.length; i < l; i++) {
         this.m_renderChild(children[i]);
     } 
@@ -481,6 +504,8 @@ rune.display.DisplayObjectContainer.prototype.m_renderChildren = function() {
  * @ignore
  */
 rune.display.DisplayObjectContainer.prototype.m_renderChild = function(child) {
+    if (child == null) return;
+
     if (child['visible'] == true) {
         this.m_canvas.renderDisplayObject(child);   
     }
@@ -498,6 +523,8 @@ rune.display.DisplayObjectContainer.prototype.m_renderChild = function(child) {
  * @ignore
  */
 rune.display.DisplayObjectContainer.prototype.m_renderChildDebug = function(child) {
+    if (child == null || this.m_canvas == null) return;
+
     if (child['debug'] == true) {
         this.m_canvas.drawRect(
             child['x'],
@@ -509,7 +536,7 @@ rune.display.DisplayObjectContainer.prototype.m_renderChildDebug = function(chil
         );   
     }
     
-    if (child['hitbox'].debug == true) {
+    if (child['hitbox'] != null && child['hitbox'].debug == true) {
         this.m_canvas.drawRect(
             child['hitbox']['x'],
             child['hitbox']['y'],

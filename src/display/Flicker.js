@@ -139,6 +139,10 @@ Object.defineProperty(rune.display.Flicker.prototype, "visible", {
  * @returns {undefined}
  */
 rune.display.Flicker.prototype.start = function(duration, frequency, onComplete, scope) {
+	if (this.m_onComplete != null) {
+		this.m_onComplete.dispose();
+	}
+
 	this.m_active     = true;
 	this.m_duration   = duration  || 500;
 	this.m_frequency  = frequency || 60;
@@ -179,7 +183,10 @@ rune.display.Flicker.prototype.stop = function(exec) {
  */
 rune.display.Flicker.prototype.dispose = function() {
 	this.m_displayObject = null;
-	this.m_onComplete = null;
+	if (this.m_onComplete != null) {
+		this.m_onComplete.dispose();
+		this.m_onComplete = null;
+	}
 };
 
 /**
@@ -207,7 +214,10 @@ rune.display.Flicker.prototype.update = function(step) {
 		} else {
 			this.m_active = false;
 			this.m_visible = true;
-			this.m_displayObject['parent'].breakCache();
+			if (this.m_displayObject != null && this.m_displayObject['parent'] != null) {
+				this.m_displayObject['parent'].breakCache();
+			}
+			
 			if (this.m_onComplete != null) {
 				this.m_onComplete.execute();
 				this.m_onComplete.dispose();

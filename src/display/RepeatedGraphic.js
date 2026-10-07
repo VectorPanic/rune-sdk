@@ -125,11 +125,13 @@ Object.defineProperty(rune.display.RepeatedGraphic.prototype, "offsetY", {
  * @inheritDoc
  */
 rune.display.RepeatedGraphic.prototype.m_renderTexture = function() {
-    this.m_canvas.drawImageFill(
-        this.m_texture["data"],
-        this.m_offset.x,
-        this.m_offset.y,
-        this.width,
-        this.height
-    );
+    if (this.m_canvas != null && this.m_texture != null && this.m_texture["data"] != null) {
+        this.m_canvas.drawImageFill(
+            this.m_texture["data"],
+            this.m_offset.x,
+            this.m_offset.y,
+            this.width,
+            this.height
+        );
+    }
 };

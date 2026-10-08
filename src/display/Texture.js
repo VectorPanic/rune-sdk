@@ -8,7 +8,7 @@
  * @constructor
  * @package
  *
- * @param {rune.display.Graphic} graphic Reference to the object to be associated with the texture.
+ * @param {rune.display.DisplayObject} graphic Reference to the object to be associated with the texture.
  * @param {HTMLImageElement} resource Reference to the bitmap to be used for texture data.
  *
  * @class
@@ -36,7 +36,7 @@ rune.display.Texture = function(graphic, resource) {
 	/**
 	 * Reference to the object using the texture.
 	 *
-	 * @type {rune.display.Graphic}
+	 * @type {rune.display.DisplayObject}
 	 * @private
 	 */
 	this.m_graphic = graphic;

@@ -700,7 +700,7 @@ Object.defineProperty(rune.display.InteractiveObject.prototype, "previousY", {
  * Evaluates whether the object's hitbox overlaps or intersects with the 
  * parameter object's hitbox.
  *
- * @param {rune.display.Stage|rune.display.InteractiveObject|rune.display.DisplayGroup|rune.tilemap.TilemapLayer|rune.geom.Point|Array} obj The object to be evaluated.
+ * @param {rune.display.Stage|rune.display.InteractiveObject|rune.display.DisplayGroup|rune.display.TileGraphic|rune.tilemap.TilemapLayer|rune.geom.Point|Array} obj The object to be evaluated.
  * @param {Function} [callback] Executed for each detected collision.
  * @param {Object} [scope] Scope of execution for the callback method.
  *
@@ -708,6 +708,7 @@ Object.defineProperty(rune.display.InteractiveObject.prototype, "previousY", {
  */
 rune.display.InteractiveObject.prototype.hitTest = function(obj, callback, scope) {
     if      (obj instanceof rune.display.Stage)             return this.hitTestChildrenOf(obj, callback, scope);
+    else if (rune.display.TileGraphic && obj instanceof rune.display.TileGraphic) return obj.hitTest(this, callback, scope);
     else if (obj instanceof rune.display.InteractiveObject) return this.hitTestObject(obj, callback, scope);
     else if (obj instanceof rune.display.DisplayGroup)      return this.hitTestGroup(obj, callback, scope);
     else if (obj instanceof rune.tilemap.TilemapLayer)      return this.hitTestTilemapLayer(obj, callback, scope);
@@ -845,7 +846,7 @@ rune.display.InteractiveObject.prototype.hitTestTilemapLayer = function(layer, c
  * Evaluates and resolves collision between the object's hitbox and the given 
  * argument object.
  *
- * @param {rune.display.Stage|rune.display.InteractiveObject|rune.display.DisplayGroup|rune.tilemap.TilemapLayer|Array} obj The object to be evaluated.
+ * @param {rune.display.Stage|rune.display.InteractiveObject|rune.display.DisplayGroup|rune.display.TileGraphic|rune.tilemap.TilemapLayer|Array} obj The object to be evaluated.
  * @param {Function} [callback] Executed automatically in case of overlap.
  * @param {Object} [scope] Scope within the callback method must be executed.
  *
@@ -853,6 +854,7 @@ rune.display.InteractiveObject.prototype.hitTestTilemapLayer = function(layer, c
  */
 rune.display.InteractiveObject.prototype.hitTestAndSeparate = function(obj, callback, scope) {
     if      (obj instanceof rune.display.Stage)             return this.hitTestAndSeparateChildrenOf(obj, callback, scope);
+    else if (rune.display.TileGraphic && obj instanceof rune.display.TileGraphic) return obj.hitTestAndSeparate(this, callback, scope);
     else if (obj instanceof rune.display.InteractiveObject) return this.hitTestAndSeparateObject(obj, callback, scope);
     else if (obj instanceof rune.display.DisplayGroup)      return this.hitTestAndSeparateGroup(obj, callback, scope);
     else if (obj instanceof rune.tilemap.TilemapLayer)      return this.hitTestAndSeparateTilemapLayer(obj, callback, scope);

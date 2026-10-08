@@ -72,6 +72,7 @@ npx google-closure-compiler \
 --js "./../../src/display/Texture.js" \
 --js "./../../src/display/Graphic.js" \
 --js "./../../src/display/RepeatedGraphic.js" \
+--js "./../../src/display/TileGraphic.js" \
 --js "./../../src/display/Sprite.js" \
 --js "./../../src/display/Stage.js" \
 --js "./../../src/display/Screen.js" \
@@ -80,6 +81,7 @@ npx google-closure-compiler \
 --js "./../../src/particle/Emitter.js" \
 --js "./../../src/tilemap/Block.js" \
 --js "./../../src/tilemap/Tile.js" \
+--js "./../../src/tilemap/TilemapDataLayer.js" \
 --js "./../../src/tilemap/TilemapLayer.js" \
 --js "./../../src/tilemap/Tilemap.js" \
 --js "./../../src/text/bitmapfont/BitmapFormat.js" \

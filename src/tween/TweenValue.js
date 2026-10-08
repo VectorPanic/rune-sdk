@@ -36,7 +36,7 @@ rune.tween.TweenValue = function(name, start, end) {
 	 * @type {number}
 	 * @default 0
 	 */
-	this.start = start || 0;
+	this.start = this.m_parseValue(start);
 
 	/**
 	 * The final value of the property (after interpolation).
@@ -44,7 +44,7 @@ rune.tween.TweenValue = function(name, start, end) {
 	 * @type {number}
 	 * @default 0
 	 */
-	this.end = end || 0;
+	this.end = this.m_parseValue(end);
 };
 
 //------------------------------------------------------------------------------
@@ -89,4 +89,20 @@ rune.tween.TweenValue.prototype.dispose = function() {
  */
 rune.tween.TweenValue.prototype.toString = function() {
 	return "[{TweenProp (name=" + this['name'] + " start=" + this['start'] + " end=" + this['end']  + ")}]";
+};
+
+//------------------------------------------------------------------------------
+// Private prototype methods
+//------------------------------------------------------------------------------
+
+/**
+ * Parses a tween value.
+ *
+ * @param {*} value Value to parse.
+ *
+ * @returns {number}
+ * @private
+ */
+rune.tween.TweenValue.prototype.m_parseValue = function(value) {
+	return (typeof value === "number" && isFinite(value)) ? value : 0;
 };

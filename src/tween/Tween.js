@@ -60,7 +60,7 @@ rune.tween.Tween = function(options) {
      * @type {Function}
      * @private
      */
-    this.m_easing = options.easing || rune.tween.Sine.easeInOut;
+    this.m_easing = options.transition || options.easing || rune.tween.Sine.easeInOut;
 
     /**
      * The number of times the animation has been repeated.
@@ -205,7 +205,7 @@ Object.defineProperty(rune.tween.Tween.prototype, "progress", {
             if (this.m_duration == 0) return 1.0;
             
             var p = this.m_timeCycle / this.m_duration;
-            return Math.round((((this.m_reversing) ? (1 - p) : p)) * 10) / 10;
+            return rune.util.Math.clamp((this.m_reversing) ? (1 - p) : p, 0.0, 1.0);
         }
         
         return 1.0;
@@ -439,7 +439,12 @@ rune.tween.Tween.prototype.m_createTweenValues = function(args) {
     var values = [];
     if (args != null && this.m_target != null) {
         for (var arg in args) {
-            if (Object.prototype.hasOwnProperty.call(args, arg) && arg in this.m_target) {
+            if (
+                Object.prototype.hasOwnProperty.call(args, arg) &&
+                arg in this.m_target &&
+                this.m_isValidTweenValue(this.m_target[arg]) &&
+                this.m_isValidTweenValue(args[arg])
+            ) {
                 var value = new rune.tween.TweenValue(
                     arg,
                     this.m_target[arg],
@@ -452,6 +457,18 @@ rune.tween.Tween.prototype.m_createTweenValues = function(args) {
     }
 
     return values;
+};
+
+/**
+ * Validates a value to be interpolated.
+ *
+ * @param {*} value Value to validate.
+ *
+ * @returns {boolean}
+ * @private
+ */
+rune.tween.Tween.prototype.m_isValidTweenValue = function(value) {
+    return typeof value === "number" && isFinite(value);
 };
 
 /**

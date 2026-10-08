@@ -166,9 +166,11 @@ rune.tween.Tweens.prototype.m_updateTweens = function(step) {
     if (this.m_tweens == null) return;
 
     var i = this.m_tweens.length;
+    var tween = null;
     while (i--) {
-        if (this.m_tweens[i].update(step)) {
-            this.m_disposeTween(this.m_tweens[i]);
+        tween = this.m_tweens[i];
+        if (tween instanceof rune.tween.Tween && tween.update(step)) {
+            this.m_disposeTween(tween);
         }
     }
 };

@@ -633,7 +633,7 @@ rune.tilemap.TilemapDataLayer.prototype.hitTestAndSeparateObject = function(obj,
     for (var i = 0; i < tiles.length; i++) {
         tile = this.getTileAt(tiles[i]);
         if (tile['allowCollisions'] > 0) {
-            if (obj.hitTestAndSeparateObject(tile, callback, scope)) {
+            if (this.m_hitTestAndSeparateTile(obj, tile, callback, scope)) {
                 result = true;
             }
         }
@@ -1070,6 +1070,65 @@ rune.tilemap.TilemapDataLayer.prototype.m_getOriginX = function() {
  */
 rune.tilemap.TilemapDataLayer.prototype.m_getOriginY = function() {
     return this.m_owner != null ? this.m_owner['y'] : 0;
+};
+
+/**
+ * Evaluates and resolves collision against a tile object.
+ *
+ * @param {rune.display.InteractiveObject} obj The object to evaluate.
+ * @param {rune.tilemap.Tile} tile Tile object.
+ * @param {Function} [callback] Executed for each detected collision.
+ * @param {Object} [scope] Scope of execution for the callback method.
+ *
+ * @returns {boolean}
+ * @private
+ */
+rune.tilemap.TilemapDataLayer.prototype.m_hitTestAndSeparateTile = function(obj, tile, callback, scope) {
+    if (obj.hitTestObject(tile)) {
+        if (this.m_separateTile(obj, tile)) {
+            if (typeof callback === "function") {
+                callback.call(scope || obj, obj, tile);
+            }
+        }
+
+        return true;
+    }
+
+    return false;
+};
+
+/**
+ * Separates an object from a tile, using the object's dominant movement axis.
+ *
+ * @param {rune.display.InteractiveObject} obj The object to separate.
+ * @param {rune.tilemap.Tile} tile Tile object.
+ *
+ * @returns {boolean}
+ * @private
+ */
+rune.tilemap.TilemapDataLayer.prototype.m_separateTile = function(obj, tile) {
+    if (this.m_shouldSeparateYFirst(obj)) {
+        if (rune.physics.Space.separateY(obj, tile)) return true;
+        return obj.hitTestObject(tile) && rune.physics.Space.separateX(obj, tile);
+    }
+
+    if (rune.physics.Space.separateX(obj, tile)) return true;
+    return obj.hitTestObject(tile) && rune.physics.Space.separateY(obj, tile);
+};
+
+/**
+ * Evaluates whether tile separation should prioritize the y axis.
+ *
+ * @param {rune.display.InteractiveObject} obj The object to evaluate.
+ *
+ * @returns {boolean}
+ * @private
+ */
+rune.tilemap.TilemapDataLayer.prototype.m_shouldSeparateYFirst = function(obj) {
+    var dx = Math.abs(obj['hitbox']['x'] - obj['hitbox']['previousX']);
+    var dy = Math.abs(obj['hitbox']['y'] - obj['hitbox']['previousY']);
+
+    return dy >= dx;
 };
 
 /**

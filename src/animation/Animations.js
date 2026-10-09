@@ -222,6 +222,11 @@ rune.animation.Animations.prototype.gotoAndPlay = function(name, frame) {
     var animation = this.find(name);
     
     if (animation != null) {
+        if (this.m_animation == animation && frame == null) {
+            this.m_animation.play();
+            return;
+        }
+        
         this.m_animation = animation;
         this.m_animation.gotoAndPlay(frame);
     }

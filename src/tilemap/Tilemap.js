@@ -23,6 +23,14 @@ rune.tilemap.Tilemap = function() {
     //--------------------------------------------------------------------------
     // Private properties
     //--------------------------------------------------------------------------
+
+    /**
+     * Reference to the current map's source JSON data.
+     *
+     * @type {Object}
+     * @private
+     */
+    this.m_data = null;
     
     /**
      * The back buffer.
@@ -375,6 +383,7 @@ Object.defineProperty(rune.tilemap.Tilemap.prototype, "application", {
  * @returns {undefined}
  */
 rune.tilemap.Tilemap.prototype.clear = function() {
+    this.m_data          = null;
     this.m_name          = "";
     this.m_texture       = "";
     this.m_heightInTiles = 0;
@@ -405,6 +414,35 @@ rune.tilemap.Tilemap.prototype.getBlock = function(v) {
         this,
         v
     );
+};
+
+/**
+ * Reads an own, top-level property from the loaded map's source JSON data.
+ * Nested properties are accessed through the returned object, not through
+ * path syntax. Objects and arrays are returned as independent deep copies.
+ * Changes to the running tilemap are not reflected in the source data.
+ *
+ * The default value is returned unchanged only if the property is missing,
+ * including before loading a map and after clear(). Values such as false,
+ * zero, an empty string and null are preserved. Without a default value,
+ * a missing property returns undefined.
+ *
+ * @param {string} name Property name.
+ * @param {*} [defaultValue] Value to return if the property is missing.
+ *
+ * @returns {*} Property value, a deep copy, or the supplied default value.
+ */
+rune.tilemap.Tilemap.prototype.getProperty = function(name, defaultValue) {
+    if (this.m_data != null && Object.prototype.hasOwnProperty.call(this.m_data, name)) {
+        var value = this.m_data[name];
+        if (value != null && typeof value === "object") {
+            return JSON.parse(JSON.stringify(value));
+        }
+
+        return value;
+    }
+
+    return defaultValue;
 };
 
 /**
@@ -481,6 +519,7 @@ rune.tilemap.Tilemap.prototype.load = function(name) {
     if (map) {
         map = map['data'];
         this.m_disposeBuffers();
+        this.m_data          = map;
         
         this.m_name          = map['name']       || name;
         this.m_texture       = map['texture']    || "";

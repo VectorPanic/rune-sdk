@@ -59,6 +59,7 @@ npx google-closure-compiler \
 --js "./../../src/animation/Animations.js" \
 --js "./../../src/display/Quadtree.js" \
 --js "./../../src/display/DisplayGroup.js" \
+--js "./../../src/display/DisplayPool.js" \
 --js "./../../src/display/DisplayGroups.js" \
 --js "./../../src/display/Frame.js" \
 --js "./../../src/display/Hitbox.js" \

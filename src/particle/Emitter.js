@@ -228,6 +228,33 @@ rune.particle.Emitter.prototype.getParticles = function(active, list) {
 };
 
 /**
+ * Tests and separates emitted, active particles against a tilemap layer.
+ * Uses the particle register directly without creating a temporary list.
+ * Call after particle movement has been updated. The emitter's own hitbox
+ * is not tested, and particles returned to the pool are skipped.
+ *
+ * @param {rune.tilemap.TilemapLayer} layer Tilemap layer to evaluate.
+ * @param {Function} [callback] Receives the particle and tile after separation.
+ * @param {Object} [scope] Callback scope; defaults to the colliding particle.
+ *
+ * @returns {boolean} True if any particle collision was detected.
+ */
+rune.particle.Emitter.prototype.hitTestAndSeparateParticlesTilemapLayer = function(layer, callback, scope) {
+    if (layer == null) return false;
+
+    var result = false;
+    for (var i = 0; i < this.m_particles.length; i++) {
+        var particle = this.m_particles[i];
+        if (particle['parent'] != null && particle['active'] == true) {
+            if (particle.hitTestAndSeparateTilemapLayer(layer, callback, scope)) {
+                result = true;
+            }
+        }
+    }
+    return result;
+};
+
+/**
  * Emits new particles at a fixed time interval.
  *
  * @param {number} amount The number of particles to be emitted.

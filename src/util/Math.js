@@ -72,15 +72,15 @@ rune.util.Math.avg = function(n) {
 };
 
 /**
- * Returns the smallest integer greater than or equal to n.
+ * Returns the smallest integer greater than or equal to n. Uses native
+ * rounding without converting the value to a signed 32-bit integer.
  *
  * @param {number} n A number.
  * 
  * @return {number} The smallest integer greater than or equal to the given number.
  */
 rune.util.Math.ceil = function(n) {
-    var t = ~~n;
-    return (t === n) ? n : (n > 0) ? (t + 1) : (t - 1);
+    return Math.ceil(n);
 };
 
 /**
@@ -193,14 +193,15 @@ rune.util.Math.distance = function(x1, y1, x2, y2) {
 };
 
 /**
- * Returns the largest integer less than or equal to n.
+ * Returns the largest integer less than or equal to n. Uses native rounding
+ * without converting the value to a signed 32-bit integer.
  *
  * @param {number} n A number.
  * 
  * @return {number} A number representing the largest integer less than or equal to the specified number.
  */
 rune.util.Math.floor = function(n) {
-    return ~~n;
+    return Math.floor(n);
 };
 
 /**

@@ -17,7 +17,9 @@
  * The BitmapField class represents a bitmap-based text field. Each character 
  * in the text field is retrieved from a bitmap-based texture file that is 
  * passed as an optional parameter to the constructor. If no texture file is 
- * specified, {@link rune.text.BitmapFormat.FONT_SMALL} is used.
+ * specified, {@link rune.text.BitmapFormat.FONT_SMALL} is used. Each field has
+ * its own Texture wrapper so colors can be replaced without changing other
+ * fields that use the same font resource.
  */
 rune.text.BitmapField = function(text, resource) {
 	
@@ -40,6 +42,14 @@ rune.text.BitmapField = function(text, resource) {
 	 * @private
 	 */
 	this.m_format = new rune.text.BitmapFormat(resource);
+
+	/**
+	 * The field's font texture. Source pixels remain shared until modified.
+	 *
+	 * @type {rune.display.Texture}
+	 * @private
+	 */
+	this.m_texture = new rune.display.Texture(this, this.m_format['texture']);
 	
 	/**
 	 * A number representing the amount of space that is uniformly distributed 
@@ -292,6 +302,26 @@ Object.defineProperty(rune.text.BitmapField.prototype, "textWidth", {
 	}
 });
 
+/**
+ * The font texture used to render this field. Calling replaceColor() creates
+ * unique pixel data for this field and invalidates its render cache. Other
+ * fields and the original font resource remain unchanged.
+ *
+ * @member {rune.display.Texture} texture
+ * @memberof rune.text.BitmapField
+ * @instance
+ * @readonly
+ */
+Object.defineProperty(rune.text.BitmapField.prototype, "texture", {
+	/**
+	 * @this rune.text.BitmapField
+	 * @ignore
+	 */
+	get : function() {
+		return this.m_texture;
+	}
+});
+
 //------------------------------------------------------------------------------
 // Override public prototype methods (ENGINE)
 //------------------------------------------------------------------------------
@@ -314,6 +344,7 @@ rune.text.BitmapField.prototype.render = function() {
  * @inheritDoc
  */
 rune.text.BitmapField.prototype.dispose = function() {
+	this.m_disposeTexture();
 	this.m_disposeFormat();
 	rune.display.DisplayObject.prototype.dispose.call(this);
 };
@@ -374,7 +405,7 @@ rune.text.BitmapField.prototype.m_renderCharacter = function(charCode, x, y) {
 	var rect = this.m_format.getCharRect(charCode);
 	if (rect instanceof rune.geom.Rectangle) {
 		this.m_canvas.drawImage(
-			this.m_format['texture'],
+			this.m_texture['data'],
 			x,
 			y,
 			rect.width,
@@ -384,6 +415,21 @@ rune.text.BitmapField.prototype.m_renderCharacter = function(charCode, x, y) {
 			rect.width,
 			rect.height
 		);
+	}
+};
+
+/**
+ * Disposes the field's texture wrapper and any unique pixel buffer.
+ * The shared font resource is retained by the resource collection.
+ *
+ * @return {undefined}
+ * @private
+ * @suppress {accessControls}
+ */
+rune.text.BitmapField.prototype.m_disposeTexture = function() {
+	if (this.m_texture != null) {
+		this.m_texture.dispose();
+		this.m_texture = null;
 	}
 };
 

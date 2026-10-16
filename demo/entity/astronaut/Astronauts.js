@@ -80,7 +80,8 @@ Object.defineProperty(demo.entity.Astronauts.prototype, "debug", {
 //------------------------------------------------------------------------------
 
 /**
- * Creates a new astronaut and adds it to the group.
+ * Creates a new astronaut and adds it to the group. Registers it as a camera
+ * target when the scene's automatic zoom is enabled.
  *
  * @returns {undefined}
  */
@@ -94,16 +95,22 @@ demo.entity.Astronauts.prototype.add = function() {
         astronaut.flicker.start();
         
     this.addMember(astronaut);
+    var camera = this.cameras.getCameraAt(0);
+    if (camera.autoZoom.enabled) {
+        camera.targets.add(astronaut);
+    }
 };
 
 /**
- * Removes the oldest astronaut from the group.
+ * Removes the oldest astronaut from the group and the camera's targets.
  *
  * @returns {undefined}
  */
 demo.entity.Astronauts.prototype.remove = function() {
     if (this.numMembers > 0) {
-        this.removeMember(this.getMemberAt(0), true);
+        var astronaut = this.getMemberAt(0);
+        this.cameras.getCameraAt(0).targets.remove(astronaut);
+        this.removeMember(astronaut, true);
     }
 };
 
@@ -154,7 +161,8 @@ demo.entity.Astronauts.prototype.m_updateInputs = function(step) {
 };
 
 /**
- * Make sure all astronauts stay within the camera's field of view.
+ * Wraps astronauts at the viewport edges during manual camera control.
+ * Automatic framing follows their world positions without wrapping them.
  *
  * @param {number} step Current time step.
  *
@@ -162,6 +170,9 @@ demo.entity.Astronauts.prototype.m_updateInputs = function(step) {
  */
 demo.entity.Astronauts.prototype.m_updateBounds = function(step) {
     var camera = this.cameras.getCameraAt(0);
+    if (camera.autoZoom.enabled) {
+        return;
+    }
     for (var i = 0; i < this.container.numChildren; i++) {
         var astronaut = this.container.getChildAt(i);
         

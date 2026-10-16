@@ -106,6 +106,7 @@ npx google-closure-compiler \
 --js "./../../src/console/ConsoleManager.js" \
 --js "./../../src/camera/CameraViewport.js" \
 --js "./../../src/camera/CameraTargets.js" \
+--js "./../../src/camera/CameraAutoZoom.js" \
 --js "./../../src/camera/CameraTint.js" \
 --js "./../../src/camera/CameraTintTween.js" \
 --js "./../../src/camera/CameraFlash.js" \

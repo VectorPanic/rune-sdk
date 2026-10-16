@@ -117,7 +117,8 @@ Object.defineProperty(rune.camera.CameraViewport.prototype, "height", {
 
 /**
  * Current zoom value, where 1.0 is the default, ie. rendered on a 100% 
- * scale. The value can vary between 0.25 (min) and 4.0 (max).
+ * scale. The value can vary between 0.25 (min) and 4.0 (max). Buffer dimensions
+ * are rounded up to whole pixels. Unchanged pixel dimensions are not resized.
  *
  * @member {number} zoom
  * @memberof rune.camera.CameraViewport
@@ -138,10 +139,15 @@ Object.defineProperty(rune.camera.CameraViewport.prototype, "zoom", {
      */
     set : function(value) {
         this.m_zoom = rune.util.Math.clamp(value, 0.25, 4.0);
-        this.m_camera['canvas'].resize(
-            this.m_camera['width']  / this.m_zoom,
-            this.m_camera['height'] / this.m_zoom
-        );
+        var canvas = this.m_camera['canvas'];
+        var width = Math.max(1, Math.ceil(this.m_camera['width'] / this.m_zoom));
+        var height = Math.max(1, Math.ceil(this.m_camera['height'] / this.m_zoom));
+        if (canvas['width'] !== width || canvas['height'] !== height) {
+            var smoothing = canvas['smoothing'];
+            canvas.resize(width, height);
+            // Resizing clears context state; preserve the interpolation setting.
+            canvas['smoothing'] = smoothing;
+        }
     }
 });
 
@@ -157,9 +163,11 @@ Object.defineProperty(rune.camera.CameraViewport.prototype, "zoom", {
  * @returns {number} The current zoom value after clamping.
  */
 rune.camera.CameraViewport.prototype.zoomTo = function(value) {
-    var center = this['center'];
+    var centerX = this['x'] + this['width'] / 2;
+    var centerY = this['y'] + this['height'] / 2;
     this['zoom'] = value;
-    this['center'] = center;
+    this['x'] = centerX - this['width'] / 2;
+    this['y'] = centerY - this['height'] / 2;
 
     return this.m_zoom;
 };

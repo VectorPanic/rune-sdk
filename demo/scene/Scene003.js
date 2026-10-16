@@ -54,6 +54,7 @@ demo.scene.Scene003.prototype.constructor = demo.scene.Scene003;
 demo.scene.Scene003.prototype.init = function() {
     rune.scene.Scene.prototype.init.call(this);
     this.m_initAstronauts();
+    this.m_initAutoZoom();
 };
 
 /**
@@ -62,6 +63,11 @@ demo.scene.Scene003.prototype.init = function() {
 demo.scene.Scene003.prototype.update = function(step) {
     rune.scene.Scene.prototype.update.call(this, step);
     var camera = this.cameras.getCameraAt(0);
+
+    // TOGGLE AUTOMATIC CAMERA ZOOM
+    if (this.keyboard.justPressed("A")) {
+        this.m_toggleAutoZoom();
+    }
     
     // CAMERA MOVEMENT
     if (this.keyboard.pressed("RIGHT")) {
@@ -81,17 +87,19 @@ demo.scene.Scene003.prototype.update = function(step) {
     }
     
     // CAMERA ZOOM OUT
-    if (this.keyboard.pressed("X")) {
+    if (!camera.autoZoom.enabled && this.keyboard.pressed("X")) {
         camera.viewport.zoomBy(-0.01);
     }
     
     // CAMERA ZOOM IN
-    if (this.keyboard.pressed("Z")) {
+    if (!camera.autoZoom.enabled && this.keyboard.pressed("Z")) {
         camera.viewport.zoomBy(0.01);
     }
     
     // CAMERA RESET
     if (this.keyboard.pressed("R")) {
+        camera.autoZoom.enabled = false;
+        camera.targets.clear();
         camera.viewport.zoom = 1;
         camera.viewport.x = 0;
         camera.viewport.y = 0;
@@ -116,6 +124,39 @@ demo.scene.Scene003.prototype.dispose = function() {
 //------------------------------------------------------------------------------
 
 /**
+ * Configures automatic framing without enabling it. Press A to toggle it;
+ * manual zoom remains available while automatic zoom is disabled.
+ *
+ * @returns {undefined}
+ * @private
+ */
+demo.scene.Scene003.prototype.m_initAutoZoom = function() {
+    var autoZoom = this.cameras.getCameraAt(0).autoZoom;
+    autoZoom.min = 0.5;
+    autoZoom.max = 2.0;
+    autoZoom.padding = 32;
+    autoZoom.smoothing = 250;
+};
+
+/**
+ * Toggles automatic zoom for all current astronauts. Removing the targets
+ * when disabled restores manual camera movement and retains the current view.
+ *
+ * @returns {undefined}
+ * @private
+ */
+demo.scene.Scene003.prototype.m_toggleAutoZoom = function() {
+    var camera = this.cameras.getCameraAt(0);
+    camera.autoZoom.enabled = !camera.autoZoom.enabled;
+    camera.targets.clear();
+    if (camera.autoZoom.enabled) {
+        this.m_astronauts.forEachMember(function(astronaut) {
+            camera.targets.add(astronaut);
+        }, this);
+    }
+};
+
+/**
  * Creates, and adds the group of astronauts.
  *
  * @returns {undefined}
@@ -138,6 +179,7 @@ demo.scene.Scene003.prototype.m_initAstronauts = function() {
  */
 demo.scene.Scene003.prototype.m_disposeAstronauts = function() {
     if (this.m_astronauts instanceof demo.entity.Astronauts) {
+        this.cameras.getCameraAt(0).targets.clear();
         this.groups.remove(this.m_astronauts, true);
         this.m_astronauts = null;
     }

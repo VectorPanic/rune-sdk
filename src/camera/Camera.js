@@ -50,6 +50,15 @@ rune.camera.Camera = function(x, y, width, height) {
     //--------------------------------------------------------------------------
     // Protected properties
     //--------------------------------------------------------------------------
+
+    /**
+     * Optional automatic framing and zoom for the registered targets.
+     *
+     * @type {rune.camera.CameraAutoZoom}
+     * @protected
+     * @ignore
+     */
+    this.m_autoZoom = null;
     
     /**
      * Subsystem for fading the camera in and out.
@@ -145,6 +154,24 @@ rune.camera.Camera.prototype.constructor = rune.camera.Camera;
 //------------------------------------------------------------------------------
 // Public getter and setter methods
 //------------------------------------------------------------------------------
+
+/**
+ * Automatic target framing and zoom configuration. Disabled by default.
+ *
+ * @member {rune.camera.CameraAutoZoom} autoZoom
+ * @memberof rune.camera.Camera
+ * @instance
+ * @readonly
+ */
+Object.defineProperty(rune.camera.Camera.prototype, "autoZoom", {
+    /**
+     * @this rune.camera.Camera
+     * @ignore
+     */
+    get : function() {
+        return this.m_autoZoom;
+    }
+});
 
 /**
  * Subsystem for fading the camera in and out.
@@ -331,6 +358,7 @@ rune.camera.Camera.prototype.update = function(step) {
     this.m_updateShake(step);
     this.m_updateFlash(step);
     this.m_updateFade(step);
+    this.m_updateAutoZoom(step);
     this.m_updateTargets(step);
     this.m_updateBoundaries(step);
     this.m_updateViewportOffset();
@@ -358,6 +386,7 @@ rune.camera.Camera.prototype.render = function() {
  * @inheritDoc
  */
 rune.camera.Camera.prototype.dispose = function() {
+    this.m_disposeAutoZoom();
     this.m_disposeTargets();
     this.m_disposeFade();
     this.m_disposeFlash();
@@ -402,6 +431,7 @@ rune.camera.Camera.prototype.m_construct = function() {
     this.m_constructFlash();
     this.m_constructFade();
     this.m_constructTargets();
+    this.m_constructAutoZoom();
 };
 
 /**
@@ -509,6 +539,30 @@ rune.camera.Camera.prototype.m_constructTargets = function() {
 };
 
 /**
+ * Creates the camera's automatic zoom controller.
+ *
+ * @returns {undefined}
+ * @protected
+ * @ignore
+ */
+rune.camera.Camera.prototype.m_constructAutoZoom = function() {
+    this.m_disposeAutoZoom();
+    this.m_autoZoom = new rune.camera.CameraAutoZoom(this);
+};
+
+/**
+ * Updates automatic zoom and framing before following the targets.
+ *
+ * @param {number} step Elapsed milliseconds.
+ * @returns {undefined}
+ * @protected
+ * @ignore
+ */
+rune.camera.Camera.prototype.m_updateAutoZoom = function(step) {
+    if (this.m_autoZoom != null) this.m_autoZoom.update(step);
+};
+
+/**
  * Updates the shake effects subsystem.
  *
  * @param {number} step Current time step.
@@ -583,8 +637,10 @@ rune.camera.Camera.prototype.m_updateFade = function(step) {
  */
 rune.camera.Camera.prototype.m_updateTargets = function(step) {
     if (this.m_targets['length'] > 0) {
-        var tx = (this['targets'].position.x - (this.m_viewport.width  >> 1));
-        var ty = (this['targets'].position.y - (this.m_viewport.height >> 1));
+        var automatic = this.m_autoZoom != null && this.m_autoZoom.enabled;
+        var position = automatic ? this.m_autoZoom['position'] : this.m_targets['position'];
+        var tx = position['x'] - (automatic ? this.m_viewport['width'] / 2 : this.m_viewport['width'] >> 1);
+        var ty = position['y'] - (automatic ? this.m_viewport['height'] / 2 : this.m_viewport['height'] >> 1);
         
         this.m_viewport.x += (tx - this.m_viewport.x) * this.m_lag.x;
         this.m_viewport.y += (ty - this.m_viewport.y) * this.m_lag.y;
@@ -592,7 +648,8 @@ rune.camera.Camera.prototype.m_updateTargets = function(step) {
 };
 
 /**
- * Updates the camera position so that it is within limits.
+ * Updates the camera position so that it is within limits. If zoom makes the
+ * viewport larger than the limits, centers it on that axis instead.
  *
  * @param {number} step Current time step.
  *
@@ -602,20 +659,30 @@ rune.camera.Camera.prototype.m_updateTargets = function(step) {
  */
 rune.camera.Camera.prototype.m_updateBoundaries = function(step) {
     if (this.bounderies != null) {
-        if (this.m_viewport['left'] < this.bounderies['left']) {
-            this.m_viewport['left'] = this.bounderies['left'];
+        if (this.m_viewport['width'] > this.bounderies['width']) {
+            this.m_viewport['x'] = this.bounderies['x'] +
+                (this.bounderies['width'] - this.m_viewport['width']) / 2;
+        } else {
+            if (this.m_viewport['left'] < this.bounderies['left']) {
+                this.m_viewport['left'] = this.bounderies['left'];
+            }
+
+            if (this.m_viewport['right'] > this.bounderies['right']) {
+                this.m_viewport['right'] = this.bounderies['right'];
+            }
         }
 
-        if (this.m_viewport['right'] > this.bounderies['right']) {
-            this.m_viewport['right'] = this.bounderies['right'];
-        }
+        if (this.m_viewport['height'] > this.bounderies['height']) {
+            this.m_viewport['y'] = this.bounderies['y'] +
+                (this.bounderies['height'] - this.m_viewport['height']) / 2;
+        } else {
+            if (this.m_viewport['top'] < this.bounderies['top']) {
+                this.m_viewport['top'] = this.bounderies['top'];
+            }
 
-        if (this.m_viewport['top'] < this.bounderies['top']) {
-            this.m_viewport['top'] = this.bounderies['top'];
-        }
-
-        if (this.m_viewport['bottom'] > this.bounderies['bottom']) {
-            this.m_viewport['bottom'] = this.bounderies['bottom'];
+            if (this.m_viewport['bottom'] > this.bounderies['bottom']) {
+                this.m_viewport['bottom'] = this.bounderies['bottom'];
+            }
         }
     }
 };
@@ -785,6 +852,20 @@ rune.camera.Camera.prototype.m_disposeTargets = function() {
     if (this.m_targets instanceof rune.camera.CameraTargets) {
         this.m_targets.dispose();
         this.m_targets = null;
+    }
+};
+
+/**
+ * Disposes the automatic zoom controller and releases its camera reference.
+ *
+ * @returns {undefined}
+ * @protected
+ * @ignore
+ */
+rune.camera.Camera.prototype.m_disposeAutoZoom = function() {
+    if (this.m_autoZoom != null) {
+        this.m_autoZoom.dispose();
+        this.m_autoZoom = null;
     }
 };
 

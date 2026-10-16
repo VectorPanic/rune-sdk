@@ -97,6 +97,37 @@ Object.defineProperty(rune.camera.CameraTargets.prototype, "position", {
 //------------------------------------------------------------------------------
 
 /**
+ * Calculates global axis-aligned bounds around all targets, including their
+ * scaled width and height. Nested targets use their global positions. Empty
+ * collections return an empty rectangle at the origin. Rotation and parent
+ * scaling follow the same limitations as DisplayObject.getGlobalRect().
+ *
+ * @param {rune.geom.Rectangle} [output] Optional rectangle to store the result in.
+ * @returns {rune.geom.Rectangle} Bounds of the target collection.
+ */
+rune.camera.CameraTargets.prototype.getBounds = function(output) {
+    output = output || new rune.geom.Rectangle();
+    var left = Infinity;
+    var top = Infinity;
+    var right = -Infinity;
+    var bottom = -Infinity;
+    for (var i = 0; i < this.m_targets.length; i++) {
+        var target = this.m_targets[i];
+        var x = target['globalX'];
+        var y = target['globalY'];
+        left = Math.min(left, x, x + target['width']);
+        top = Math.min(top, y, y + target['height']);
+        right = Math.max(right, x, x + target['width']);
+        bottom = Math.max(bottom, y, y + target['height']);
+    }
+    output['x'] = this.m_targets.length > 0 ? left : 0;
+    output['y'] = this.m_targets.length > 0 ? top : 0;
+    output['width'] = this.m_targets.length > 0 ? right - left : 0;
+    output['height'] = this.m_targets.length > 0 ? bottom - top : 0;
+    return output;
+};
+
+/**
  * Add a target to follow.
  * 
  * @param {rune.display.DisplayObject} target Target to follow.

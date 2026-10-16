@@ -257,6 +257,9 @@ rune.physics.Space.m_calcDynamicOverlap = function(obj1, obj2, axes, obj1delta, 
 
 /**
  * Calculates overlap for objects with no relative movement along an axis.
+ * Horizontal separation requires vertical overlap at the previous positions,
+ * matching the horizontal swept test used for moving objects. This prevents
+ * new floor or ceiling contacts from being resolved as sideways collisions.
  *
  * @param {rune.display.InteractiveObject} obj1 The first object.
  * @param {rune.display.InteractiveObject} obj2 The second object.
@@ -268,6 +271,15 @@ rune.physics.Space.m_calcDynamicOverlap = function(obj1, obj2, axes, obj1delta, 
 rune.physics.Space.m_calcStaticOverlap = function(obj1, obj2, axes) {
     if (!rune.physics.Space.m_hitboxesOverlap(obj1, obj2)) {
         return 0;
+    }
+
+    if (axes.axis == "x") {
+        var hitbox1 = obj1['hitbox'];
+        var hitbox2 = obj2['hitbox'];
+        if (hitbox1['previousY'] + hitbox1['height'] <= hitbox2['previousY'] ||
+            hitbox1['previousY'] >= hitbox2['previousY'] + hitbox2['height']) {
+            return 0;
+        }
     }
     
     var overlapHigh = rune.physics.Space.m_getDirectionalOverlap(obj1, obj2, axes, true);

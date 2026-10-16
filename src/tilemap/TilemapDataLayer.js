@@ -618,7 +618,9 @@ rune.tilemap.TilemapDataLayer.prototype.hitTestAndSeparateContentOf = function(a
 };
 
 /**
- * Evaluates and resolves collision against an interactive object.
+ * Resolves horizontal contacts against all candidate tiles before resolving
+ * vertical contacts. Candidates are recalculated after horizontal separation
+ * so internal wall seams cannot act as floors or ceilings.
  *
  * @param {rune.display.InteractiveObject} obj The object to evaluate.
  * @param {Function} [callback] Executed for each detected collision.
@@ -628,13 +630,15 @@ rune.tilemap.TilemapDataLayer.prototype.hitTestAndSeparateContentOf = function(a
  */
 rune.tilemap.TilemapDataLayer.prototype.hitTestAndSeparateObject = function(obj, callback, scope) {
     var result = false;
-    var tile = null;
-    var tiles = this.getTileIndexesInRect(obj['hitbox']);
-    for (var i = 0; i < tiles.length; i++) {
-        tile = this.getTileAt(tiles[i]);
-        if (tile['allowCollisions'] > 0) {
-            if (this.m_hitTestAndSeparateTile(obj, tile, callback, scope)) {
-                result = true;
+    var axes = ["x", "y"];
+    for (var axis = 0; axis < axes.length; axis++) {
+        var tiles = this.getTileIndexesInRect(obj['hitbox']);
+        for (var i = 0; i < tiles.length; i++) {
+            var tile = this.getTileAt(tiles[i]);
+            if (tile['allowCollisions'] > 0) {
+                if (this.m_hitTestAndSeparateTile(obj, tile, axes[axis], callback, scope)) {
+                    result = true;
+                }
             }
         }
     }
@@ -1077,15 +1081,16 @@ rune.tilemap.TilemapDataLayer.prototype.m_getOriginY = function() {
  *
  * @param {rune.display.InteractiveObject} obj The object to evaluate.
  * @param {rune.tilemap.Tile} tile Tile object.
+ * @param {string} axis The movement axis to resolve, either "x" or "y".
  * @param {Function} [callback] Executed for each detected collision.
  * @param {Object} [scope] Scope of execution for the callback method.
  *
  * @returns {boolean}
  * @private
  */
-rune.tilemap.TilemapDataLayer.prototype.m_hitTestAndSeparateTile = function(obj, tile, callback, scope) {
+rune.tilemap.TilemapDataLayer.prototype.m_hitTestAndSeparateTile = function(obj, tile, axis, callback, scope) {
     if (obj.hitTestObject(tile)) {
-        if (this.m_separateTile(obj, tile)) {
+        if (this.m_separateTile(obj, tile, axis)) {
             if (typeof callback === "function") {
                 callback.call(scope || obj, obj, tile);
             }
@@ -1098,37 +1103,19 @@ rune.tilemap.TilemapDataLayer.prototype.m_hitTestAndSeparateTile = function(obj,
 };
 
 /**
- * Separates an object from a tile, using the object's dominant movement axis.
+ * Separates one tile contact along the requested axis. The caller completes
+ * the horizontal pass over the layer before starting vertical separation.
  *
  * @param {rune.display.InteractiveObject} obj The object to separate.
  * @param {rune.tilemap.Tile} tile Tile object.
+ * @param {string} axis The movement axis to resolve, either "x" or "y".
  *
  * @returns {boolean}
  * @private
  */
-rune.tilemap.TilemapDataLayer.prototype.m_separateTile = function(obj, tile) {
-    if (this.m_shouldSeparateYFirst(obj)) {
-        if (rune.physics.Space.separateY(obj, tile)) return true;
-        return obj.hitTestObject(tile) && rune.physics.Space.separateX(obj, tile);
-    }
-
-    if (rune.physics.Space.separateX(obj, tile)) return true;
-    return obj.hitTestObject(tile) && rune.physics.Space.separateY(obj, tile);
-};
-
-/**
- * Evaluates whether tile separation should prioritize the y axis.
- *
- * @param {rune.display.InteractiveObject} obj The object to evaluate.
- *
- * @returns {boolean}
- * @private
- */
-rune.tilemap.TilemapDataLayer.prototype.m_shouldSeparateYFirst = function(obj) {
-    var dx = Math.abs(obj['hitbox']['x'] - obj['hitbox']['previousX']);
-    var dy = Math.abs(obj['hitbox']['y'] - obj['hitbox']['previousY']);
-
-    return dy >= dx;
+rune.tilemap.TilemapDataLayer.prototype.m_separateTile = function(obj, tile, axis) {
+    return axis == "x" ? rune.physics.Space.separateX(obj, tile) :
+        rune.physics.Space.separateY(obj, tile);
 };
 
 /**

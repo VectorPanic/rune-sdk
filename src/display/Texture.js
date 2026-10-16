@@ -17,7 +17,8 @@
  * Represents a 24- or 32-bit bitmap texture. A texture can be "shared" or 
  * "unique". A shared texture reads its bitmap data from the resource library 
  * and is thus read-only. A unique texture creates its own bitmap data and thus 
- * allocates more memory, but is fully writable.
+ * allocates more memory, but is fully writable. Calling reset() discards unique
+ * pixel data and restores the original shared bitmap resource.
  */
 rune.display.Texture = function(graphic, resource) {
 	
@@ -165,6 +166,24 @@ rune.display.Texture.prototype.replaceColor = function(c1, c2) {
 	}
 	
 	this.m_canvas['context'].putImageData(image, 0, 0);
+	if (this.m_graphic != null) {
+		this.m_graphic.breakCache();
+	}
+};
+
+/**
+ * Restores the original shared bitmap and frees the unique pixel buffer.
+ * The owning display object is marked for redraw so the original image is
+ * rendered again. The resource and owner references are retained, allowing
+ * subsequent color replacements to create a new unique buffer.
+ * Calling reset() on a shared or disposed texture has no effect.
+ *
+ * @return {undefined}
+ */
+rune.display.Texture.prototype.reset = function() {
+	if (this.m_canvas == null) return;
+
+	this.m_disposeCanvas();
 	if (this.m_graphic != null) {
 		this.m_graphic.breakCache();
 	}

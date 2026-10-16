@@ -125,6 +125,7 @@ npx google-closure-compiler \
 --js "./../../src/ui/menu/VTMenuPointer.js" \
 --js "./../../src/ui/menu/VTMenu.js" \
 --js "./../../src/media/sound/Sound.js" \
+--js "./../../src/media/sound/SoundEcho.js" \
 --js "./../../src/media/sound/SoundChannel.js" \
 --js "./../../src/media/sound/Sounds.js" \
 --js "./../../src/data/highscore/Highscores.js" \

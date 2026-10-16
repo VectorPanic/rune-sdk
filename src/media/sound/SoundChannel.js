@@ -44,6 +44,23 @@ rune.media.SoundChannel = function(shared) {
     this.m_gain = null;
 
     /**
+     * Stable channel input before volume control. Reuses the stereo panner
+     * when available, otherwise a unity-gain node provides the same routing.
+     *
+     * @type {AudioNode}
+     * @private
+     */
+    this.m_input = null;
+
+    /**
+     * Optional echo controller, created when first requested.
+     *
+     * @type {rune.media.SoundEcho}
+     * @private
+     */
+    this.m_echo = null;
+
+    /**
      * create stereo panner
      *
      * @type {StereoPannerNode}
@@ -96,6 +113,31 @@ rune.media.SoundChannel = function(shared) {
 //------------------------------------------------------------------------------
 // Public prototype getter and setter methods
 //------------------------------------------------------------------------------
+
+/**
+ * Echo configuration for this channel. The controller is created on first
+ * access; its audio nodes are allocated only when enabled. Echo is disabled
+ * by default and both direct and delayed audio use the channel's volume.
+ *
+ * @member {rune.media.SoundEcho} echo
+ * @memberof rune.media.SoundChannel
+ * @instance
+ * @readonly
+ * @throws {Error} If the channel is disposed.
+ */
+Object.defineProperty(rune.media.SoundChannel.prototype, "echo", {
+    /**
+     * @this rune.media.SoundChannel
+     * @ignore
+     */
+    get : function() {
+        if (this.m_context == null) throw new Error("SoundChannel is disposed.");
+        if (this.m_echo == null) {
+            this.m_echo = new rune.media.SoundEcho(this.m_context, this.m_input, this.m_gain);
+        }
+        return this.m_echo;
+    }
+});
 
 /**
  * Returns the number of Sound objects registered in the sound channel.
@@ -247,6 +289,7 @@ Object.defineProperty(rune.media.SoundChannel.prototype, "context", {
 /**
  * Clears the current audio channel on Sound objects. This means that ongoing
  * playback of Sound objects is stopped and all object references are destroyed.
+ * Pending echoes are cleared while echo settings and activation are retained.
  *
  * @returns {undefined}
  */
@@ -256,6 +299,7 @@ rune.media.SoundChannel.prototype.clear = function() {
     while (this.m_sounds.length) {
         this.remove(this.m_sounds[0], true);
     }
+    if (this.m_echo != null) this.m_echo.clear();
 };
 
 /**
@@ -305,7 +349,7 @@ rune.media.SoundChannel.prototype.get = function(name, unique) {
     }
 
     var sound = new rune.media.Sound(this, name, unique);
-    sound.connect(this.m_panner || this.m_gain);
+    sound.connect(this.m_input);
     this.m_sounds.push(sound);
 
     return sound;
@@ -388,7 +432,9 @@ rune.media.SoundChannel.prototype.update = function(step) {
  */
 rune.media.SoundChannel.prototype.dispose = function() {
     this.m_disposeTweens();
+    this.m_disposeEcho();
     this.m_disposeSounds();
+    this.m_disposeInput();
     this.m_disposePanner();
     this.m_disposeGain();
     this.m_disposeContext();
@@ -409,6 +455,7 @@ rune.media.SoundChannel.prototype.m_construct = function() {
     this.m_constructContext();
     this.m_constructGain();
     this.m_constructPanner();
+    this.m_constructInput();
     this.m_constructTweens();
 };
 
@@ -463,6 +510,22 @@ rune.media.SoundChannel.prototype.m_constructPanner = function() {
             this.m_panner.connect(this.m_gain);
         }
     } else throw new Error();
+};
+
+/**
+ * Provides a stable input that can feed both the direct path and optional echo.
+ * A panner already supplies this node in contexts supporting stereo panning.
+ *
+ * @returns {undefined}
+ * @private
+ */
+rune.media.SoundChannel.prototype.m_constructInput = function() {
+    this.m_disposeInput();
+    this.m_input = this.m_panner;
+    if (this.m_input == null && this.m_context != null && this.m_gain != null) {
+        this.m_input = this.m_context.createGain();
+        this.m_input.connect(this.m_gain);
+    }
 };
 
 /**
@@ -548,6 +611,32 @@ rune.media.SoundChannel.prototype.m_disposePanner = function() {
     if (this.m_panner != null) {
         this.m_panner.disconnect();
         this.m_panner = null;
+    }
+};
+
+/**
+ * Disposes the echo before its input, output and owning context are released.
+ *
+ * @returns {undefined}
+ * @private
+ */
+rune.media.SoundChannel.prototype.m_disposeEcho = function() {
+    if (this.m_echo != null) {
+        this.m_echo.dispose();
+        this.m_echo = null;
+    }
+};
+
+/**
+ * Releases the channel input. An aliased panner is disposed separately.
+ *
+ * @returns {undefined}
+ * @private
+ */
+rune.media.SoundChannel.prototype.m_disposeInput = function() {
+    if (this.m_input != null) {
+        if (this.m_input !== this.m_panner) this.m_input.disconnect();
+        this.m_input = null;
     }
 };
 

@@ -134,6 +134,36 @@ rune.util.Math.degreesToRadians = function(angle) {
 };
 
 /**
+ * Smoothly approaches a target angle along the shortest rotation path.
+ * Angles are expressed in radians. Smoothing and step are expressed in
+ * milliseconds, making the response independent of the update frequency.
+ *
+ * A lower smoothing value produces a faster response. After one smoothing
+ * interval, approximately 63 percent of the remaining difference is covered.
+ * Smoothing is not a fixed duration; the angle approaches the target gradually.
+ * A smoothing value of zero or less returns the target immediately. Otherwise,
+ * a step of zero or less leaves the current angle unchanged.
+ *
+ * @param {number} current Current angle in radians.
+ * @param {number} target Target angle in radians.
+ * @param {number} smoothing Response time in milliseconds.
+ * @param {number} step Elapsed update time in milliseconds.
+ *
+ * @return {number} The new angle, which may be outside the range of zero to two pi.
+ */
+rune.util.Math.dampAngle = function(current, target, smoothing, step) {
+    if (smoothing <= 0) {
+        return target;
+    }
+    if (step <= 0) {
+        return current;
+    }
+
+    var difference = Math.atan2(Math.sin(target - current), Math.cos(target - current));
+    return current + difference * (1 - Math.exp(-step / smoothing));
+};
+
+/**
  * Calculates the difference between a and b.
  * 
  * @param {number} a A number.

@@ -1048,8 +1048,8 @@ rune.display.InteractiveObject.prototype.moveTo = function(x, y) {
  * @returns {undefined}
  */
 rune.display.InteractiveObject.prototype.applyImpulse = function(x, y) {
-    this.velocity.x += x;
-    this.velocity.y += y;
+    this.m_velocity['x'] += x;
+    this.m_velocity['y'] += y;
 };
 
 //------------------------------------------------------------------------------

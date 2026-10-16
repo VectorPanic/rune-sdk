@@ -276,6 +276,50 @@ Object.defineProperty(rune.camera.Camera.prototype, "viewport", {
 });
 
 //------------------------------------------------------------------------------
+// Public prototype methods (API)
+//------------------------------------------------------------------------------
+
+/**
+ * Converts a stage-local world position into camera-local coordinates.
+ * The result uses the same coordinate system as the camera's children and
+ * includes viewport scrolling and the current shake offset. Camera placement,
+ * page coordinates and CSS scaling are not included. Coordinates are measured
+ * in camera buffer pixels, before viewport zoom scales the rendered camera.
+ *
+ * @param {number} x World x coordinate relative to the stage.
+ * @param {number} y World y coordinate relative to the stage.
+ * @param {rune.geom.Point} [output] Optional point to store the result in.
+ *
+ * @returns {rune.geom.Point} The camera-local position.
+ */
+rune.camera.Camera.prototype.worldToScreen = function(x, y, output) {
+    output = output || new rune.geom.Point();
+    output['x'] = x - this.m_viewport['x'] - this.m_shake['x'];
+    output['y'] = y - this.m_viewport['y'] - this.m_shake['y'];
+    return output;
+};
+
+/**
+ * Converts a camera-local position into stage-local world coordinates.
+ * This is the inverse of worldToScreen and includes viewport scrolling and
+ * the current shake offset. Input uses camera buffer pixels, matching the
+ * camera's children. Convert page coordinates, CSS scaling, camera placement
+ * and viewport zoom to buffer coordinates before calling this method.
+ *
+ * @param {number} x Camera-local x coordinate.
+ * @param {number} y Camera-local y coordinate.
+ * @param {rune.geom.Point} [output] Optional point to store the result in.
+ *
+ * @returns {rune.geom.Point} The world position relative to the stage.
+ */
+rune.camera.Camera.prototype.screenToWorld = function(x, y, output) {
+    output = output || new rune.geom.Point();
+    output['x'] = x + this.m_viewport['x'] + this.m_shake['x'];
+    output['y'] = y + this.m_viewport['y'] + this.m_shake['y'];
+    return output;
+};
+
+//------------------------------------------------------------------------------
 // Override public prototype methods (ENGINE)
 //------------------------------------------------------------------------------
 

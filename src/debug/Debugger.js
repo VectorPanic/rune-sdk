@@ -70,6 +70,30 @@ rune.debug.Debugger = function(width, height) {
      * @private
      */
     this.m_render = null;
+
+    /**
+     * Visualizes the screen canvas's internal resolution.
+     *
+     * @type {rune.debug.Resolution}
+     * @private
+     */
+    this.m_resolution = null;
+
+    /**
+     * Vertical position of the current panel row during layout.
+     *
+     * @type {number}
+     * @private
+     */
+    this.m_layoutY = 0;
+
+    /**
+     * Height of the tallest panel in the current layout row.
+     *
+     * @type {number}
+     * @private
+     */
+    this.m_layoutRowHeight = 0;
     
     /**
      * Visualizes update time.
@@ -133,6 +157,7 @@ rune.debug.Debugger.prototype.update = function(step) {
  * @inheritDoc
  */
 rune.debug.Debugger.prototype.dispose = function() {
+    this.m_disposeResolution();
     this.m_disposeMaster();
     this.m_disposeMusic();
     this.m_disposeSound();
@@ -161,6 +186,7 @@ rune.debug.Debugger.prototype.m_construct = function() {
     this.m_constructSound();
     this.m_constructMusic();
     this.m_constructMaster();
+    this.m_constructResolution();
     this.m_layoutPanels();
 };
 
@@ -303,6 +329,18 @@ rune.debug.Debugger.prototype.m_constructMaster = function() {
 };
 
 /**
+ * Creates the panel displaying the screen's internal rendering resolution.
+ *
+ * @return {undefined}
+ * @private
+ */
+rune.debug.Debugger.prototype.m_constructResolution = function() {
+    this.m_disposeResolution();
+    this.m_resolution = new rune.debug.Resolution();
+    this.addChild(this.m_resolution);
+};
+
+/**
  * Listens for keyboard input to show and hide debug data.
  *
  * @return {undefined}
@@ -317,12 +355,15 @@ rune.debug.Debugger.prototype.m_updateInput = function() {
 };
 
 /**
- * Positions all debug panels based on their current size.
+ * Positions all debug panels based on their current size, wrapping to a new
+ * row when the current row no longer fits inside the debugger's pixel buffer.
  *
  * @return {undefined}
  * @private
  */
 rune.debug.Debugger.prototype.m_layoutPanels = function() {
+    this.m_layoutY = 0;
+    this.m_layoutRowHeight = 0;
     var x = 0;
     x = this.m_layoutPanel(this.m_framerate, x);
     x = this.m_layoutPanel(this.m_histogram, x);
@@ -331,7 +372,8 @@ rune.debug.Debugger.prototype.m_layoutPanels = function() {
     x = this.m_layoutPanel(this.m_memory, x);
     x = this.m_layoutPanel(this.m_sound, x);
     x = this.m_layoutPanel(this.m_music, x);
-    this.m_layoutPanel(this.m_master, x);
+    x = this.m_layoutPanel(this.m_master, x);
+    this.m_layoutPanel(this.m_resolution, x);
 };
 
 /**
@@ -345,11 +387,33 @@ rune.debug.Debugger.prototype.m_layoutPanels = function() {
  */
 rune.debug.Debugger.prototype.m_layoutPanel = function(panel, x) {
     if (panel != null) {
+        if (x > 0 && x + panel['width'] > this.m_canvas['width']) {
+            x = 0;
+            this.m_layoutY += this.m_layoutRowHeight + 4;
+            this.m_layoutRowHeight = 0;
+        }
         panel['x'] = x;
+        panel['y'] = this.m_layoutY;
+        this.m_layoutRowHeight = Math.max(this.m_layoutRowHeight, panel['height']);
         return x + panel['width'] + 4;
     }
 
     return x;
+};
+
+/**
+ * Removes and disposes the resolution panel.
+ *
+ * @return {undefined}
+ * @private
+ */
+rune.debug.Debugger.prototype.m_disposeResolution = function() {
+    if (this.m_resolution != null) {
+        if (this.m_resolution['parent'] != null) {
+            this.m_resolution['parent'].removeChild(this.m_resolution, true);
+        }
+        this.m_resolution = null;
+    }
 };
 
 /**

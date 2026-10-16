@@ -109,7 +109,7 @@ demo.scene.Scene001.prototype.m_initMenu = function() {
  * @private
  */
 demo.scene.Scene001.prototype.m_initEmitter = function() {
-    this.m_emitter = new rune.particle.Emitter(200, 80, 8, 8, {
+    this.m_emitter = new rune.particle.Emitter(this.m_menu.centerX, this.m_menu.top - 16, 8, 8, {
         particles: [demo.entity.Particle],
         capacity: 92,
         accelerationY: 0.025,

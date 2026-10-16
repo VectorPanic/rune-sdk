@@ -95,6 +95,7 @@ npx google-closure-compiler \
 --js "./../../src/debug/Update.js" \
 --js "./../../src/debug/Histogram.js" \
 --js "./../../src/debug/Framerate.js" \
+--js "./../../src/debug/Resolution.js" \
 --js "./../../src/debug/Debugger.js" \
 --js "./../../src/console/ConsoleCommand.js" \
 --js "./../../src/console/ConsoleCommands.js" \

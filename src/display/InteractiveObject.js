@@ -1036,6 +1036,22 @@ rune.display.InteractiveObject.prototype.moveTo = function(x, y) {
     this.m_previousY = this.m_y;
 };
 
+/**
+ * Adds an impulse to the object's velocity without changing its position.
+ * Positive values push right and down; negative values push left and up.
+ * The velocity change is independent of mass. Drag, speed limits and collisions
+ * are handled by the normal movement update.
+ *
+ * @param {number} x Horizontal velocity change.
+ * @param {number} y Vertical velocity change.
+ *
+ * @returns {undefined}
+ */
+rune.display.InteractiveObject.prototype.applyImpulse = function(x, y) {
+    this.velocity.x += x;
+    this.velocity.y += y;
+};
+
 //------------------------------------------------------------------------------
 // Public prototype methods (ENGINE)
 //------------------------------------------------------------------------------

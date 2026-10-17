@@ -63,6 +63,24 @@ rune.geom.Point.distance = function(x1, y1, x2, y2) {
 };
 
 /**
+ * Returns the squared distance between two points without calculating a square
+ * root. Useful for comparing distances against squared thresholds.
+ *
+ * @param {number} x1 The x coordinate of the first point.
+ * @param {number} y1 The y coordinate of the first point.
+ * @param {number} x2 The x coordinate of the second point.
+ * @param {number} y2 The y coordinate of the second point.
+ *
+ * @return {number} The squared distance between the points.
+ */
+rune.geom.Point.distanceSquared = function(x1, y1, x2, y2) {
+    var x = x1 - x2;
+    var y = y1 - y2;
+
+    return x * x + y * y;
+};
+
+/**
  * Returns the linear interpolation point between the two given points.
  *
  * @param {number} x1 The x coordinate of the first point.
@@ -168,6 +186,23 @@ rune.geom.Point.prototype.copyFrom = function(point) {
  */
 rune.geom.Point.prototype.distance = function(point) {
     return rune.geom.Point.distance(
+        this['x'],
+        this['y'],
+        point['x'],
+        point['y']
+    );
+};
+
+/**
+ * Returns the squared distance between the current and specified point without
+ * calculating a square root. Compare the result against a squared distance.
+ *
+ * @param {rune.geom.Point} point The specified point.
+ *
+ * @return {number} The squared distance between the points.
+ */
+rune.geom.Point.prototype.distanceSquared = function(point) {
+    return rune.geom.Point.distanceSquared(
         this['x'],
         this['y'],
         point['x'],

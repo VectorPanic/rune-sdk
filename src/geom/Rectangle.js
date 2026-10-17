@@ -193,6 +193,38 @@ rune.geom.Rectangle.intersects = function(x1, y1, w1, h1, x2, y2, w2, h2) {
 			(y1  + h1 > y2));
 };
 
+/**
+ * Returns the smallest rectangle that contains both specified rectangles,
+ * including any space between them. Zero-sized rectangles contribute their
+ * coordinates to the bounds.
+ *
+ * @param {number} x1 The x coordinate of the first rectangle.
+ * @param {number} y1 The y coordinate of the first rectangle.
+ * @param {number} w1 The width of the first rectangle.
+ * @param {number} h1 The height of the first rectangle.
+ * @param {number} x2 The x coordinate of the second rectangle.
+ * @param {number} y2 The y coordinate of the second rectangle.
+ * @param {number} w2 The width of the second rectangle.
+ * @param {number} h2 The height of the second rectangle.
+ * @param {rune.geom.Rectangle} [o] Store results in this object.
+ *
+ * @return {rune.geom.Rectangle} The rectangle enclosing both rectangles.
+ */
+rune.geom.Rectangle.union = function(x1, y1, w1, h1, x2, y2, w2, h2, o) {
+	var left = Math.min(x1, x2);
+	var top = Math.min(y1, y2);
+	var right = Math.max(x1 + w1, x2 + w2);
+	var bottom = Math.max(y1 + h1, y2 + h2);
+
+	o = o || new rune.geom.Rectangle();
+	o['x'] = left;
+	o['y'] = top;
+	o['width'] = right - left;
+	o['height'] = bottom - top;
+
+	return o;
+};
+
 //------------------------------------------------------------------------------
 // Public getter and setter methods
 //------------------------------------------------------------------------------
@@ -664,5 +696,30 @@ rune.geom.Rectangle.prototype.intersects = function(toIntersect) {
 		toIntersect['y'],
 		toIntersect['width'],
 		toIntersect['height']
+	);
+};
+
+/**
+ * Returns the smallest rectangle that contains this rectangle and the specified
+ * rectangle, including any space between them. The original rectangles remain
+ * unchanged unless one is supplied as output. Zero-sized rectangles contribute
+ * their coordinates to the bounds.
+ *
+ * @param {rune.geom.Rectangle} rect The rectangle to combine with this rectangle.
+ * @param {rune.geom.Rectangle} [output] Store results in this object. May be either input rectangle.
+ *
+ * @return {rune.geom.Rectangle} The rectangle enclosing both rectangles.
+ */
+rune.geom.Rectangle.prototype.union = function(rect, output) {
+	return rune.geom.Rectangle.union(
+		this['x'],
+		this['y'],
+		this['width'],
+		this['height'],
+		rect['x'],
+		rect['y'],
+		rect['width'],
+		rect['height'],
+		output
 	);
 };

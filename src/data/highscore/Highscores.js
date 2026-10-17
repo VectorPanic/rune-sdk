@@ -7,7 +7,8 @@
  *
  * @constructor
  *
- * @param {string} id The App ID.
+ * @param {string} id Unique application ID, matching Application.id.
+ * @throws {Error} If the application ID is missing or invalid.
  * @param {number} length The number of positions per highscore table.
  * @param {number} tables The number of highscore tables.
  *
@@ -98,7 +99,7 @@ Object.defineProperty(rune.data.Highscores.prototype, "key", {
      * @ignore
      */
     get : function() {
-        return this.m_id + this.SUFFIX;
+        return rune.data.StorageKey.create(this.m_id, this.SUFFIX);
     }
 });
 
@@ -154,7 +155,8 @@ rune.data.Highscores.prototype.save = function() {
  * raking of the score in the form of an integer. The result -1 indicates that 
  * the score is outside the scope of the current high score table and thus not 
  * a high score. Note that a test does not affect the current high score list, 
- * nothing is saved or deleted when a test is performed.
+ * nothing is saved or deleted when a test is performed. Non-finite scores
+ * cannot qualify and return -1.
  *
  * @param {number} score Score to test.
  * @param {number} [table=0] Table to test against.
@@ -164,7 +166,7 @@ rune.data.Highscores.prototype.save = function() {
 rune.data.Highscores.prototype.test = function(score, table) {
     table = this.m_resolveTable(table);
     score = parseFloat(score);
-    if (table == -1 || isNaN(score)) {
+    if (table == -1 || !isFinite(score)) {
         return -1;
     }
     
@@ -317,8 +319,7 @@ rune.data.Highscores.prototype.m_validate = function(data) {
 };
 
 /**
- * Creates a storage ID. If no explicit application ID is provided, the URL path
- * is used so multiple games on the same domain get separate highscore data.
+ * Validates the explicit application ID through the shared storage key helper.
  *
  * @param {string} id The App ID.
  *
@@ -327,29 +328,7 @@ rune.data.Highscores.prototype.m_validate = function(data) {
  * @ignore
  */
 rune.data.Highscores.prototype.m_createID = function(id) {
-    id = String(id || "");
-    if (id.length > 0 && id != ".") {
-        return id;
-    }
-    
-    return this.m_createLocationID();
-};
-
-/**
- * Creates a stable storage ID based on the current page location.
- *
- * @return {string}
- * @protected
- * @ignore
- */
-rune.data.Highscores.prototype.m_createLocationID = function() {
-    var id = "rune";
-    if (typeof window != "undefined" && window.location != null) {
-        id += "." + (window.location.hostname || "local");
-        id += "." + (window.location.pathname || "/");
-    }
-    
-    return id.replace(/[^a-zA-Z0-9]+/g, ".").replace(/^\.+|\.+$/g, "");
+    return rune.data.StorageKey.createID(id);
 };
 
 /**
@@ -367,7 +346,8 @@ rune.data.Highscores.prototype.m_resolveTable = function(table) {
 };
 
 /**
- * Validates a single highscore entry.
+ * Validates a single highscore entry. Scores and timestamps must be finite
+ * numbers so JSON serialization cannot silently replace them with null.
  *
  * @param {Object} entry Highscore entry.
  *
@@ -380,6 +360,6 @@ rune.data.Highscores.prototype.m_validateEntry = function(entry) {
         typeof entry.name == "string" &&
         typeof entry.score == "number" &&
         typeof entry.date == "number" &&
-        isNaN(entry.score) == false &&
-        isNaN(entry.date) == false;
+        isFinite(entry.score) &&
+        isFinite(entry.date);
 };

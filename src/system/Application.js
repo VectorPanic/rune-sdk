@@ -37,6 +37,13 @@ rune.system.Application = function(options) {
      * @private
      */
     this.m_highscores = null;
+
+    /**
+     * Persistent application-scoped key/value storage.
+     * @type {rune.data.Storage}
+     * @private
+     */
+    this.m_storage = null;
     
     /**
      * The subsystem that handles input devices.
@@ -212,6 +219,24 @@ Object.defineProperty(rune.system.Application.prototype, "highscores", {
      */
     get : function() {
         return this.m_highscores;
+    }
+});
+
+/**
+ * Persistent game settings and progress, isolated using this application's ID.
+ *
+ * @member {rune.data.Storage} storage
+ * @memberof rune.system.Application
+ * @instance
+ * @readonly
+ */
+Object.defineProperty(rune.system.Application.prototype, "storage", {
+    /**
+     * @this rune.system.Application
+     * @ignore
+     */
+    get : function() {
+        return this.m_storage;
     }
 });
 
@@ -541,6 +566,7 @@ rune.system.Application.prototype.m_preInitResources = function(callback) {
 rune.system.Application.prototype.m_init = function() {
     this.m_initInstance();
     this.m_initHighscores();
+    this.m_initStorage();
     this.m_initSounds();
     this.m_initInputs();
     this.m_initScreen();
@@ -583,6 +609,17 @@ rune.system.Application.prototype.m_initHighscores = function() {
     } else throw new Error();
 };
 
+
+/**
+ * Initializes persistent storage using the same application ID as highscores.
+ *
+ * @return {undefined}
+ * @private
+ */
+rune.system.Application.prototype.m_initStorage = function() {
+    this.m_disposeStorage();
+    this.m_storage = new rune.data.Storage(this['id']);
+};
 /**
  * Creates the audio subsystem.
  *
@@ -837,6 +874,7 @@ rune.system.Application.prototype.m_dispose = function() {
     this.m_disposeScreen();
     this.m_disposeInputs();
     this.m_disposeSounds();
+    this.m_disposeStorage();
     this.m_disposeHighscores();
     this.m_disposeInstance();
     this.m_disposeResources();
@@ -907,6 +945,19 @@ rune.system.Application.prototype.m_disposeSounds = function() {
     if (this.m_sounds instanceof rune.media.Sounds) {
         this.m_sounds.dispose();
         this.m_sounds = null;
+    }
+};
+
+/**
+ * Disposes persistent storage without deleting saved values.
+ *
+ * @return {undefined}
+ * @private
+ */
+rune.system.Application.prototype.m_disposeStorage = function() {
+    if (this.m_storage != null) {
+        this.m_storage.dispose();
+        this.m_storage = null;
     }
 };
 

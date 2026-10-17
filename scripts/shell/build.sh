@@ -133,6 +133,8 @@ npx google-closure-compiler \
 --js "./../../src/media/sound/SoundEcho.js" \
 --js "./../../src/media/sound/SoundChannel.js" \
 --js "./../../src/media/sound/Sounds.js" \
+--js "./../../src/data/storage/StorageKey.js" \
+--js "./../../src/data/storage/Storage.js" \
 --js "./../../src/data/highscore/Highscores.js" \
 --js "./../../src/data/graphics/Logo.js" \
 --js "./../../src/data/resource/Requests.js" \

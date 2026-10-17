@@ -107,10 +107,12 @@ Object.defineProperty(rune.text.Typewriter.prototype, "running", {
  * @param {string} text The full text to display.
  * @param {number} [interval=40] Positive milliseconds per character.
  * @return {undefined}
+ * @suppress {accessControls}
  */
 rune.text.Typewriter.prototype.start = function(text, interval) {
     if (this.m_field == null) return;
     this.stop();
+    this.m_field.stopTextEffects();
     this.m_field['text'] = text;
     this.m_interval = (typeof interval === "number" && isFinite(interval) && interval > 0) ? interval : 40;
     this.m_index = 0;

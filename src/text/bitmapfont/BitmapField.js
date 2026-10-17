@@ -144,6 +144,20 @@ rune.text.BitmapField = function(text, resource) {
 	 */
 	this.m_rowStarts = [];
 
+	/**
+	 * Optional scramble effect, created on first access.
+	 * @type {rune.text.TextScramble}
+	 * @private
+	 */
+	this.m_scramble = null;
+
+	/**
+	 * Optional numeric text animation, created on first access.
+	 * @type {rune.text.TextCounter}
+	 * @private
+	 */
+	this.m_counter = null;
+
 	//--------------------------------------------------------------------------
 	// Super call
 	//--------------------------------------------------------------------------
@@ -402,17 +416,7 @@ Object.defineProperty(rune.text.BitmapField.prototype, "text", {
 	 * @suppress {accessControls}
 	 */
 	set : function(value) {
-		value = this.m_formatText(value);
-		if (this.m_text != value) {
-			if (this.m_writer != null) this.m_writer.stop();
-			this.m_maxVisibleCharacters = Infinity;
-			this.m_text  = value;
-			if (this.m_autoSize == true) {
-				this.m_refit();
-			}
-			
-			this.breakCache();
-		}
+		this.setTextFromEffect(value, null);
 	}
 });
 
@@ -535,6 +539,46 @@ Object.defineProperty(rune.text.BitmapField.prototype, "writer", {
 	}
 });
 
+/**
+ * Optional scramble subsystem. Created on first access, then updated and disposed
+ * automatically by this field.
+ *
+ * @member {rune.text.TextScramble} scramble
+ * @memberof rune.text.BitmapField
+ * @instance
+ * @readonly
+ */
+Object.defineProperty(rune.text.BitmapField.prototype, "scramble", {
+	/**
+	 * @this rune.text.BitmapField
+	 * @ignore
+	 */
+	get : function() {
+		if (this.m_scramble == null) this.m_scramble = new rune.text.TextScramble(this);
+		return this.m_scramble;
+	}
+});
+
+/**
+ * Optional counter subsystem. Created on first access, then updated and disposed
+ * automatically by this field.
+ *
+ * @member {rune.text.TextCounter} counter
+ * @memberof rune.text.BitmapField
+ * @instance
+ * @readonly
+ */
+Object.defineProperty(rune.text.BitmapField.prototype, "counter", {
+	/**
+	 * @this rune.text.BitmapField
+	 * @ignore
+	 */
+	get : function() {
+		if (this.m_counter == null) this.m_counter = new rune.text.TextCounter(this);
+		return this.m_counter;
+	}
+});
+
 //------------------------------------------------------------------------------
 // Override public prototype methods (ENGINE)
 //------------------------------------------------------------------------------
@@ -546,6 +590,8 @@ Object.defineProperty(rune.text.BitmapField.prototype, "writer", {
 rune.text.BitmapField.prototype.update = function(step) {
 	rune.display.DisplayObject.prototype.update.call(this, step);
 	if (this.m_writer != null) this.m_writer.update(step);
+	if (this.m_scramble != null) this.m_scramble.update(step);
+	if (this.m_counter != null) this.m_counter.update(step);
 };
 
 /**
@@ -567,6 +613,8 @@ rune.text.BitmapField.prototype.render = function() {
  */
 rune.text.BitmapField.prototype.dispose = function() {
 	this.m_disposeWriter();
+	this.m_disposeScramble();
+	this.m_disposeCounter();
 	this.m_disposeTexture();
 	this.m_disposeFormat();
 	rune.display.DisplayObject.prototype.dispose.call(this);
@@ -575,6 +623,43 @@ rune.text.BitmapField.prototype.dispose = function() {
 //------------------------------------------------------------------------------
 // Override internal prototype methods
 //------------------------------------------------------------------------------
+
+/**
+ * Stops text animations before another subsystem takes control of this field.
+ * Does not allocate unused subsystems.
+ *
+ * @return {undefined}
+ * @package
+ * @ignore
+ */
+rune.text.BitmapField.prototype.stopTextEffects = function() {
+	if (this.m_writer != null) this.m_writer.stop();
+	if (this.m_scramble != null) this.m_scramble.stop();
+	if (this.m_counter != null) this.m_counter.stop();
+};
+
+/**
+ * Assigns normalized text without cancelling the effect that produced it.
+ * A direct text assignment passes null and stops all effects when text changes.
+ *
+ * @param {*} value The new text.
+ * @param {Object} effect The owning effect, or null for a direct assignment.
+ * @return {undefined}
+ * @package
+ * @ignore
+ */
+rune.text.BitmapField.prototype.setTextFromEffect = function(value, effect) {
+	value = this.m_formatText(value);
+	if (this.m_text != value) {
+		if (this.m_writer != null && this.m_writer !== effect) this.m_writer.stop();
+		if (this.m_scramble != null && this.m_scramble !== effect) this.m_scramble.stop();
+		if (this.m_counter != null && this.m_counter !== effect) this.m_counter.stop();
+		this.m_maxVisibleCharacters = Infinity;
+		this.m_text = value;
+		if (this.m_autoSize) this.m_refit();
+		this.breakCache();
+	}
+};
 
 /**
  * Invalidates rendering and refits wrapped height after a buffer width change.
@@ -652,6 +737,7 @@ rune.text.BitmapField.prototype.m_getRows = function() {
  *
  * @returns {undefined}
  * @private
+ * @suppress {accessControls}
  */
 rune.text.BitmapField.prototype.m_renderText = function() {
 	var text = "";
@@ -667,8 +753,10 @@ rune.text.BitmapField.prototype.m_renderText = function() {
 		var y = (this.m_format['charHeight'] * ln) + (this.m_leading * ln);
 		for (var col = 0; col < text.length; col++) {
 			if (this.m_rowStarts[ln] + col >= this.m_maxVisibleCharacters) return;
+			var code = text.charCodeAt(col);
+			if (this.m_scramble != null) code = this.m_scramble.getCharCode(this.m_rowStarts[ln] + col, code);
 			this.m_renderCharacter(
-				text.charCodeAt(col),
+				code,
 				x,
 				y
 			);
@@ -744,6 +832,30 @@ rune.text.BitmapField.prototype.m_disposeWriter = function() {
 	if (this.m_writer != null) {
 		this.m_writer.dispose();
 		this.m_writer = null;
+	}
+};
+
+/**
+ * Disposes the optional scramble subsystem.
+ * @return {undefined}
+ * @private
+ */
+rune.text.BitmapField.prototype.m_disposeScramble = function() {
+	if (this.m_scramble != null) {
+		this.m_scramble.dispose();
+		this.m_scramble = null;
+	}
+};
+
+/**
+ * Disposes the optional counter subsystem.
+ * @return {undefined}
+ * @private
+ */
+rune.text.BitmapField.prototype.m_disposeCounter = function() {
+	if (this.m_counter != null) {
+		this.m_counter.dispose();
+		this.m_counter = null;
 	}
 };
 

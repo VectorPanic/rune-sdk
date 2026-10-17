@@ -77,6 +77,14 @@ rune.camera.Camera = function(x, y, width, height) {
      * @ignore
      */
     this.m_flash = null;
+
+    /**
+     * Camera glitch effect manager.
+     * @type {rune.camera.CameraGlitch}
+     * @protected
+     * @ignore
+     */
+    this.m_glitch = null;
     
     /**
      * Dictates how much the camera should lag behind when following objects. 
@@ -206,6 +214,21 @@ Object.defineProperty(rune.camera.Camera.prototype, "flash", {
      */
     get : function() {
         return this.m_flash;
+    }
+});
+
+/**
+ * Subsystem used to displace horizontal bands in the camera image.
+ *
+ * @member {rune.camera.CameraGlitch} glitch
+ * @memberof rune.camera.Camera
+ * @instance
+ * @readonly
+ */
+Object.defineProperty(rune.camera.Camera.prototype, "glitch", {
+    /** @this rune.camera.Camera @ignore */
+    get : function() {
+        return this.m_glitch;
     }
 });
 
@@ -357,6 +380,7 @@ rune.camera.Camera.prototype.update = function(step) {
     rune.display.DisplayObjectContainer.prototype.update.call(this, step);
     this.m_updateShake(step);
     this.m_updateFlash(step);
+    this.m_updateGlitch(step);
     this.m_updateFade(step);
     this.m_updateAutoZoom(step);
     this.m_updateTargets(step);
@@ -377,6 +401,7 @@ rune.camera.Camera.prototype.render = function() {
     this.m_renderMapFrontBuffer();
     this.m_renderChildren();
     this.m_renderGraphics();
+    this.m_renderGlitch();
     this.m_renderTint();
     this.m_renderFlash();
     this.m_renderFade();
@@ -390,6 +415,7 @@ rune.camera.Camera.prototype.dispose = function() {
     this.m_disposeTargets();
     this.m_disposeFade();
     this.m_disposeFlash();
+    this.m_disposeGlitch();
     this.m_disposeTint();
     this.m_disposeShake();
     this.m_disposeViewport();
@@ -429,6 +455,7 @@ rune.camera.Camera.prototype.m_construct = function() {
     this.m_constructShake();
     this.m_constructTint();
     this.m_constructFlash();
+    this.m_constructGlitch();
     this.m_constructFade();
     this.m_constructTargets();
     this.m_constructAutoZoom();
@@ -512,6 +539,18 @@ rune.camera.Camera.prototype.m_constructFlash = function() {
 };
 
 /**
+ * Creates the camera glitch subsystem.
+ *
+ * @return {undefined}
+ * @protected
+ * @ignore
+ */
+rune.camera.Camera.prototype.m_constructGlitch = function() {
+    this.m_disposeGlitch();
+    this.m_glitch = new rune.camera.CameraGlitch();
+};
+
+/**
  * Creates the subsystem used to create fade effects.
  *
  * @return {undefined}
@@ -551,18 +590,6 @@ rune.camera.Camera.prototype.m_constructAutoZoom = function() {
 };
 
 /**
- * Updates automatic zoom and framing before following the targets.
- *
- * @param {number} step Elapsed milliseconds.
- * @returns {undefined}
- * @protected
- * @ignore
- */
-rune.camera.Camera.prototype.m_updateAutoZoom = function(step) {
-    if (this.m_autoZoom != null) this.m_autoZoom.update(step);
-};
-
-/**
  * Updates the shake effects subsystem.
  *
  * @param {number} step Current time step.
@@ -574,25 +601,6 @@ rune.camera.Camera.prototype.m_updateAutoZoom = function(step) {
 rune.camera.Camera.prototype.m_updateShake = function(step) {
     if (this.m_shake != null) {
         this.m_shake.update(step);
-    }
-};
-
-/**
- * Updates the viewport rectangle used for rendering.
- *
- * @return {undefined}
- * @protected
- * @ignore
- */
-rune.camera.Camera.prototype.m_updateViewportOffset = function() {
-    if (this.m_viewport != null && this.m_viewportOffset != null) {
-        var shakeX = (this.m_shake != null) ? this.m_shake['x'] : 0;
-        var shakeY = (this.m_shake != null) ? this.m_shake['y'] : 0;
-        
-        this.m_viewportOffset['x'] = this.m_viewport['x'] + shakeX;
-        this.m_viewportOffset['y'] = this.m_viewport['y'] + shakeY;
-        this.m_viewportOffset['width'] = this.m_viewport['width'];
-        this.m_viewportOffset['height'] = this.m_viewport['height'];
     }
 };
 
@@ -612,6 +620,18 @@ rune.camera.Camera.prototype.m_updateFlash = function(step) {
 };
 
 /**
+ * Updates the camera glitch subsystem.
+ *
+ * @param {number} step Elapsed time in milliseconds.
+ * @return {undefined}
+ * @protected
+ * @ignore
+ */
+rune.camera.Camera.prototype.m_updateGlitch = function(step) {
+    if (this.m_glitch != null) this.m_glitch.update(step);
+};
+
+/**
  * Updates the subsystem used to create fade effects.
  *
  * @param {number} step Current time step.
@@ -624,6 +644,18 @@ rune.camera.Camera.prototype.m_updateFade = function(step) {
     if (this.m_fade != null) {
         this.m_fade.update(step);
     }
+};
+
+/**
+ * Updates automatic zoom and framing before following the targets.
+ *
+ * @param {number} step Elapsed milliseconds.
+ * @returns {undefined}
+ * @protected
+ * @ignore
+ */
+rune.camera.Camera.prototype.m_updateAutoZoom = function(step) {
+    if (this.m_autoZoom != null) this.m_autoZoom.update(step);
 };
 
 /**
@@ -684,6 +716,25 @@ rune.camera.Camera.prototype.m_updateBoundaries = function(step) {
                 this.m_viewport['bottom'] = this.bounderies['bottom'];
             }
         }
+    }
+};
+
+/**
+ * Updates the viewport rectangle used for rendering.
+ *
+ * @return {undefined}
+ * @protected
+ * @ignore
+ */
+rune.camera.Camera.prototype.m_updateViewportOffset = function() {
+    if (this.m_viewport != null && this.m_viewportOffset != null) {
+        var shakeX = (this.m_shake != null) ? this.m_shake['x'] : 0;
+        var shakeY = (this.m_shake != null) ? this.m_shake['y'] : 0;
+
+        this.m_viewportOffset['x'] = this.m_viewport['x'] + shakeX;
+        this.m_viewportOffset['y'] = this.m_viewport['y'] + shakeY;
+        this.m_viewportOffset['width'] = this.m_viewport['width'];
+        this.m_viewportOffset['height'] = this.m_viewport['height'];
     }
 };
 
@@ -804,6 +855,17 @@ rune.camera.Camera.prototype.m_renderMapFrontBuffer = function() {
 };
 
 /**
+ * Applies glitch displacement before camera overlays.
+ *
+ * @return {undefined}
+ * @protected
+ * @ignore
+ */
+rune.camera.Camera.prototype.m_renderGlitch = function() {
+    if (this.m_glitch != null) this.m_glitch.render(this.m_canvas);
+};
+
+/**
  * Render color tint.
  *
  * @return {undefined}
@@ -843,19 +905,6 @@ rune.camera.Camera.prototype.m_renderFade = function() {
 };
 
 /**
- * Removes the subsystem (CameraTargets).
- *
- * @returns {undefined}
- * @private
- */
-rune.camera.Camera.prototype.m_disposeTargets = function() {
-    if (this.m_targets instanceof rune.camera.CameraTargets) {
-        this.m_targets.dispose();
-        this.m_targets = null;
-    }
-};
-
-/**
  * Disposes the automatic zoom controller and releases its camera reference.
  *
  * @returns {undefined}
@@ -866,6 +915,19 @@ rune.camera.Camera.prototype.m_disposeAutoZoom = function() {
     if (this.m_autoZoom != null) {
         this.m_autoZoom.dispose();
         this.m_autoZoom = null;
+    }
+};
+
+/**
+ * Removes the subsystem (CameraTargets).
+ *
+ * @returns {undefined}
+ * @private
+ */
+rune.camera.Camera.prototype.m_disposeTargets = function() {
+    if (this.m_targets instanceof rune.camera.CameraTargets) {
+        this.m_targets.dispose();
+        this.m_targets = null;
     }
 };
 
@@ -894,6 +956,20 @@ rune.camera.Camera.prototype.m_disposeFlash = function() {
     if (this.m_flash instanceof rune.camera.CameraFlash) {
         this.m_flash.dispose();
         this.m_flash = null;
+    }
+};
+
+/**
+ * Releases the camera glitch subsystem.
+ *
+ * @return {undefined}
+ * @protected
+ * @ignore
+ */
+rune.camera.Camera.prototype.m_disposeGlitch = function() {
+    if (this.m_glitch != null) {
+        this.m_glitch.dispose();
+        this.m_glitch = null;
     }
 };
 

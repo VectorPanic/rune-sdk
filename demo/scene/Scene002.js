@@ -160,6 +160,7 @@ demo.scene.Scene002.prototype.m_updateInput = function() {
     this.m_updateInputTarget();
     this.m_updateInputFade();
     this.m_updateInputShake();
+    this.m_updateInputGlitch();
     this.m_updateInputMove();
     this.m_updateInputView();
     this.m_updateInputReset();
@@ -242,6 +243,18 @@ demo.scene.Scene002.prototype.m_updateInputFade = function() {
 demo.scene.Scene002.prototype.m_updateInputShake = function() {
     if (this.keyboard.justPressed("V")) {
         this.m_cam.shake.start(2500, 5, 5, true);
+    }
+};
+
+/**
+ * Camera glitch effect. Press G to distort the selected camera for 750 ms.
+ *
+ * @returns {undefined}
+ * @private
+ */
+demo.scene.Scene002.prototype.m_updateInputGlitch = function() {
+    if (this.keyboard.justPressed("G")) {
+        this.m_cam.glitch.start(750, 8);
     }
 };
 

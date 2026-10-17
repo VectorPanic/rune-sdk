@@ -111,6 +111,7 @@ npx google-closure-compiler \
 --js "./../../src/camera/CameraTint.js" \
 --js "./../../src/camera/CameraTintTween.js" \
 --js "./../../src/camera/CameraFlash.js" \
+--js "./../../src/camera/CameraGlitch.js" \
 --js "./../../src/camera/CameraFade.js" \
 --js "./../../src/camera/CameraShake.js" \
 --js "./../../src/camera/Camera.js" \

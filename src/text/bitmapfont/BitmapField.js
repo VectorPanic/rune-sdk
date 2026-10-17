@@ -379,7 +379,8 @@ rune.text.BitmapField.prototype.m_renderText = function() {
 };
 
 /**
- * Formats a value as text.
+ * Formats a value as text and normalizes Windows and legacy carriage-return
+ * line endings to newline characters for consistent layout and rendering.
  *
  * @param {*} value Value to format.
  *
@@ -388,7 +389,7 @@ rune.text.BitmapField.prototype.m_renderText = function() {
  */
 rune.text.BitmapField.prototype.m_formatText = function(value) {
 	if (value == null) return "";
-	else return value.toString();
+	else return value.toString().replace(/\r\n?/g, "\n");
 };
 
 /**
@@ -448,19 +449,23 @@ rune.text.BitmapField.prototype.m_disposeFormat = function() {
 };
 
 /**
- * Redo the size of the text field.
+ * Fits the local pixel buffer and hitbox to the text independently of the
+ * display object's scale.
  *
  * @return {undefined}
  * @protected
  * @ignore
  */
 rune.text.BitmapField.prototype.m_refit = function() {
-	this.width  = this['textWidth'];
-	this.height = this['textHeight'];
+	var width = this['textWidth'];
+	var height = this['textHeight'];
+
+	this['unscaledWidth'] = width;
+	this['unscaledHeight'] = height;
 	this['hitbox'].set(
 		0,
 		0,
-		this['textWidth'],
-		this['textHeight']
+		width,
+		height
 	);
 };

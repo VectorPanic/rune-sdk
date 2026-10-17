@@ -654,6 +654,26 @@ rune.geom.Rectangle.prototype.containsRectangle = function(rect) {
 };
 
 /**
+ * Returns the exact geometric center of this rectangle without rounding.
+ * Supply an output point to reuse an existing object instead of creating one.
+ * Unlike the center property, fractional coordinates are preserved.
+ *
+ * @param {rune.geom.Point} [output] The point to store the center coordinates in.
+ *
+ * @return {rune.geom.Point} The point containing the center coordinates.
+ */
+rune.geom.Rectangle.prototype.getCenter = function(output) {
+	var x = this['x'] + this['width'] / 2;
+	var y = this['y'] + this['height'] / 2;
+
+	output = output || new rune.geom.Point();
+	output['x'] = x;
+	output['y'] = y;
+
+	return output;
+};
+
+/**
  * Expands this rectangle by dx on both horizontal sides and dy on both vertical
  * sides, preserving its geometric center. Negative values shrink the rectangle.
  * Width and height are not clamped and may become negative if the rectangle is

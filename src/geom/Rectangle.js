@@ -654,6 +654,26 @@ rune.geom.Rectangle.prototype.containsRectangle = function(rect) {
 };
 
 /**
+ * Expands this rectangle by dx on both horizontal sides and dy on both vertical
+ * sides, preserving its geometric center. Negative values shrink the rectangle.
+ * Width and height are not clamped and may become negative if the rectangle is
+ * shrunk beyond its current size.
+ *
+ * @param {number} dx The amount to add to each horizontal side.
+ * @param {number} dy The amount to add to each vertical side.
+ *
+ * @return {rune.geom.Rectangle} This rectangle.
+ */
+rune.geom.Rectangle.prototype.inflate = function(dx, dy) {
+	this['x'] -= dx;
+	this['y'] -= dy;
+	this['width'] += dx * 2;
+	this['height'] += dy * 2;
+
+	return this;
+};
+
+/**
  * If the Rectangle object specified in the toIntersect parameter intersects 
  * with this Rectangle object, returns the area of intersection as a Rectangle 
  * object. If the rectangles do not intersect, this method returns an empty 

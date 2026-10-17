@@ -34,6 +34,14 @@ rune.text.BitmapField = function(text, resource) {
 	 * @private
 	 */
 	this.m_autoSize = false;
+
+	/**
+	 * Horizontal alignment of each row within the local pixel buffer.
+	 *
+	 * @type {string}
+	 * @private
+	 */
+	this.m_align = rune.text.BitmapField.ALIGN_LEFT;
 	
 	/**
 	 * Represent a font.
@@ -95,8 +103,66 @@ rune.text.BitmapField.prototype = Object.create(rune.display.DisplayObject.proto
 rune.text.BitmapField.prototype.constructor = rune.text.BitmapField;
 
 //------------------------------------------------------------------------------
+// Public static constants
+//------------------------------------------------------------------------------
+
+/**
+ * Aligns text to the left edge of the field.
+ * @const {string}
+ */
+rune.text.BitmapField.ALIGN_LEFT = "left";
+
+/**
+ * Centers each row horizontally within the field.
+ * @const {string}
+ */
+rune.text.BitmapField.ALIGN_CENTER = "center";
+
+/**
+ * Aligns text to the right edge of the field.
+ * @const {string}
+ */
+rune.text.BitmapField.ALIGN_RIGHT = "right";
+
+//------------------------------------------------------------------------------
 // Public prototype getter and setter methods
 //------------------------------------------------------------------------------
+
+/**
+ * Horizontal text alignment: ALIGN_LEFT (default), ALIGN_CENTER or ALIGN_RIGHT.
+ * Each row is aligned within the unscaled buffer width. Overflow is clipped.
+ * With autoSize enabled, shorter rows align within the longest row's width.
+ * Unsupported values are ignored.
+ *
+ * @member {string} align
+ * @memberof rune.text.BitmapField
+ * @instance
+ */
+Object.defineProperty(rune.text.BitmapField.prototype, "align", {
+	/**
+	 * @this rune.text.BitmapField
+	 * @ignore
+	 */
+	get : function() {
+		return this.m_align;
+	},
+
+	/**
+	 * @this rune.text.BitmapField
+	 * @ignore
+	 * @suppress {accessControls}
+	 */
+	set : function(value) {
+		if (value !== rune.text.BitmapField.ALIGN_LEFT &&
+			value !== rune.text.BitmapField.ALIGN_CENTER &&
+			value !== rune.text.BitmapField.ALIGN_RIGHT) return;
+
+		if (this.m_align !== value) {
+			this.m_align = value;
+			this.breakCache();
+		}
+	}
+});
 
 /**
  * Controls automatic sizing and alignment of text fields. If this property is 
@@ -294,11 +360,7 @@ Object.defineProperty(rune.text.BitmapField.prototype, "textWidth", {
 			numChars = Math.max(rows[ln].length, numChars); 
 		}
 
-		if (numChars > 0) {
-			return (numChars * this.m_format['charWidth']) + ((numChars - 1) * this.m_letterSpacing);
-		}
-
-		return 0;
+		return this.m_getRowWidth(numChars);
 	}
 });
 
@@ -365,6 +427,11 @@ rune.text.BitmapField.prototype.m_renderText = function() {
 	for (var ln = 0; ln < rows.length; ln++) {
 		text = rows[ln];
 		var x = 0;
+		if (this.m_align === rune.text.BitmapField.ALIGN_CENTER) {
+			x = Math.floor((this.m_canvas['width'] - this.m_getRowWidth(text.length)) / 2);
+		} else if (this.m_align === rune.text.BitmapField.ALIGN_RIGHT) {
+			x = this.m_canvas['width'] - this.m_getRowWidth(text.length);
+		}
 		var y = (this.m_format['charHeight'] * ln) + (this.m_leading * ln);
 		for (var col = 0; col < text.length; col++) {
 			this.m_renderCharacter(
@@ -376,6 +443,21 @@ rune.text.BitmapField.prototype.m_renderText = function() {
 			x += this.m_format['charWidth'] + this.m_letterSpacing;
 		}
 	}
+};
+
+/**
+ * Measures a row in local pixels, excluding spacing after its final character.
+ * Empty rows have zero width.
+ *
+ * @param {number} numChars The number of characters in the row.
+ * @return {number} The row width in pixels.
+ * @private
+ */
+rune.text.BitmapField.prototype.m_getRowWidth = function(numChars) {
+	if (numChars > 0) {
+		return numChars * this.m_format['charWidth'] + (numChars - 1) * this.m_letterSpacing;
+	}
+	return 0;
 };
 
 /**

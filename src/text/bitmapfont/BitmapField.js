@@ -85,6 +85,41 @@ rune.text.BitmapField = function(text, resource) {
 	 */
 	this.m_text = this.m_formatText(text);
 	
+	/**
+	 * Whether text wraps within the local buffer width.
+	 * @type {boolean}
+	 * @private
+	 */
+	this.m_wordWrap = false;
+
+	/**
+	 * Cached visual rows shared by measurement and rendering.
+	 * @type {Array.<string>}
+	 * @private
+	 */
+	this.m_rows = null;
+
+	/**
+	 * Text used to build the cached visual rows.
+	 * @type {?string}
+	 * @private
+	 */
+	this.m_layoutText = null;
+
+	/**
+	 * Buffer width used to build the cached visual rows.
+	 * @type {number}
+	 * @private
+	 */
+	this.m_layoutWidth = -1;
+
+	/**
+	 * Character spacing used to build the cached visual rows.
+	 * @type {number}
+	 * @private
+	 */
+	this.m_layoutSpacing = 0;
+
 	//--------------------------------------------------------------------------
 	// Super call
 	//--------------------------------------------------------------------------
@@ -131,7 +166,8 @@ rune.text.BitmapField.ALIGN_RIGHT = "right";
 /**
  * Horizontal text alignment: ALIGN_LEFT (default), ALIGN_CENTER or ALIGN_RIGHT.
  * Each row is aligned within the unscaled buffer width. Overflow is clipped.
- * With autoSize enabled, shorter rows align within the longest row's width.
+ * With autoSize enabled and wrapping disabled, shorter rows align within the
+ * longest row's width. Wrapped rows use the configured buffer width.
  * Unsupported values are ignored.
  *
  * @member {string} align
@@ -167,7 +203,8 @@ Object.defineProperty(rune.text.BitmapField.prototype, "align", {
 /**
  * Controls automatic sizing and alignment of text fields. If this property is 
  * set to false, a default width of 140 pixels and a default height of 10 
- * pixels are used to represent the size of the text field.
+ * pixels are used initially. With wordWrap enabled, automatic sizing adjusts
+ * only height and preserves the configured width.
  *
  * @member {boolean} autoSize
  * @memberof rune.text.BitmapField
@@ -335,7 +372,7 @@ Object.defineProperty(rune.text.BitmapField.prototype, "textHeight", {
 	 * @ignore
 	 */
 	get : function() {
-		var numRows = this.m_text.split("\n").length;
+		var numRows = this.m_getRows().length;
 		return (numRows * this.m_format['charHeight']) + ((numRows - 1) * this.m_leading);
 	}
 });
@@ -355,7 +392,7 @@ Object.defineProperty(rune.text.BitmapField.prototype, "textWidth", {
 	 */
 	get : function() {
 		var numChars = 0;
-		var rows = this.m_text.split("\n");
+		var rows = this.m_getRows();
 		for (var ln = 0; ln < rows.length; ln++) {
 			numChars = Math.max(rows[ln].length, numChars); 
 		}
@@ -381,6 +418,42 @@ Object.defineProperty(rune.text.BitmapField.prototype, "texture", {
 	 */
 	get : function() {
 		return this.m_texture;
+	}
+});
+
+/**
+ * Whether text wraps at spaces within the local buffer width. Defaults to false.
+ * Oversized words split between characters. Spaces at automatic breaks are
+ * omitted; explicit newlines and empty rows are preserved. The text is unchanged.
+ * With autoSize enabled, only height is fitted. Even a zero-width field advances
+ * by at least one character per row. Non-positive character advances disable
+ * automatic wrapping to preserve overlapping text layouts.
+ *
+ * @member {boolean} wordWrap
+ * @memberof rune.text.BitmapField
+ * @instance
+ */
+Object.defineProperty(rune.text.BitmapField.prototype, "wordWrap", {
+	/**
+	 * @this rune.text.BitmapField
+	 * @ignore
+	 */
+	get : function() {
+		return this.m_wordWrap;
+	},
+	/**
+	 * @this rune.text.BitmapField
+	 * @ignore
+	 * @suppress {accessControls}
+	 */
+	set : function(value) {
+		value = Boolean(value);
+		if (this.m_wordWrap !== value) {
+			this.m_wordWrap = value;
+			this.m_rows = null;
+			if (this.m_autoSize) this.m_refit();
+			this.breakCache();
+		}
 	}
 });
 
@@ -412,8 +485,69 @@ rune.text.BitmapField.prototype.dispose = function() {
 };
 
 //------------------------------------------------------------------------------
+// Override internal prototype methods
+//------------------------------------------------------------------------------
+
+/**
+ * Invalidates rendering and refits wrapped height after a buffer width change.
+ * Width setters already invoke this method, including inherited width setters.
+ *
+ * @return {undefined}
+ * @package
+ * @ignore
+ * @suppress {accessControls}
+ */
+rune.text.BitmapField.prototype.breakCache = function() {
+	rune.display.DisplayObject.prototype.breakCache.call(this);
+	if (this.m_wordWrap && this.m_autoSize && this.m_canvas != null &&
+		this.m_layoutWidth !== this.m_canvas['width']) {
+		this.m_refit();
+	}
+};
+
+//------------------------------------------------------------------------------
 // Private prototype methods
 //------------------------------------------------------------------------------
+
+/**
+ * Returns visual rows, rebuilding only when text, width or character spacing
+ * changes. Rows are shared by measurement and rendering, independently of scale.
+ *
+ * @return {Array.<string>} The cached visual rows.
+ * @private
+ */
+rune.text.BitmapField.prototype.m_getRows = function() {
+	var width = this.m_wordWrap ? this.m_canvas['width'] : -1;
+	if (this.m_rows != null && this.m_layoutText === this.m_text &&
+		this.m_layoutWidth === width && this.m_layoutSpacing === this.m_letterSpacing) {
+		return this.m_rows;
+	}
+	this.m_layoutText = this.m_text;
+	this.m_layoutWidth = width;
+	this.m_layoutSpacing = this.m_letterSpacing;
+	this.m_rows = [];
+	var lines = this.m_text.split("\n");
+	var advance = this.m_format['charWidth'] + this.m_letterSpacing;
+	var limit = Math.max(1, Math.floor((width + this.m_letterSpacing) / advance));
+	for (var i = 0; i < lines.length; i++) {
+		var line = lines[i];
+		if (this.m_wordWrap && advance > 0) {
+			while (line.length > limit) {
+				var split = line.lastIndexOf(" ", limit);
+				if (split > 0) {
+					this.m_rows.push(line.substring(0, split).replace(/ +$/, ""));
+					line = line.substring(split).replace(/^ +/, "");
+				} else {
+					this.m_rows.push(line.substring(0, limit));
+					line = line.substring(limit).replace(/^ +/, "");
+				}
+				if (line.length === 0) break;
+			}
+		}
+		if (line.length > 0 || lines[i].length === 0) this.m_rows.push(line);
+	}
+	return this.m_rows;
+};
 
 /**
  * Renders a text field.
@@ -423,7 +557,7 @@ rune.text.BitmapField.prototype.dispose = function() {
  */
 rune.text.BitmapField.prototype.m_renderText = function() {
 	var text = "";
-	var rows = this.m_text.split("\n");
+	var rows = this.m_getRows();
 	for (var ln = 0; ln < rows.length; ln++) {
 		text = rows[ln];
 		var x = 0;
@@ -532,7 +666,7 @@ rune.text.BitmapField.prototype.m_disposeFormat = function() {
 
 /**
  * Fits the local pixel buffer and hitbox to the text independently of the
- * display object's scale.
+ * display object's scale. Wrapped fields retain their configured width.
  *
  * @return {undefined}
  * @protected
@@ -542,7 +676,8 @@ rune.text.BitmapField.prototype.m_refit = function() {
 	var width = this['textWidth'];
 	var height = this['textHeight'];
 
-	this['unscaledWidth'] = width;
+	if (this.m_wordWrap) width = this['unscaledWidth'];
+	else this['unscaledWidth'] = width;
 	this['unscaledHeight'] = height;
 	this['hitbox'].set(
 		0,

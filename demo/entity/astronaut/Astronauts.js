@@ -158,6 +158,10 @@ demo.entity.Astronauts.prototype.m_updateInputs = function(step) {
     if (this.keyboard.justPressed("MINUS")) {
         this.remove();
     }
+    
+    if (this.keyboard.justPressed("G")) {
+        this.getMemberAt(0).glitch.start(500, 8);
+    }
 };
 
 /**

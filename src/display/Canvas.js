@@ -501,7 +501,7 @@ rune.display.Canvas.prototype.renderDisplayObject = function(obj, offsetX, offse
 			this.m_context.translate(-tx, -ty);
 			this.m_context.globalAlpha = obj['alpha'];
 			this.m_context.drawImage(
-				obj['canvas']['element'],
+				obj.getRenderCanvas()['element'],
 				frame['clipping']['x'],
 				frame['clipping']['y'],
 				frame['clipping']['width'],

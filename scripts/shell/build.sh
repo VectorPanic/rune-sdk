@@ -66,6 +66,7 @@ npx google-closure-compiler \
 --js "./../../src/display/InteractiveObject.js" \
 --js "./../../src/display/Canvas.js" \
 --js "./../../src/display/Flicker.js" \
+--js "./../../src/display/Glitch.js" \
 --js "./../../src/display/DisplayObject.js" \
 --js "./../../src/display/Graphics.js" \
 --js "./../../src/display/Artboard.js" \

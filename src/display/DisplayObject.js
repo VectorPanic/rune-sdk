@@ -103,6 +103,14 @@ rune.display.DisplayObject = function(x, y, width, height) {
      * @ignore
      */
     this.m_flicker = null;
+
+    /**
+     * Optional glitch subsystem, created only on first access.
+     * @type {rune.display.Glitch}
+     * @protected
+     * @ignore
+     */
+    this.m_glitch = null;
     
     /**
      * Whether the object is flipped on the x axis.
@@ -484,6 +492,25 @@ Object.defineProperty(rune.display.DisplayObject.prototype, "debug", {
                 this['parent'].breakCache();
             }   
         }
+    }
+});
+
+/**
+ * Optional glitch effect. Created on first access and managed by this object.
+ * Displacements are measured in local pixels before scale and rotation.
+ * @member {rune.display.Glitch} glitch
+ * @memberof rune.display.DisplayObject
+ * @instance
+ * @readonly
+ */
+Object.defineProperty(rune.display.DisplayObject.prototype, "glitch", {
+    /**
+     * @this rune.display.DisplayObject
+     * @ignore
+     */
+    get : function() {
+        if (this.m_glitch == null) this.m_glitch = new rune.display.Glitch(this);
+        return this.m_glitch;
     }
 });
 
@@ -974,6 +1001,7 @@ Object.defineProperty(rune.display.DisplayObject.prototype, "visible", {
 rune.display.DisplayObject.prototype.update = function(step) {
     rune.display.InteractiveObject.prototype.update.call(this, step);
     this.m_updateFlicker(step);
+    this.m_updateGlitch(step);
 };
 
 /**
@@ -982,6 +1010,7 @@ rune.display.DisplayObject.prototype.update = function(step) {
 rune.display.DisplayObject.prototype.dispose = function() {
     this.m_disposeParent();
     this.m_disposeFlicker();
+    this.m_disposeGlitch();
     this.m_disposeCanvas();
     rune.display.InteractiveObject.prototype.dispose.call(this);
 };
@@ -1093,9 +1122,21 @@ rune.display.DisplayObject.prototype.fini = function() {
  */
 rune.display.DisplayObject.prototype.breakCache = function() {
     this.m_cached = false;
+    if (this.m_glitch != null) this.m_glitch.invalidate();
     if (this.m_parent != null) {
         this.m_parent.breakCache();
     }
+};
+
+/**
+ * Selects the buffer to composite after rendering, without exposing or modifying
+ * the original canvas through an effect. Does not allocate unused subsystems.
+ * @return {rune.display.Canvas} The original or active effect buffer.
+ * @package
+ * @ignore
+ */
+rune.display.DisplayObject.prototype.getRenderCanvas = function() {
+    return this.m_glitch != null ? this.m_glitch.getCanvas(this.m_canvas) : this.m_canvas;
 };
 
 /**
@@ -1158,6 +1199,7 @@ rune.display.DisplayObject.prototype.getRenderFrame = function() {
  */
 rune.display.DisplayObject.prototype.restoreCache = function() {
     this.m_cached = true;
+    if (this.m_glitch != null) this.m_glitch.invalidate();
 };
 
 /**
@@ -1256,6 +1298,17 @@ rune.display.DisplayObject.prototype.m_updateFlicker = function(step) {
 };
 
 /**
+ * Updates the optional glitch subsystem.
+ * @param {number} step Elapsed milliseconds.
+ * @return {undefined}
+ * @protected
+ * @ignore
+ */
+rune.display.DisplayObject.prototype.m_updateGlitch = function(step) {
+    if (this.m_glitch != null) this.m_glitch.update(step);
+};
+
+/**
  * Clears the object's pixel buffer (Canvas).
  *
  * @return {undefined}
@@ -1293,6 +1346,19 @@ rune.display.DisplayObject.prototype.m_disposeFlicker = function() {
     if (this.m_flicker != null) {
         this.m_flicker.dispose();
         this.m_flicker = null;
+    }
+};
+
+/**
+ * Disposes the optional glitch subsystem and its buffers.
+ * @return {undefined}
+ * @protected
+ * @ignore
+ */
+rune.display.DisplayObject.prototype.m_disposeGlitch = function() {
+    if (this.m_glitch != null) {
+        this.m_glitch.dispose();
+        this.m_glitch = null;
     }
 };
 

@@ -380,7 +380,6 @@ rune.camera.Camera.prototype.update = function(step) {
     rune.display.DisplayObjectContainer.prototype.update.call(this, step);
     this.m_updateShake(step);
     this.m_updateFlash(step);
-    this.m_updateGlitch(step);
     this.m_updateFade(step);
     this.m_updateAutoZoom(step);
     this.m_updateTargets(step);
@@ -415,7 +414,6 @@ rune.camera.Camera.prototype.dispose = function() {
     this.m_disposeTargets();
     this.m_disposeFade();
     this.m_disposeFlash();
-    this.m_disposeGlitch();
     this.m_disposeTint();
     this.m_disposeShake();
     this.m_disposeViewport();
@@ -617,18 +615,6 @@ rune.camera.Camera.prototype.m_updateFlash = function(step) {
     if (this.m_flash != null) {
         this.m_flash.update(step);
     }
-};
-
-/**
- * Updates the camera glitch subsystem.
- *
- * @param {number} step Elapsed time in milliseconds.
- * @return {undefined}
- * @protected
- * @ignore
- */
-rune.camera.Camera.prototype.m_updateGlitch = function(step) {
-    if (this.m_glitch != null) this.m_glitch.update(step);
 };
 
 /**
@@ -956,20 +942,6 @@ rune.camera.Camera.prototype.m_disposeFlash = function() {
     if (this.m_flash instanceof rune.camera.CameraFlash) {
         this.m_flash.dispose();
         this.m_flash = null;
-    }
-};
-
-/**
- * Releases the camera glitch subsystem.
- *
- * @return {undefined}
- * @protected
- * @ignore
- */
-rune.camera.Camera.prototype.m_disposeGlitch = function() {
-    if (this.m_glitch != null) {
-        this.m_glitch.dispose();
-        this.m_glitch = null;
     }
 };
 

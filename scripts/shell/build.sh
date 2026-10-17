@@ -86,6 +86,7 @@ npx google-closure-compiler \
 --js "./../../src/tilemap/TilemapLayer.js" \
 --js "./../../src/tilemap/Tilemap.js" \
 --js "./../../src/text/bitmapfont/BitmapFormat.js" \
+--js "./../../src/text/Typewriter.js" \
 --js "./../../src/text/bitmapfont/BitmapField.js" \
 --js "./../../src/debug/Master.js" \
 --js "./../../src/debug/Music.js" \

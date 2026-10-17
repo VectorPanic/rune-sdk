@@ -34,6 +34,14 @@ demo.scene.Scene001 = function() {
      * @private
      */
     this.m_menu = null;
+
+    /**
+     * Animated heading above the demo selection menu.
+     *
+     * @type {rune.text.BitmapField}
+     * @private
+     */
+    this.m_title = null;
     
     /**
      * Selection sound.
@@ -71,6 +79,8 @@ demo.scene.Scene001.prototype.init = function() {
     rune.scene.Scene.prototype.init.call(this);
     this.m_sound = this.application.sounds.sound.get("demo_sound_beep", true);
     this.m_initMenu();
+    this.m_initTitle();
+    this.m_layoutMenu();
     this.m_initEmitter();
 };
 
@@ -98,18 +108,51 @@ demo.scene.Scene001.prototype.m_initMenu = function() {
     this.m_menu.add("Scene001");
     this.m_menu.add("Scene002");
     this.m_menu.add("Scene003");
-    this.m_menu.center = this.cameras.getCameraAt(0).viewport.center;
     this.stage.addChild(this.m_menu);
 };
 
 /**
- * Create emitter.
+ * Creates the heading and starts revealing its text automatically.
+ *
+ * @return {undefined}
+ * @private
+ */
+demo.scene.Scene001.prototype.m_initTitle = function() {
+    this.m_title = new rune.text.BitmapField("", rune.text.BitmapFormat.FONT_MEDIUM);
+    this.m_title.autoSize = true;
+    this.m_title.align = rune.text.BitmapField.ALIGN_CENTER;
+    this.m_title.writer.start("SELECT SCENE", 60);
+    this.stage.addChild(this.m_title);
+};
+
+/**
+ * Centers the heading and menu text with sixteen pixels of spacing. The menu
+ * pointer sits to the left of the centered text. Trailing list padding is
+ * excluded from the block height, and full heading dimensions keep it stable
+ * while characters are revealed.
+ *
+ * @return {undefined}
+ * @private
+ */
+demo.scene.Scene001.prototype.m_layoutMenu = function() {
+    var center = this.cameras.getCameraAt(0).viewport.center;
+    var list = this.m_menu.getChildAt(0);
+    var last = list.getChildAt(list.numChildren - 1);
+    var height = this.m_title.height + 16 + list.y + last.bottom;
+    this.m_title.x = Math.floor(center.x - this.m_title.width / 2);
+    this.m_title.y = Math.floor(center.y - height / 2);
+    this.m_menu.x = Math.floor(center.x - list.x - list.width / 2);
+    this.m_menu.y = this.m_title.bottom + 16;
+};
+
+/**
+ * Creates the emitter with its emission area centered above the heading.
  *
  * @return {undefined}
  * @private
  */
 demo.scene.Scene001.prototype.m_initEmitter = function() {
-    this.m_emitter = new rune.particle.Emitter(this.m_menu.centerX, this.m_menu.top - 16, 8, 8, {
+    this.m_emitter = new rune.particle.Emitter(0, 0, 8, 8, {
         particles: [demo.entity.Particle],
         capacity: 92,
         accelerationY: 0.025,
@@ -121,6 +164,8 @@ demo.scene.Scene001.prototype.m_initEmitter = function() {
         maxRotation:   2
     });
     
+    this.m_emitter.centerX = this.m_title.centerX;
+    this.m_emitter.centerY = this.m_title.top - 16;
     this.stage.addChild(this.m_emitter);
 };
 

@@ -120,6 +120,30 @@ rune.text.BitmapField = function(text, resource) {
 	 */
 	this.m_layoutSpacing = 0;
 
+	/**
+	 * Lazily created typewriter, owned and updated by this field.
+	 *
+	 * @type {rune.text.Typewriter}
+	 * @private
+	 */
+	this.m_writer = null;
+
+	/**
+	 * Exclusive source-text position up to which characters are rendered.
+	 *
+	 * @type {number}
+	 * @private
+	 */
+	this.m_maxVisibleCharacters = Infinity;
+
+	/**
+	 * Source-text start position for each cached visual row.
+	 *
+	 * @type {Array.<number>}
+	 * @private
+	 */
+	this.m_rowStarts = [];
+
 	//--------------------------------------------------------------------------
 	// Super call
 	//--------------------------------------------------------------------------
@@ -290,6 +314,38 @@ Object.defineProperty(rune.text.BitmapField.prototype, "letterSpacing", {
 });
 
 /**
+ * Maximum number of source-text characters to reveal. Defaults to Infinity.
+ * Newlines and spaces omitted by wrapping still count. Layout and measurements
+ * always use the full text. Values are rounded down and clamped to zero.
+ *
+ * @member {number} maxVisibleCharacters
+ * @memberof rune.text.BitmapField
+ * @instance
+ */
+Object.defineProperty(rune.text.BitmapField.prototype, "maxVisibleCharacters", {
+	/**
+	 * @this rune.text.BitmapField
+	 * @ignore
+	 */
+	get : function() {
+		return this.m_maxVisibleCharacters;
+	},
+	/**
+	 * @this rune.text.BitmapField
+	 * @ignore
+	 * @suppress {accessControls}
+	 */
+	set : function(value) {
+		if (typeof value !== "number" || isNaN(value)) return;
+		value = Math.max(0, Math.floor(value));
+		if (this.m_maxVisibleCharacters !== value) {
+			this.m_maxVisibleCharacters = value;
+			this.breakCache();
+		}
+	}
+});
+
+/**
  * Which line spacing to use when rendering text fields.
  *
  * @member {number} leading
@@ -348,6 +404,8 @@ Object.defineProperty(rune.text.BitmapField.prototype, "text", {
 	set : function(value) {
 		value = this.m_formatText(value);
 		if (this.m_text != value) {
+			if (this.m_writer != null) this.m_writer.stop();
+			this.m_maxVisibleCharacters = Infinity;
 			this.m_text  = value;
 			if (this.m_autoSize == true) {
 				this.m_refit();
@@ -457,9 +515,38 @@ Object.defineProperty(rune.text.BitmapField.prototype, "wordWrap", {
 	}
 });
 
+/**
+ * Typewriter subsystem, created on first access. Updated and disposed by this
+ * field. No manual update is required while the field is in the display list.
+ *
+ * @member {rune.text.Typewriter} writer
+ * @memberof rune.text.BitmapField
+ * @instance
+ * @readonly
+ */
+Object.defineProperty(rune.text.BitmapField.prototype, "writer", {
+	/**
+	 * @this rune.text.BitmapField
+	 * @ignore
+	 */
+	get : function() {
+		if (this.m_writer == null) this.m_writer = new rune.text.Typewriter(this);
+		return this.m_writer;
+	}
+});
+
 //------------------------------------------------------------------------------
 // Override public prototype methods (ENGINE)
 //------------------------------------------------------------------------------
+
+/**
+ * @inheritDoc
+ * @suppress {accessControls}
+ */
+rune.text.BitmapField.prototype.update = function(step) {
+	rune.display.DisplayObject.prototype.update.call(this, step);
+	if (this.m_writer != null) this.m_writer.update(step);
+};
 
 /**
  * @inheritDoc
@@ -479,6 +566,7 @@ rune.text.BitmapField.prototype.render = function() {
  * @inheritDoc
  */
 rune.text.BitmapField.prototype.dispose = function() {
+	this.m_disposeWriter();
 	this.m_disposeTexture();
 	this.m_disposeFormat();
 	rune.display.DisplayObject.prototype.dispose.call(this);
@@ -526,13 +614,19 @@ rune.text.BitmapField.prototype.m_getRows = function() {
 	this.m_layoutWidth = width;
 	this.m_layoutSpacing = this.m_letterSpacing;
 	this.m_rows = [];
+	this.m_rowStarts.length = 0;
+	var source = 0;
 	var lines = this.m_text.split("\n");
 	var advance = this.m_format['charWidth'] + this.m_letterSpacing;
 	var limit = Math.max(1, Math.floor((width + this.m_letterSpacing) / advance));
 	for (var i = 0; i < lines.length; i++) {
 		var line = lines[i];
+		var start = source;
+		source += line.length + 1;
 		if (this.m_wordWrap && advance > 0) {
 			while (line.length > limit) {
+				var length = line.length;
+				this.m_rowStarts.push(start);
 				var split = line.lastIndexOf(" ", limit);
 				if (split > 0) {
 					this.m_rows.push(line.substring(0, split).replace(/ +$/, ""));
@@ -541,10 +635,14 @@ rune.text.BitmapField.prototype.m_getRows = function() {
 					this.m_rows.push(line.substring(0, limit));
 					line = line.substring(limit).replace(/^ +/, "");
 				}
+				start += length - line.length;
 				if (line.length === 0) break;
 			}
 		}
-		if (line.length > 0 || lines[i].length === 0) this.m_rows.push(line);
+		if (line.length > 0 || lines[i].length === 0) {
+			this.m_rows.push(line);
+			this.m_rowStarts.push(start);
+		}
 	}
 	return this.m_rows;
 };
@@ -568,6 +666,7 @@ rune.text.BitmapField.prototype.m_renderText = function() {
 		}
 		var y = (this.m_format['charHeight'] * ln) + (this.m_leading * ln);
 		for (var col = 0; col < text.length; col++) {
+			if (this.m_rowStarts[ln] + col >= this.m_maxVisibleCharacters) return;
 			this.m_renderCharacter(
 				text.charCodeAt(col),
 				x,
@@ -632,6 +731,19 @@ rune.text.BitmapField.prototype.m_renderCharacter = function(charCode, x, y) {
 			rect.width,
 			rect.height
 		);
+	}
+};
+
+/**
+ * Stops and disposes the optional typewriter subsystem.
+ *
+ * @return {undefined}
+ * @private
+ */
+rune.text.BitmapField.prototype.m_disposeWriter = function() {
+	if (this.m_writer != null) {
+		this.m_writer.dispose();
+		this.m_writer = null;
 	}
 };
 

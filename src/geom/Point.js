@@ -143,6 +143,23 @@ Object.defineProperty(rune.geom.Point.prototype, "y", {
 //------------------------------------------------------------------------------
 
 /**
+ * Copies the coordinates of the specified point to this point.
+ *
+ * @param {rune.geom.Point} point The point to copy coordinates from.
+ *
+ * @return {rune.geom.Point} This point.
+ */
+rune.geom.Point.prototype.copyFrom = function(point) {
+    var x = point['x'];
+    var y = point['y'];
+
+    this['x'] = x;
+    this['y'] = y;
+
+    return this;
+};
+
+/**
  * Returns the distance between the current and specified point.
  *
  * @param {rune.geom.Point} point The specified point.
@@ -178,6 +195,21 @@ rune.geom.Point.prototype.interpolate = function(point, fraction, output) {
         fraction,
         output
     );
+};
+
+/**
+ * Sets the horizontal and vertical coordinates of this point.
+ *
+ * @param {number} x The horizontal coordinate.
+ * @param {number} y The vertical coordinate.
+ *
+ * @return {rune.geom.Point} This point.
+ */
+rune.geom.Point.prototype.set = function(x, y) {
+    this['x'] = x;
+    this['y'] = y;
+
+    return this;
 };
 
 /**

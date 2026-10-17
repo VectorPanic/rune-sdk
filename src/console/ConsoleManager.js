@@ -225,10 +225,12 @@ rune.console.ConsoleManager.prototype.show = function(callback, scope) {
 
 /**
  * Displays part of the console.
+ * This signature is independent of Point.set.
  *
  * @param {number} ammount How much of the console to display.
  *
  * @returns {undefined}
+ * @suppress {checkTypes}
  * @ignore
  */
 rune.console.ConsoleManager.prototype.set = function(ammount) {

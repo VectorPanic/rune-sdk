@@ -255,12 +255,15 @@ Object.defineProperty(rune.tilemap.Tile.prototype, "value", {
 /**
  * Set the Tile object's position and properties. Note that this method is 
  * internal and intended only for the TilemapLayer class.
+ * This signature is independent of Point.set.
  *
+ * @param {number} i The tile index.
  * @param {number} x The position of the Tile object in the x direction.
  * @param {number} y The position of the Tile object in the y direction.
  * @param {Object} [p] Tile properties.
  *
  * @return {undefined}
+ * @suppress {checkTypes}
  * @package
  * @ignore
  */

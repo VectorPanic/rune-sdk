@@ -173,10 +173,11 @@ rune.geom.Rectangle.intersection = function(x1, y1, w1, h1, x2, y2, w2, h2, o) {
 };
 
 /**
- * Determine whether or not two rectangles intersects.
+ * Determines whether two rectangles overlap with positive area. Edge or corner
+ * contact alone is not an intersection. Empty rectangles do not intersect.
  * 
  * @param {number} x1 The x coordinate of the first rectangle.
- * @param {number} y1 The x coordinate of the first rectangle.
+ * @param {number} y1 The y coordinate of the first rectangle.
  * @param {number} w1 The width of the first rectangle.
  * @param {number} h1 The height of the first rectangle.
  * @param {number} x2 The x coordinate of the second rectangle.
@@ -184,13 +185,14 @@ rune.geom.Rectangle.intersection = function(x1, y1, w1, h1, x2, y2, w2, h2, o) {
  * @param {number} w2 The width of the second rectangle.
  * @param {number} h2 The height of the second rectangle.
  * 
- * @return {boolean} A value of true if the specified point intersects with this rectangle; otherwise false.
+ * @return {boolean} Whether the rectangles overlap with positive area.
  */
 rune.geom.Rectangle.intersects = function(x1, y1, w1, h1, x2, y2, w2, h2) {
-	return ((x1 <= x2 + w2) && 
-			(x1  + w1 > x2) && 
-			(y1 <= y2 + h2) && 
-			(y1  + h1 > y2));
+	return (w1 > 0 && h1 > 0 && w2 > 0 && h2 > 0 &&
+			x1 < x2 + w2 &&
+			x1 + w1 > x2 &&
+			y1 < y2 + h2 &&
+			y1 + h1 > y2);
 };
 
 /**
@@ -719,8 +721,8 @@ rune.geom.Rectangle.prototype.intersection = function(toIntersect, output) {
 };
 
 /**
- * Determines whether the object specified in the toIntersect parameter 
- * intersects with this Rectangle object.
+ * Determines whether the specified rectangle overlaps this rectangle with
+ * positive area. Edge and corner contact and empty rectangles return false.
  *
  * @param {rune.geom.Rectangle} toIntersect The Rectangle object to compare against this Rectangle object.
  *

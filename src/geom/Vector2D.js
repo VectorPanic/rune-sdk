@@ -196,16 +196,18 @@ rune.geom.Vector2D.prototype.multiply = function(value) {
 
 /**
  * Scales the line segment between (0,0) and the current vector to a set length.
+ * A scale of zero clears a nonzero vector. A zero vector remains unchanged.
  *
- * @param {number} [scale] The scaling value.
+ * @param {number} [scale=1] The scaling value.
  *
  * @returns {rune.geom.Vector2D}
  */
 rune.geom.Vector2D.prototype.normalize = function(scale) {
+    scale = (scale === undefined) ? 1 : scale;
     var magnitude = this.magnitude();
     if (magnitude > 0) {
         this.divide(magnitude);
-        this.multiply(scale || 1);
+        this.multiply(scale);
     }
 
     return this;

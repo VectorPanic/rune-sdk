@@ -123,6 +123,7 @@ npx google-closure-compiler \
 --js "./../../src/camera/Cameras.js" \
 --js "./../../src/scene/Scene.js" \
 --js "./../../src/scene/Scenes.js" \
+--js "./../../src/ui/button/Button.js" \
 --js "./../../src/ui/counter/CounterDigit.js" \
 --js "./../../src/ui/counter/Counter.js" \
 --js "./../../src/ui/progressbar/Progressbar.js" \

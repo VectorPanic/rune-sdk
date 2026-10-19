@@ -80,34 +80,18 @@ demo.scene.Scene002.prototype.update = function(step) {
  * @override
  */
 demo.scene.Scene002.prototype.m_initCamera = function() {
-    this.cameras.removeCameras(true);
-    
-    var w = this.application.screen.width  >> 1;
-    var h = this.application.screen.height >> 1;
-    
+    this.cameras.splitScreen(4);
+
+    var zooms = [0.25, 0.5, 1, 2];
     this.m_cams = [];
-    
-    this.m_cams[0] = this.cameras.createCamera(0, 0, w, h);
-    this.m_cams[0].viewport.zoom = 0.25;
-    this.m_cams[0].viewport.center = this.application.screen.center;
-    
-    this.m_cams[1] = this.cameras.createCamera(w, 0, w, h);
-    this.m_cams[1].viewport.zoom = 0.5;
-    this.m_cams[1].viewport.center = this.application.screen.center;
 
-    this.m_cams[2] = this.cameras.createCamera(0, h, w, h);
-    this.m_cams[2].viewport.zoom = 1;
-    this.m_cams[2].viewport.center = this.application.screen.center;
+    for (var i = 0; i < zooms.length; i++) {
+        var camera = this.cameras.getCameraAt(i);
+        camera.viewport.zoom = zooms[i];
+        camera.viewport.center = this.application.screen.center;
+        this.m_cams.push(camera);
+    }
 
-    this.m_cams[3] = this.cameras.createCamera(w, h, w, h);
-    this.m_cams[3].viewport.zoom = 2;
-    this.m_cams[3].viewport.center = this.application.screen.center;
-    
-    this.cameras.addCamera(this.m_cams[0]);
-    this.cameras.addCamera(this.m_cams[1]);
-    this.cameras.addCamera(this.m_cams[2]);
-    this.cameras.addCamera(this.m_cams[3]);
-    
     this.m_cam = this.m_cams[0];
 };
 

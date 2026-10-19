@@ -169,6 +169,55 @@ rune.camera.Cameras.prototype.removeCameras = function(dispose) {
     }
 };
 
+/**
+ * Arranges one to four cameras over the application's internal screen area.
+ * Disposes all existing cameras through removeCameras(true), then creates a
+ * fresh set through createCamera()/addCamera(). Previous targets, effects,
+ * zoom settings and external camera references do not carry over. Configure
+ * the new cameras after this call. Invalid layout arguments leave cameras intact.
+ *
+ * One camera fills the screen. Two cameras use left/right panes by default;
+ * horizontal uses top/bottom. Three or four cameras use a two-by-two grid in
+ * row-major order, leaving the bottom-right pane unused with three cameras.
+ * Pixel boundaries are rounded independently so odd resolutions have no gaps.
+ * Call again after a screen resolution change; layout is not updated implicitly.
+ *
+ * @param {number} count Number of cameras, an integer from one to four.
+ * @param {string} [orientation="vertical"] Two-player layout: vertical or horizontal.
+ *
+ * @return {undefined}
+ * @throws {RangeError} If count, orientation or screen dimensions are invalid.
+ * @throws {Error} If the camera system has been disposed.
+ */
+rune.camera.Cameras.prototype.splitScreen = function(count, orientation) {
+    if (this.m_cameras == null) throw new Error("Cameras is disposed.");
+    orientation = orientation === undefined ? "vertical" : orientation;
+    if (typeof count !== "number" || count !== Math.floor(count) || count < 1 || count > 4 ||
+        (orientation !== "vertical" && orientation !== "horizontal")) {
+        throw new RangeError("Invalid split-screen layout.");
+    }
+    var screen = rune.system.Application['instance']['screen'];
+    var width = screen['width'];
+    var height = screen['height'];
+    var columns = count === 1 || (count === 2 && orientation === "horizontal") ? 1 : 2;
+    var rows = count > 2 || (count === 2 && orientation === "horizontal") ? 2 : 1;
+    if (!isFinite(width) || !isFinite(height) || width !== Math.floor(width) ||
+        height !== Math.floor(height) || width < columns || height < rows) {
+        throw new RangeError("Screen is too small or invalid for split-screen.");
+    }
+    this.removeCameras(true);
+    for (var i = 0; i < count; i++) {
+        var column = i % columns;
+        var row = Math.floor(i / columns);
+        var x = Math.floor(column * width / columns);
+        var y = Math.floor(row * height / rows);
+        var w = Math.floor((column + 1) * width / columns) - x;
+        var h = Math.floor((row + 1) * height / rows) - y;
+        var camera = this.addCamera(this.createCamera(0, 0, w, h));
+        this.m_layoutCamera(camera, x, y, w, h);
+    }
+};
+
 //------------------------------------------------------------------------------
 // Public prototype methods (ENGINE)
 //------------------------------------------------------------------------------
@@ -194,6 +243,42 @@ rune.camera.Cameras.prototype.update = function(step) {
  */
 rune.camera.Cameras.prototype.dispose = function() {
     this.m_disposeCameras();
+};
+
+//------------------------------------------------------------------------------
+// Protected prototype methods
+//------------------------------------------------------------------------------
+
+/**
+ * Applies a split-screen pane without moving its world-space view center.
+ * Camera x/y and width/height describe the output rectangle; viewport x/y
+ * describe the viewed world. Reapply zoom after resizing the camera buffer.
+ * Override to customize how an individual camera receives its layout.
+ *
+ * @param {rune.camera.Camera} camera Camera to arrange.
+ * @param {number} x Screen x in pixels.
+ * @param {number} y Screen y in pixels.
+ * @param {number} width Output width in pixels.
+ * @param {number} height Output height in pixels.
+ *
+ * @return {undefined}
+ * @protected
+ * @ignore
+ */
+rune.camera.Cameras.prototype.m_layoutCamera = function(camera, x, y, width, height) {
+    var viewport = camera['viewport'];
+    var centerX = viewport['x'] + viewport['width'] / 2;
+    var centerY = viewport['y'] + viewport['height'] / 2;
+    var zoom = viewport['zoom'];
+    var smoothing = camera['canvas']['smoothing'];
+    camera['x'] = x;
+    camera['y'] = y;
+    camera['width'] = width;
+    camera['height'] = height;
+    viewport['zoom'] = zoom;
+    camera['canvas']['smoothing'] = smoothing;
+    viewport['x'] = centerX - viewport['width'] / 2;
+    viewport['y'] = centerY - viewport['height'] / 2;
 };
 
 //------------------------------------------------------------------------------

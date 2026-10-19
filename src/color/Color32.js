@@ -11,7 +11,7 @@
  * @param {number} [r=0] The red component.
  * @param {number} [g=0] The green component.
  * @param {number} [b=0] The blue component.
- * @param {number} [a=0] The alpha component.
+ * @param {number} [a=255] The alpha component; zero is fully transparent.
  *
  * @class
  * @classdesc
@@ -31,7 +31,7 @@ rune.color.Color32 = function(r, g, b, a) {
      * @type {rune.color.ColorComponent}
      * @private
      */
-    this.m_a = new rune.color.ColorComponent(a | 0xff);
+    this.m_a = new rune.color.ColorComponent(a === undefined ? 0xff : a);
     
     //--------------------------------------------------------------------------
     // Super call

@@ -86,6 +86,33 @@ rune.color.Color32.fromHex = function(s) {
     );
 }
 
+/**
+ * Linearly interpolates RGBA components into an optional reusable output color.
+ * Reuses Color24 interpolation for RGB; alpha is blended independently, without
+ * premultiplication. Components are rounded to whole bytes. Output may alias
+ * either input. Inputs remain unchanged when output is a separate color.
+ *
+ * @param {rune.color.Color32} start Starting color.
+ * @param {rune.color.Color32} target Target color.
+ * @param {number} amount Blend amount, clamped to the interval zero to one.
+ * @param {rune.color.Color32} [output] Result color; allocated only if omitted.
+ *
+ * @return {rune.color.Color32} The output color.
+ * @throws {TypeError} If an input or supplied output is not a Color32.
+ * @throws {RangeError} If amount is not a finite number.
+ */
+rune.color.Color32.lerp = function(start, target, amount, output) {
+    if (!(start instanceof rune.color.Color32) || !(target instanceof rune.color.Color32) ||
+        (output !== undefined && !(output instanceof rune.color.Color32))) throw new TypeError("Expected Color32 colors.");
+    var startAlpha = start['a']['value'];
+    var targetAlpha = target['a']['value'];
+    output = output === undefined ? new rune.color.Color32() : output;
+    rune.color.Color24.lerp(start, target, amount, output);
+    amount = rune.util.Math.clamp(amount, 0, 1);
+    output['a']['value'] = Math.round(startAlpha + (targetAlpha - startAlpha) * amount);
+    return output;
+};
+
 //------------------------------------------------------------------------------
 // Public prototype getter and setter methods
 //------------------------------------------------------------------------------
@@ -119,6 +146,22 @@ rune.color.Color32.prototype.dispose = function() {
     rune.color.Color24.prototype.dispose.call(this);
     this.m_a = null;
 }
+
+/**
+ * Blends this color toward a Color32 target, including alpha, without allocating
+ * colors. Use static lerp() with a fixed start color for a time-based transition.
+ *
+ * @param {rune.color.Color24} target Target color; must be a Color32.
+ * @param {number} amount Blend amount, clamped to the interval zero to one.
+ *
+ * @return {rune.color.Color32} This color.
+ * @throws {TypeError} If target is not a Color32.
+ * @throws {RangeError} If amount is not a finite number.
+ */
+rune.color.Color32.prototype.lerp = function(target, amount) {
+    if (!(target instanceof rune.color.Color32)) throw new TypeError("Expected a Color32 target.");
+    return rune.color.Color32.lerp(this, target, amount, this);
+};
 
 /**
  * Returns a 32-bit RGBA representation of this color, as a string.

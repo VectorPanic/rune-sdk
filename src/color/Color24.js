@@ -85,6 +85,34 @@ rune.color.Color24.fromHex = function(s) {
     );
 }
 
+/**
+ * Linearly interpolates RGB components without changing either input, unless
+ * output aliases an input. Components are rounded to whole bytes. This blends
+ * stored RGB values directly, without gamma correction. Color32 inputs are
+ * accepted, but alpha is neither read nor changed by this RGB-only method.
+ *
+ * @param {rune.color.Color24} start Starting color.
+ * @param {rune.color.Color24} target Target color.
+ * @param {number} amount Blend amount, clamped to the interval zero to one.
+ * @param {rune.color.Color24} [output] Result color; allocated only if omitted.
+ *
+ * @return {rune.color.Color24} The output color.
+ * @throws {TypeError} If an input or supplied output is not a Color24.
+ * @throws {RangeError} If amount is not a finite number.
+ */
+rune.color.Color24.lerp = function(start, target, amount, output) {
+    if (!(start instanceof rune.color.Color24) || !(target instanceof rune.color.Color24) ||
+        (output !== undefined && !(output instanceof rune.color.Color24))) throw new TypeError("Expected Color24 colors.");
+    if (typeof amount !== "number" || !isFinite(amount)) throw new RangeError("Invalid color blend amount.");
+    amount = rune.util.Math.clamp(amount, 0, 1);
+    var r = Math.round(start['r']['value'] + (target['r']['value'] - start['r']['value']) * amount);
+    var g = Math.round(start['g']['value'] + (target['g']['value'] - start['g']['value']) * amount);
+    var b = Math.round(start['b']['value'] + (target['b']['value'] - start['b']['value']) * amount);
+    output = output === undefined ? new rune.color.Color24() : output;
+    output.setRGB(r, g, b);
+    return output;
+};
+
 //------------------------------------------------------------------------------
 // Public prototype getter and setter methods
 //------------------------------------------------------------------------------
@@ -157,6 +185,22 @@ rune.color.Color24.prototype.dispose = function() {
     this.m_g = null;
     this.m_b = null;
 }
+
+/**
+ * Blends this color toward a target in place. Repeated calls blend from the
+ * current value; use static lerp(start, target, amount, output) with a fixed
+ * start color for a time-based transition. This method does not allocate colors.
+ *
+ * @param {rune.color.Color24} target Target color.
+ * @param {number} amount Blend amount, clamped to the interval zero to one.
+ *
+ * @return {rune.color.Color24} This color.
+ * @throws {TypeError} If target is not a Color24.
+ * @throws {RangeError} If amount is not a finite number.
+ */
+rune.color.Color24.prototype.lerp = function(target, amount) {
+    return rune.color.Color24.lerp(this, target, amount, this);
+};
 
 /**
  * Generates a random color for this object.

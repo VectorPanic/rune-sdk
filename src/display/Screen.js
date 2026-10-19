@@ -48,6 +48,14 @@ rune.display.Screen = function(options) {
      */
     this.m_debugger = null;
     
+    /**
+     * Screenshot request waiting for the next visible render, or null.
+     *
+     * @type {Object}
+     * @private
+     */
+    this.m_screenshot = null;
+
     //--------------------------------------------------------------------------
     // Super call
     //--------------------------------------------------------------------------
@@ -218,6 +226,38 @@ Object.defineProperty(rune.display.Screen.prototype, "console", {
 });
 
 //------------------------------------------------------------------------------
+// Public prototype methods (API)
+//------------------------------------------------------------------------------
+
+/**
+ * Downloads the next rendered screen as a PNG at its internal resolution,
+ * independent of CSS scaling. Includes cameras and screen children such as
+ * HUD elements. Debugger and console are excluded unless includeDebug is true.
+ * The request waits while the screen is invisible. If requested more than once
+ * before rendering, the latest filename and debug option replace the previous
+ * request. At most one screenshot is captured per render.
+ *
+ * Encoding and downloading use the browser's asynchronous canvas export. The
+ * browser controls the save location and may request permission to download.
+ * Export/download errors are reported to the console without stopping the game.
+ * The pending request is discarded if the screen is disposed before rendering.
+ *
+ * @param {string} [filename="screenshot.png"] Download filename; .png is appended if missing.
+ * @param {boolean} [includeDebug=false] Whether to include debugger and console.
+ *
+ * @return {undefined}
+ * @throws {TypeError} If filename is not a nonempty string.
+ * @throws {Error} If the screen has been disposed.
+ */
+rune.display.Screen.prototype.screenshot = function(filename, includeDebug) {
+    if (this.m_canvas == null) throw new Error("Screen is disposed.");
+    filename = filename === undefined ? "screenshot.png" : filename;
+    if (typeof filename !== "string" || !/\S/.test(filename)) throw new TypeError("Invalid screenshot filename.");
+    if (!/\.png$/i.test(filename)) filename += ".png";
+    this.m_screenshot = {filename: filename, includeDebug: includeDebug === true};
+};
+
+//------------------------------------------------------------------------------
 // Override public prototype methods (ENGINE)
 //------------------------------------------------------------------------------
 
@@ -235,11 +275,19 @@ rune.display.Screen.prototype.update = function(step) {
  */
 rune.display.Screen.prototype.render = function() {
     if (this["visible"] == true) {
+        var screenshot = this.m_screenshot;
+        this.m_screenshot = null;
         this.m_renderBackgroundColor();
         this.m_renderCameras();
         this.m_renderChildren();
+        if (screenshot != null && screenshot['includeDebug'] === false) {
+            this.m_captureScreenshot(screenshot['filename']);
+        }
         this.m_renderDebugger();
         this.m_renderConsole();
+        if (screenshot != null && screenshot['includeDebug'] === true) {
+            this.m_captureScreenshot(screenshot['filename']);
+        }
     }
 };
 
@@ -247,6 +295,7 @@ rune.display.Screen.prototype.render = function() {
  * @inheritDoc
  */
 rune.display.Screen.prototype.dispose = function() {
+    this.m_screenshot = null;
     this.m_disposeConsole();
     this.m_disposeDebugger();
     rune.display.DisplayObjectContainer.prototype.dispose.call(this);
@@ -385,6 +434,51 @@ rune.display.Screen.prototype.m_renderDebugger = function() {
 rune.display.Screen.prototype.m_renderConsole = function() {
     if (this.m_console != null && this.m_console['visible'] == true && this.m_config.debug == true) {
         this.m_canvas.renderDisplayObject(this.m_console);
+    }
+};
+
+/**
+ * Encodes a snapshot and starts its download. Override to provide a different
+ * export destination. toBlob() snapshots the bitmap before asynchronous
+ * encoding, so debug overlays drawn afterwards do not affect a clean capture.
+ * Browser security failures do not interrupt rendering.
+ *
+ * @param {string} filename PNG download filename.
+ *
+ * @return {undefined}
+ * @protected
+ * @ignore
+ */
+rune.display.Screen.prototype.m_captureScreenshot = function(filename) {
+    try {
+        this.m_canvas['element'].toBlob(function(blob) {
+            if (blob == null) {
+                console.error("Unable to encode screenshot.");
+                return;
+            }
+            var url = null;
+            var link = null;
+            try {
+                url = URL.createObjectURL(blob);
+                link = document.createElement("a");
+                link.download = filename;
+                link.href = url;
+                link.style.display = "none";
+                document.body.appendChild(link);
+                link.click();
+            } catch (error) {
+                console.error("Unable to download screenshot.", error);
+            } finally {
+                if (link != null && link.parentNode != null) link.parentNode.removeChild(link);
+                if (url != null) {
+                    // Let the browser consume the download before releasing its URL.
+                    var downloadURL = /** @type {string} */ (url);
+                    window.setTimeout(function() { URL.revokeObjectURL(downloadURL); }, 1000);
+                }
+            }
+        }, "image/png");
+    } catch (error) {
+        console.error("Unable to capture screenshot.", error);
     }
 };
 

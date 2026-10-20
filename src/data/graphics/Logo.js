@@ -26,7 +26,7 @@ rune.data.Logo = function(x, y) {
     /**
      * Extend Graphic.
      */
-    rune.display.Graphic.call(this, x || 0, y || 0, 64, 32, "rune_texture_logo_text_64x32");
+    rune.display.Graphic.call(this, x || 0, y || 0, 64, 32, "rune_image_logo_text_64x32");
 };
 
 //------------------------------------------------------------------------------

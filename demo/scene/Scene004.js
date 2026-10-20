@@ -105,7 +105,7 @@ demo.scene.Scene004.prototype.m_initBackground = function() {
         0,
         this.application.width,
         this.application.height,
-        "rune_texture_logo_text_64x32"
+        "rune_image_logo_text_64x32"
     );
     
     this.stage.addChild(this.m_background);

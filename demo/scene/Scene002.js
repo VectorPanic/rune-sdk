@@ -35,6 +35,20 @@ demo.scene.Scene002 = function() {
      */
     this.m_controller = null;
 
+    /**
+     * Keyboard reference displayed above all camera panes.
+     * @type {rune.text.BitmapField}
+     * @private
+     */
+    this.m_controls = null;
+
+    /**
+     * Whether the keyboard reference is enabled.
+     * @type {boolean}
+     * @private
+     */
+    this.m_controlsVisible = true;
+
     //--------------------------------------------------------------------------
     // Super call
     //--------------------------------------------------------------------------
@@ -53,6 +67,26 @@ demo.scene.Scene002.prototype = Object.create(rune.scene.Scene.prototype);
 demo.scene.Scene002.prototype.constructor = demo.scene.Scene002;
 
 //------------------------------------------------------------------------------
+// Override public prototype methods (API)
+//------------------------------------------------------------------------------
+
+/**
+ * @inheritDoc
+ */
+demo.scene.Scene002.prototype.onSelect = function(scene) {
+    rune.scene.Scene.prototype.onSelect.call(this, scene);
+    this.m_controls.visible = this.m_controlsVisible;
+};
+
+/**
+ * @inheritDoc
+ */
+demo.scene.Scene002.prototype.onDeselect = function(scene) {
+    this.m_controls.visible = false;
+    rune.scene.Scene.prototype.onDeselect.call(this, scene);
+};
+
+//------------------------------------------------------------------------------
 // Override public prototype methods (ENGINE)
 //------------------------------------------------------------------------------
 
@@ -62,6 +96,7 @@ demo.scene.Scene002.prototype.constructor = demo.scene.Scene002;
 demo.scene.Scene002.prototype.init = function() {
     rune.scene.Scene.prototype.init.call(this);
     this.m_initGamepad();
+    this.m_initControls();
 };
 
 /**
@@ -70,6 +105,14 @@ demo.scene.Scene002.prototype.init = function() {
 demo.scene.Scene002.prototype.update = function(step) {
     rune.scene.Scene.prototype.update.call(this, step);
     this.m_updateInput(step);
+};
+
+/**
+ * @inheritDoc
+ */
+demo.scene.Scene002.prototype.dispose = function() {
+    this.m_disposeControls();
+    rune.scene.Scene.prototype.dispose.call(this);
 };
 
 //------------------------------------------------------------------------------
@@ -133,12 +176,47 @@ demo.scene.Scene002.prototype.m_initGamepad = function() {
 };
 
 /**
+ * Creates a screen-fixed reference for the keyboard controls.
+ *
+ * @returns {undefined}
+ * @private
+ */
+demo.scene.Scene002.prototype.m_initControls = function() {
+    this.m_disposeControls();
+    if (this.m_controls == null) {
+        this.m_controls = new rune.text.BitmapField([
+            "CONTROLS (H: SHOW / HIDE)",
+            "1-4   : SELECT CAMERA",
+            "WASD  : MOVE CAMERA ON SCREEN",
+            "Q / E : ROTATE CAMERA",
+            "SHIFT + WASD / Q / E: MOVE / ROTATE CONTROLLER",
+            "ARROWS: MOVE CAMERA VIEW",
+            "Z / X : ZOOM IN / OUT",
+            "T     : TOGGLE FOLLOW CONTROLLER",
+            "M     : MIRROR CAMERA",
+            "F / V / G: FLASH / SHAKE / GLITCH",
+            "I / O : FADE IN / OUT",
+            "R     : RESET CAMERAS / CONTROLLER POSITION",
+            "ESC   : MAIN MENU"
+        ].join("\n"), rune.text.BitmapFormat.FONT_SMALL);
+        this.m_controls.autoSize = true;
+        this.m_controls.x = 8;
+        this.m_controls.y = 8;
+        this.m_controls.visible = false;
+        this.application.screen.addChild(this.m_controls);
+    } else throw new Error();
+};
+
+/**
  * Updates user input.
  *
  * @returns {undefined}
  * @private
  */
 demo.scene.Scene002.prototype.m_updateInput = function() {
+    if (this.keyboard.justPressed("H")) {
+        this.m_toggleControls();
+    }
     this.m_updateInputSelect();
     this.m_updateInputFlash();
     this.m_updateInputTarget();
@@ -347,6 +425,17 @@ demo.scene.Scene002.prototype.m_updateSceneSelect = function() {
 };
 
 /**
+ * Toggles the visibility of the keyboard reference.
+ *
+ * @returns {undefined}
+ * @private
+ */
+demo.scene.Scene002.prototype.m_toggleControls = function() {
+    this.m_controlsVisible = !this.m_controlsVisible;
+    this.m_controls.visible = this.m_controlsVisible;
+};
+
+/**
  * Prepare the game controller object for removal.
  *
  * @returns {undefined}
@@ -356,5 +445,18 @@ demo.scene.Scene002.prototype.m_disposeGamepad = function() {
     if (this.m_controller instanceof demo.entity.Controller) {
         this.m_controller.dispose();
         this.m_controller = null;
+    }
+};
+
+/**
+ * Removes and destroys the keyboard reference.
+ *
+ * @returns {undefined}
+ * @private
+ */
+demo.scene.Scene002.prototype.m_disposeControls = function() {
+    if (this.m_controls instanceof rune.text.BitmapField) {
+        this.m_controls.parent.removeChild(this.m_controls, true);
+        this.m_controls = null;
     }
 };

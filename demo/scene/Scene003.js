@@ -27,6 +27,22 @@ demo.scene.Scene003 = function() {
      */
     this.m_astronauts;
 
+    /**
+     * Displays the current number of astronauts.
+     *
+     * @type {rune.ui.Counter}
+     * @private
+     */
+    this.m_counter;
+
+    /**
+     * Describes the scene's keyboard controls.
+     *
+     * @type {rune.text.BitmapField}
+     * @private
+     */
+    this.m_controls;
+
     //--------------------------------------------------------------------------
     // Super call
     //--------------------------------------------------------------------------
@@ -54,6 +70,8 @@ demo.scene.Scene003.prototype.constructor = demo.scene.Scene003;
 demo.scene.Scene003.prototype.init = function() {
     rune.scene.Scene.prototype.init.call(this);
     this.m_initAstronauts();
+    this.m_initCounter();
+    this.m_initControls();
     this.m_initAutoZoom();
 };
 
@@ -62,7 +80,13 @@ demo.scene.Scene003.prototype.init = function() {
  */
 demo.scene.Scene003.prototype.update = function(step) {
     rune.scene.Scene.prototype.update.call(this, step);
+    this.m_updateCounter();
     var camera = this.cameras.getCameraAt(0);
+
+    // TOGGLE KEYBOARD REFERENCE
+    if (this.keyboard.justPressed("H")) {
+        this.m_toggleControls();
+    }
 
     // TOGGLE AUTOMATIC CAMERA ZOOM
     if (this.keyboard.justPressed("A")) {
@@ -115,6 +139,8 @@ demo.scene.Scene003.prototype.update = function(step) {
  * @inheritDoc
  */
 demo.scene.Scene003.prototype.dispose = function() {
+    this.m_disposeControls();
+    this.m_disposeCounter();
     this.m_disposeAstronauts();
     rune.scene.Scene.prototype.dispose.call(this);
 };
@@ -132,10 +158,79 @@ demo.scene.Scene003.prototype.dispose = function() {
  */
 demo.scene.Scene003.prototype.m_initAutoZoom = function() {
     var autoZoom = this.cameras.getCameraAt(0).autoZoom;
-    autoZoom.min = 0.5;
-    autoZoom.max = 2.0;
+    autoZoom.min = 0.25;
+    autoZoom.max = 3.0;
     autoZoom.padding = 32;
     autoZoom.smoothing = 250;
+};
+
+/**
+ * Creates, and adds the group of astronauts.
+ *
+ * @returns {undefined}
+ * @private
+ */
+demo.scene.Scene003.prototype.m_initAstronauts = function() {
+    this.m_disposeAstronauts();
+    if (this.m_astronauts == null) {
+        this.m_astronauts = this.groups.add(new demo.entity.Astronauts());
+        this.m_astronauts.useQuadtree = true;
+        this.m_astronauts.add();
+    } else throw new Error();
+};
+
+/**
+ * Creates the astronaut counter in the camera's upper-left corner.
+ *
+ * @returns {undefined}
+ * @private
+ */
+demo.scene.Scene003.prototype.m_initCounter = function() {
+    this.m_disposeCounter();
+    if (this.m_counter == null) {
+        this.m_counter = new rune.ui.Counter();
+        this.m_counter.x = 8;
+        this.m_counter.y = 8;
+        this.cameras.getCameraAt(0).addChild(this.m_counter);
+        this.m_updateCounter();
+    } else throw new Error();
+};
+
+/**
+ * Creates a keyboard reference below the counter, fixed to the camera.
+ *
+ * @returns {undefined}
+ * @private
+ */
+demo.scene.Scene003.prototype.m_initControls = function() {
+    this.m_disposeControls();
+    if (this.m_controls == null) {
+        this.m_controls = new rune.text.BitmapField([
+            "CONTROLS (H: SHOW / HIDE)",
+            "+ / - : ADD / REMOVE ASTRONAUT",
+            "ARROWS: MOVE CAMERA (AUTO OFF)",
+            "Z / X : ZOOM IN / OUT (AUTO OFF)",
+            "A     : TOGGLE AUTO ZOOM",
+            "R     : RESET CAMERA / AUTO OFF",
+            "SHIFT+F: TOGGLE DEBUG",
+            "G     : GLITCH FIRST ASTRONAUT",
+            "ESC   : MAIN MENU"
+        ].join("\n"), rune.text.BitmapFormat.FONT_SMALL);
+        this.m_controls.autoSize = true;
+        this.m_controls.x = 8;
+        this.m_controls.y = this.m_counter.bottom + 8;
+        this.cameras.getCameraAt(0).addChild(this.m_controls);
+    } else throw new Error();
+};
+
+/**
+ * Updates the counter to match the number of astronauts.
+ *
+ * @returns {undefined}
+ * @private
+ */
+demo.scene.Scene003.prototype.m_updateCounter = function() {
+    this.m_counter.value = this.m_astronauts.numMembers;
 };
 
 /**
@@ -157,18 +252,13 @@ demo.scene.Scene003.prototype.m_toggleAutoZoom = function() {
 };
 
 /**
- * Creates, and adds the group of astronauts.
+ * Toggles the visibility of the keyboard reference.
  *
  * @returns {undefined}
  * @private
  */
-demo.scene.Scene003.prototype.m_initAstronauts = function() {
-    this.m_disposeAstronauts();
-    if (this.m_astronauts == null) {
-        this.m_astronauts = this.groups.add(new demo.entity.Astronauts());
-        this.m_astronauts.useQuadtree = true;
-        this.m_astronauts.add();
-    } else throw new Error();
+demo.scene.Scene003.prototype.m_toggleControls = function() {
+    this.m_controls.visible = !this.m_controls.visible;
 };
 
 /**
@@ -182,5 +272,31 @@ demo.scene.Scene003.prototype.m_disposeAstronauts = function() {
         this.cameras.getCameraAt(0).targets.clear();
         this.groups.remove(this.m_astronauts, true);
         this.m_astronauts = null;
+    }
+};
+
+/**
+ * Removes and destroys the astronaut counter.
+ *
+ * @returns {undefined}
+ * @private
+ */
+demo.scene.Scene003.prototype.m_disposeCounter = function() {
+    if (this.m_counter instanceof rune.ui.Counter) {
+        this.m_counter.parent.removeChild(this.m_counter, true);
+        this.m_counter = null;
+    }
+};
+
+/**
+ * Removes and destroys the keyboard reference.
+ *
+ * @returns {undefined}
+ * @private
+ */
+demo.scene.Scene003.prototype.m_disposeControls = function() {
+    if (this.m_controls instanceof rune.text.BitmapField) {
+        this.m_controls.parent.removeChild(this.m_controls, true);
+        this.m_controls = null;
     }
 };

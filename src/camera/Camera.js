@@ -149,6 +149,12 @@ rune.camera.Camera = function(x, y, width, height) {
     /**
      * Extend DisplayObjectContainer.
      */
+    /**
+     * Final camera image containing the scaled world and fixed camera children.
+     * @type {rune.display.Canvas}
+     * @private
+     */
+    this.m_outputCanvas = null;
     rune.display.DisplayObjectContainer.call(this, x, y, width, height);
 }
 
@@ -334,7 +340,7 @@ Object.defineProperty(rune.camera.Camera.prototype, "viewport", {
  * The result uses the same coordinate system as the camera's children and
  * includes viewport scrolling and the current shake offset. Camera placement,
  * page coordinates and CSS scaling are not included. Coordinates are measured
- * in camera buffer pixels, before viewport zoom scales the rendered camera.
+ * in camera-local display pixels, after viewport zoom.
  *
  * @param {number} x World x coordinate relative to the stage.
  * @param {number} y World y coordinate relative to the stage.
@@ -344,17 +350,17 @@ Object.defineProperty(rune.camera.Camera.prototype, "viewport", {
  */
 rune.camera.Camera.prototype.worldToScreen = function(x, y, output) {
     output = output || new rune.geom.Point();
-    output['x'] = x - this.m_viewport['x'] - this.m_shake['x'];
-    output['y'] = y - this.m_viewport['y'] - this.m_shake['y'];
+    output['x'] = (x - this.m_viewport['x'] - this.m_shake['x']) * this['width'] / this.m_viewport['width'];
+    output['y'] = (y - this.m_viewport['y'] - this.m_shake['y']) * this['height'] / this.m_viewport['height'];
     return output;
 };
 
 /**
  * Converts a camera-local position into stage-local world coordinates.
  * This is the inverse of worldToScreen and includes viewport scrolling and
- * the current shake offset. Input uses camera buffer pixels, matching the
- * camera's children. Convert page coordinates, CSS scaling, camera placement
- * and viewport zoom to buffer coordinates before calling this method.
+ * the current shake offset. Input uses camera-local display pixels, matching
+ * the camera's children. Remove page coordinates, CSS scaling and camera
+ * placement before calling this method.
  *
  * @param {number} x Camera-local x coordinate.
  * @param {number} y Camera-local y coordinate.
@@ -364,8 +370,8 @@ rune.camera.Camera.prototype.worldToScreen = function(x, y, output) {
  */
 rune.camera.Camera.prototype.screenToWorld = function(x, y, output) {
     output = output || new rune.geom.Point();
-    output['x'] = x + this.m_viewport['x'] + this.m_shake['x'];
-    output['y'] = y + this.m_viewport['y'] + this.m_shake['y'];
+    output['x'] = x * this.m_viewport['width'] / this['width'] + this.m_viewport['x'] + this.m_shake['x'];
+    output['y'] = y * this.m_viewport['height'] / this['height'] + this.m_viewport['y'] + this.m_shake['y'];
     return output;
 };
 
@@ -398,18 +404,40 @@ rune.camera.Camera.prototype.render = function() {
     this.m_renderMapBackBuffer();
     this.m_renderInput();
     this.m_renderMapFrontBuffer();
-    this.m_renderChildren();
     this.m_renderGraphics();
-    this.m_renderGlitch();
-    this.m_renderTint();
-    this.m_renderFlash();
-    this.m_renderFade();
+
+    // Scale the world before drawing camera children in camera-local pixels.
+    var world = this.m_canvas;
+    var output = this.m_outputCanvas;
+    if (output == null) {
+        output = this.m_outputCanvas = new rune.display.Canvas(this['width'], this['height']);
+    } else if (output['width'] !== this['width'] || output['height'] !== this['height']) {
+        output.resize(this['width'], this['height']);
+    }
+    output['smoothing'] = world['smoothing'];
+    output.clear();
+    output.drawImage(world['element'], 0, 0, this['width'], this['height'],
+        0, 0, this.m_viewport['width'], this.m_viewport['height']);
+    this.m_canvas = output;
+    try {
+        this.m_renderChildren();
+        this.m_renderGlitch();
+        this.m_renderTint();
+        this.m_renderFlash();
+        this.m_renderFade();
+    } finally {
+        this.m_canvas = world;
+    }
 };
 
 /**
  * @inheritDoc
  */
 rune.camera.Camera.prototype.dispose = function() {
+    if (this.m_outputCanvas != null) {
+        this.m_outputCanvas.dispose();
+        this.m_outputCanvas = null;
+    }
     this.m_disposeAutoZoom();
     this.m_disposeTargets();
     this.m_disposeFade();
@@ -427,6 +455,13 @@ rune.camera.Camera.prototype.dispose = function() {
 /**
  * @inheritDoc
  */
+rune.camera.Camera.prototype.getRenderCanvas = function() {
+    return this.m_outputCanvas || this.m_canvas;
+};
+
+/**
+ * @inheritDoc
+ */
 rune.camera.Camera.prototype.getRenderFrame = function() {
     this.m_frame['x'] = this['x'];
     this.m_frame['y'] = this['y'];
@@ -434,8 +469,8 @@ rune.camera.Camera.prototype.getRenderFrame = function() {
     this.m_frame['height'] = this['height'];
     this.m_frame['clipping']['x'] = 0;
     this.m_frame['clipping']['y'] = 0;
-    this.m_frame['clipping']['width']  = this.m_viewport['width'];
-    this.m_frame['clipping']['height'] = this.m_viewport['height'];
+    this.m_frame['clipping']['width']  = this['width'];
+    this.m_frame['clipping']['height'] = this['height'];
     
     return this.m_frame;
 };

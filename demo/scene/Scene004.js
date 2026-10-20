@@ -26,6 +26,14 @@ demo.scene.Scene004 = function() {
      * @private
      */
     this.m_background;
+
+    /**
+     * Describes the scene's keyboard controls.
+     *
+     * @type {rune.text.BitmapField}
+     * @private
+     */
+    this.m_controls;
     
     /**
      * Scroll speed.
@@ -70,6 +78,7 @@ demo.scene.Scene004.prototype.constructor = demo.scene.Scene004;
 demo.scene.Scene004.prototype.init = function() {
     rune.scene.Scene.prototype.init.call(this);
     this.m_initBackground();
+    this.m_initControls();
 };
 
 /**
@@ -85,6 +94,7 @@ demo.scene.Scene004.prototype.update = function(step) {
  * @inheritDoc
  */
 demo.scene.Scene004.prototype.dispose = function() {
+    this.m_disposeControls();
     this.m_disposeBackground();
     rune.scene.Scene.prototype.dispose.call(this);
 };
@@ -109,6 +119,30 @@ demo.scene.Scene004.prototype.m_initBackground = function() {
     );
     
     this.stage.addChild(this.m_background);
+};
+
+/**
+ * Creates a keyboard reference fixed to the camera.
+ *
+ * @returns {undefined}
+ * @private
+ */
+demo.scene.Scene004.prototype.m_initControls = function() {
+    this.m_disposeControls();
+    if (this.m_controls == null) {
+        this.m_controls = new rune.text.BitmapField([
+            "CONTROLS (H: SHOW / HIDE)",
+            "W / S : DECREASE / INCREASE Y SPEED",
+            "A / D : DECREASE / INCREASE X SPEED",
+            "EACH PRESS CHANGES SPEED BY 1",
+            "SCROLLING CONTINUES AFTER RELEASE",
+            "ESC   : MAIN MENU"
+        ].join("\n"), rune.text.BitmapFormat.FONT_SMALL);
+        this.m_controls.autoSize = true;
+        this.m_controls.x = 8;
+        this.m_controls.y = 8;
+        this.cameras.getCameraAt(0).addChild(this.m_controls);
+    } else throw new Error();
 };
 
 /**
@@ -149,9 +183,23 @@ demo.scene.Scene004.prototype.m_updateOffset = function(step) {
  * @private
  */
 demo.scene.Scene004.prototype.m_updateInput = function(step) {
+    if (this.keyboard.justPressed("H")) {
+        this.m_toggleControls();
+    }
+
     if (this.keyboard.pressed("ESCAPE")) {
         this.application.scenes.select(0);
     }
+};
+
+/**
+ * Toggles the visibility of the keyboard reference.
+ *
+ * @returns {undefined}
+ * @private
+ */
+demo.scene.Scene004.prototype.m_toggleControls = function() {
+    this.m_controls.visible = !this.m_controls.visible;
 };
 
 /**
@@ -164,5 +212,18 @@ demo.scene.Scene004.prototype.m_disposeBackground = function() {
     if (this.m_background instanceof rune.display.RepeatedGraphic) {
         this.m_background.parent.removeChild(this.m_background, true);
         this.m_background = null;
+    }
+};
+
+/**
+ * Removes and destroys the keyboard reference.
+ *
+ * @returns {undefined}
+ * @private
+ */
+demo.scene.Scene004.prototype.m_disposeControls = function() {
+    if (this.m_controls instanceof rune.text.BitmapField) {
+        this.m_controls.parent.removeChild(this.m_controls, true);
+        this.m_controls = null;
     }
 };

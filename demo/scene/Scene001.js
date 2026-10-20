@@ -126,26 +126,6 @@ demo.scene.Scene001.prototype.m_initTitle = function() {
 };
 
 /**
- * Centers the heading and menu text with sixteen pixels of spacing. The menu
- * pointer sits to the left of the centered text. Trailing list padding is
- * excluded from the block height, and full heading dimensions keep it stable
- * while characters are revealed.
- *
- * @return {undefined}
- * @private
- */
-demo.scene.Scene001.prototype.m_layoutMenu = function() {
-    var center = this.cameras.getCameraAt(0).viewport.center;
-    var list = this.m_menu.getChildAt(0);
-    var last = list.getChildAt(list.numChildren - 1);
-    var height = this.m_title.height + 16 + list.y + last.bottom;
-    this.m_title.x = Math.floor(center.x - this.m_title.width / 2);
-    this.m_title.y = Math.floor(center.y - height / 2);
-    this.m_menu.x = Math.floor(center.x - list.x - list.width / 2);
-    this.m_menu.y = this.m_title.bottom + 16;
-};
-
-/**
  * Creates the emitter with its emission area centered above the heading.
  *
  * @return {undefined}
@@ -167,6 +147,26 @@ demo.scene.Scene001.prototype.m_initEmitter = function() {
     this.m_emitter.centerX = this.m_title.centerX;
     this.m_emitter.centerY = this.m_title.top - 16;
     this.stage.addChild(this.m_emitter);
+};
+
+/**
+ * Centers the heading and menu text with sixteen pixels of spacing. The menu
+ * pointer sits to the left of the centered text. Trailing list padding is
+ * excluded from the block height, and full heading dimensions keep it stable
+ * while characters are revealed.
+ *
+ * @return {undefined}
+ * @private
+ */
+demo.scene.Scene001.prototype.m_layoutMenu = function() {
+    var center = this.cameras.getCameraAt(0).viewport.center;
+    var list = this.m_menu.getChildAt(0);
+    var last = list.getChildAt(list.numChildren - 1);
+    var height = this.m_title.height + 16 + list.y + last.bottom;
+    this.m_title.x = Math.floor(center.x - this.m_title.width / 2);
+    this.m_title.y = Math.floor(center.y - height / 2);
+    this.m_menu.x = Math.floor(center.x - list.x - list.width / 2);
+    this.m_menu.y = this.m_title.bottom + 16;
 };
 
 /**

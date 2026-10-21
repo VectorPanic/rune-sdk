@@ -140,7 +140,9 @@ rune.scene.Scenes.prototype.findAndSelect = function(name) {
 /**
  * Activates a batch of scenes. This process removes any previous scenes and 
  * frees up allocated memory, hence the process can not be undone. All scenes 
- * in the batch are initialized on the next update tick.
+ * in the batch are initialized on the next update tick. A load requested
+ * during init() remains pending until the following update. If several loads
+ * are requested before then, the latest request replaces the pending batch.
  *
  * @param {Array.<rune.scene.Scene>} batch Batch to be loaded.
  *
@@ -227,22 +229,36 @@ rune.scene.Scenes.prototype.dispose = function() {
  */
 rune.scene.Scenes.prototype.m_iniScenes = function() {
     if (this.m_rb != null && this.m_rb.length > 0) {  
+        var batch = this.m_rb;
         var selection = this.m_rs;
-        
+
         this.m_disposeScenes();
-        
-        this.m_cb = this.m_rb;
-        this.m_cs = 0;
-        this.m_rs = (selection > -1 && selection < this.m_cb.length) ? selection : 0;
+
+        this.m_cb = batch;
+        this.m_rb = null;
+        this.m_cs = (selection > -1 && selection < batch.length) ? selection : 0;
+        this.m_rs = this.m_cs;
         
         for (var i = 0; i < this.m_cb.length; i++) {
             this.m_cb[i].init();
         }
         
-        this.m_rb = null;
-        this.m_cs = this.m_rs;
-        this.m_cb[this.m_cs].onSelect(null);
+        this.m_selectInitialScene();
     } else throw new Error();
+};
+
+/**
+ * Activates the initial scene after all init callbacks have run. If a callback
+ * requested another batch, its requested index must not select a current scene.
+ *
+ * @returns {undefined}
+ * @private
+ */
+rune.scene.Scenes.prototype.m_selectInitialScene = function() {
+    if (this.m_rb == null) {
+        this.m_cs = this.m_rs;
+    }
+    this.m_cb[this.m_cs].onSelect(null);
 };
 
 /**

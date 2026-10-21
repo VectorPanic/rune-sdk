@@ -159,15 +159,16 @@ rune.scene.Scenes.prototype.load = function(batch) {
  * Select a scene from the current batch. Note that only the selected scene is 
  * rendered. Inactive scenes remain unchanged during their time as inactive.
  *
- * @param {number} index List index of requested scene.
+ * @param {number} index Zero-based integer index in the pending or current batch.
  *
- * @throws {RangeError} On invalid list index.
+ * @throws {RangeError} If index is not an integer number within the batch bounds.
  *
  * @returns {undefined}
  */
 rune.scene.Scenes.prototype.select = function(index) {
     var batch = (this.m_rb) ? this.m_rb : this.m_cb;
-    if (index > -1 && index < batch.length) {
+    if (typeof index === "number" && index === Math.floor(index) &&
+        index >= 0 && index < batch.length) {
         if (this.m_rs != index) {
             this.m_rs  = index;
         }

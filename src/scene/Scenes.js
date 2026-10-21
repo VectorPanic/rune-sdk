@@ -151,8 +151,10 @@ rune.scene.Scenes.prototype.findAndSelect = function(name) {
  * in the batch are initialized on the next update tick. A load requested
  * during init() remains pending until the following update. If several loads
  * are requested before then, the latest request replaces the pending batch.
+ * The array is copied; later array edits do not affect the manager. Scene
+ * objects are retained by reference and disposed when removed by the manager.
  *
- * @param {Array.<rune.scene.Scene>} batch Batch to be loaded.
+ * @param {Array.<rune.scene.Scene>} batch Scene list to copy into the manager.
  *
  * @throws {Error} If the specified batch is invalid.
  *
@@ -160,7 +162,7 @@ rune.scene.Scenes.prototype.findAndSelect = function(name) {
  */
 rune.scene.Scenes.prototype.load = function(batch) {
     if (Array.isArray(batch) === true && batch.length > 0) {
-        this.m_rb = batch;
+        this.m_rb = batch.slice();
         this.m_rs = 0;
     } else throw new Error("Invalid scene batch");
 };

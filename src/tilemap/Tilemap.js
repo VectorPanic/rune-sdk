@@ -538,7 +538,8 @@ rune.tilemap.Tilemap.prototype.getTilePropertiesOf = function(v) {
 /**
  * Loads a map from resource data. Each layer owns a copy of its tile values,
  * so edits do not affect the resource or other map instances. Loading the
- * same resource again restores its original tile values.
+ * same resource again restores its original tile values. If loading fails,
+ * the current layers, live tile edits and map properties are preserved.
  *
  * @param {string} name The name of the resource that represents the map data.
  *
@@ -546,13 +547,29 @@ rune.tilemap.Tilemap.prototype.getTilePropertiesOf = function(v) {
  *
  * @returns {undefined}
  */
-rune.tilemap.Tilemap.prototype.load = function(name) {    
-    var map = this['application']['resources'].get(name);
-    if (map) {
-        map = map['data'];
-        this.m_disposeBuffers();
+rune.tilemap.Tilemap.prototype.load = function(name) {
+    var resource = this['application']['resources'].get(name);
+    if (!resource || !resource['data']) {
+        throw new Error("Invalid map");
+    }
+    var map = resource['data'];
+    var previous = {
+        data: this.m_data,
+        name: this.m_name,
+        texture: this.m_texture,
+        height: this.m_heightInTiles,
+        width: this.m_widthInTiles,
+        tileHeight: this.m_tileHeight,
+        tileWidth: this.m_tileWidth,
+        tiles: this.m_tiles
+    };
+    var back = null;
+    var front = null;
+
+    try {
+        // Layer construction reads dimensions from this map. Keep the old
+        // layers alive while preparing replacements with the new dimensions.
         this.m_data          = map;
-        
         this.m_name          = map['name']       || name;
         this.m_texture       = map['texture']    || "";
         this.m_heightInTiles = map['height']     || 0;
@@ -560,11 +577,27 @@ rune.tilemap.Tilemap.prototype.load = function(name) {
         this.m_tileHeight    = map['tileHeight'] || 0;
         this.m_tileWidth     = map['tileWidth']  || 0;
         this.m_tiles         = map['tiles']      || {};
-        
-        this.m_bufferA       = new rune.tilemap.TilemapLayer(this, map['back']); 
-        this.m_bufferB       = new rune.tilemap.TilemapLayer(this, map['front']);
-        
-    } else throw new Error("Invalid map");
+
+        back = new rune.tilemap.TilemapLayer(this, map['back']);
+        front = new rune.tilemap.TilemapLayer(this, map['front']);
+    } catch (error) {
+        this.m_data          = previous.data;
+        this.m_name          = previous.name;
+        this.m_texture       = previous.texture;
+        this.m_heightInTiles = previous.height;
+        this.m_widthInTiles  = previous.width;
+        this.m_tileHeight    = previous.tileHeight;
+        this.m_tileWidth     = previous.tileWidth;
+        this.m_tiles         = previous.tiles;
+
+        if (back) back.dispose();
+        if (front) front.dispose();
+        throw error;
+    }
+
+    this.m_disposeBuffers();
+    this.m_bufferA = back;
+    this.m_bufferB = front;
 };
 
 //------------------------------------------------------------------------------

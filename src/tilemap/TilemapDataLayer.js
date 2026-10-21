@@ -549,7 +549,9 @@ rune.tilemap.TilemapDataLayer.prototype.hitTestChildrenOf = function(parent, cal
 };
 
 /**
- * Evaluates whether the tilemap layer overlaps any object in an array.
+ * Evaluates every array entry using the same rules as hitTest().
+ * Supports points, interactive objects, groups, stages and nested arrays.
+ * Unsupported entries are ignored; callbacks run for all detected contacts.
  *
  * @param {Array} array The array to evaluate.
  * @param {Function} [callback] Executed for each detected collision.
@@ -560,7 +562,7 @@ rune.tilemap.TilemapDataLayer.prototype.hitTestChildrenOf = function(parent, cal
 rune.tilemap.TilemapDataLayer.prototype.hitTestContentOf = function(array, callback, scope) {
     var result = false;
     for (var i = 0; i < array.length; i++) {
-        if (this.hitTestObject(array[i], callback, scope)) {
+        if (this.hitTest(array[i], callback, scope)) {
             result = true;
         }
     }

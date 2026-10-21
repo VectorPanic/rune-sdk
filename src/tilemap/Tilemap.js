@@ -586,9 +586,9 @@ rune.tilemap.Tilemap.prototype.dispose = function() {
 };
 
 /**
- * Returns a chunk of the back buffer, based on specified coordinates (in the 
- * form of a rectangle). Note that this method is primarily intended for 
- * internal use.
+ * Returns back-layer tile indices within a pixel rectangle. Front-layer
+ * contents do not filter this result: transparent or hidden front tiles must
+ * leave the underlying back tiles visible. Primarily intended for internal use.
  *
  * @param {number} x The x-coordinate of the rectangle.
  * @param {number} y The y-coordinate of the rectangle.
@@ -600,17 +600,8 @@ rune.tilemap.Tilemap.prototype.dispose = function() {
  */
 rune.tilemap.Tilemap.prototype.getBackBufferIn = function(x, y, w, h) {
     if (!this.m_bufferA) return this.m_tmpArray;
-        
-    var a = this.m_bufferA.getTileIndexesIn(x, y, w, h);
-    var b = this.m_bufferB.getTileIndexesIn(x, y, w, h);
-    var o = [];
-        
-    for (var i = 0; i < a.length; i++) {
-        if (this.m_bufferB.getTileValueAt(b[i]) > 0) o.push(0);
-        else o.push(a[i]);
-    }
-    
-    return o;
+
+    return this.m_bufferA.getTileIndexesIn(x, y, w, h);
 };
 
 /**

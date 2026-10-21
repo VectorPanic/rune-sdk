@@ -38,6 +38,14 @@ rune.scene.Scenes = function() {
     this.m_rb = null;
     
     /**
+     * Prevents recursive cleanup when a scene's dispose callback calls dispose().
+     *
+     * @type {boolean}
+     * @private
+     */
+    this.m_disposing = false;
+
+    /**
      * Selected scene index.
      *
      * @type {number}
@@ -206,18 +214,50 @@ rune.scene.Scenes.prototype.render = function() {
 };
 
 /**
- * Deletes current scenes and frees up allocated memory.
+ * Cancels pending loads and disposes current and pending scenes once each.
+ * Requests made by disposal callbacks are also canceled and cleaned up.
+ * A later explicit load() may reuse this manager.
  *
  * @returns {undefined}
  * @ignore
  */
 rune.scene.Scenes.prototype.dispose = function() {
-    this.m_disposeScenes();
+    if (this.m_disposing) return;
+
+    this.m_disposing = true;
+    var disposed = [];
+    try {
+        do {
+            var batch = this.m_cb.concat(this.m_rb || []);
+            this.m_rb = null;
+            this.m_cb = [];
+            for (var i = 0; i < batch.length; i++) {
+                var scene = batch[i];
+                if (scene != null && disposed.indexOf(scene) < 0) {
+                    disposed.push(scene);
+                    this.m_cb.push(scene);
+                }
+            }
+            this.m_disposeScenes();
+        } while (this.m_hasPendingBatch());
+    } finally {
+        this.m_disposing = false;
+    }
 };
 
 //------------------------------------------------------------------------------
 // Private prototype methods
 //------------------------------------------------------------------------------
+
+/**
+ * Checks pending state after lifecycle callbacks, which may request a new load.
+ *
+ * @returns {boolean}
+ * @private
+ */
+rune.scene.Scenes.prototype.m_hasPendingBatch = function() {
+    return this.m_rb != null;
+};
 
 /**
  * Replaces the current batch with a new one.
@@ -255,7 +295,7 @@ rune.scene.Scenes.prototype.m_iniScenes = function() {
  * @private
  */
 rune.scene.Scenes.prototype.m_selectInitialScene = function() {
-    if (this.m_rb == null) {
+    if (!this.m_hasPendingBatch()) {
         this.m_cs = this.m_rs;
     }
     this.m_cb[this.m_cs].onSelect(null);
@@ -270,7 +310,7 @@ rune.scene.Scenes.prototype.m_selectInitialScene = function() {
  * @private
  */
 rune.scene.Scenes.prototype.m_updateBatch = function(step) {
-    if (this.m_rb != null) {
+    if (this.m_hasPendingBatch()) {
         this.m_iniScenes();
     }
 };
@@ -285,7 +325,7 @@ rune.scene.Scenes.prototype.m_updateBatch = function(step) {
  * @private
  */
 rune.scene.Scenes.prototype.m_updateSelection = function(step) {
-    if (this.m_rb == null && this.m_cb != null &&
+    if (!this.m_hasPendingBatch() && this.m_cb != null &&
         this.m_rs > -1 && this.m_rs < this.m_cb.length && this.m_cs != this.m_rs) {
         
         var o = this.m_cb[this.m_cs];

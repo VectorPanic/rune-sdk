@@ -506,7 +506,9 @@ rune.tilemap.Tilemap.prototype.getTilePropertiesOf = function(v) {
 };
 
 /**
- * Loads a map from map-data.
+ * Loads a map from resource data. Each layer owns a copy of its tile values,
+ * so edits do not affect the resource or other map instances. Loading the
+ * same resource again restores its original tile values.
  *
  * @param {string} name The name of the resource that represents the map data.
  *

@@ -8,7 +8,7 @@
  * @constructor
  *
  * @param {Object} map Reference to the map to which the layer belongs.
- * @param {Array.<number>} [data] Tilemap data.
+ * @param {Array.<number>} [data] Initial tile values, copied into this layer.
  * @param {rune.display.DisplayObject} [owner] Optional display object that owns this layer.
  *
  * @class
@@ -36,13 +36,13 @@ rune.tilemap.TilemapDataLayer = function(map, data, owner) {
     //--------------------------------------------------------------------------
 
     /**
-     * Map data.
+     * Owned tile values, independent of the source array and other layers.
      *
      * @type {Array.<number>}
      * @protected
      * @ignore
      */
-    this.m_data = data || null;
+    this.m_data = data != null ? data.slice() : null;
 
     /**
      * Reference to the map to which the layer belongs.
@@ -93,7 +93,8 @@ rune.tilemap.TilemapDataLayer = function(map, data, owner) {
 //------------------------------------------------------------------------------
 
 /**
- * Reference to the raw map data of the layer.
+ * Reference to this layer's mutable tile values, independent of source data.
+ * Read-only refers to the property; the returned array remains mutable.
  *
  * @member {Array.<number>} data
  * @memberof rune.tilemap.TilemapDataLayer

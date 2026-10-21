@@ -161,17 +161,19 @@ rune.tilemap.TilemapDataLayer.prototype.getTileAt = function(i) {
     var tx = 0;
     var ty = 0;
     var tp = null;
+    var value = this.getTileValueAt(i);
 
     if (this.m_isValidIndex(i)) {
         tx = i % wt;
         ty = Math.floor(i / wt);
-        tp = this.m_map.getTilePropertiesOf(this.getTileValueAt(i));
+        tp = this.m_map.getTilePropertiesOf(value);
     }
 
     tt.set(
         i,
         this.m_getOriginX() + (tx * tw),
         this.m_getOriginY() + (ty * th),
+        value,
         tp
     );
 

@@ -260,25 +260,22 @@ Object.defineProperty(rune.tilemap.Tile.prototype, "value", {
  * @param {number} i The tile index.
  * @param {number} x The position of the Tile object in the x direction.
  * @param {number} y The position of the Tile object in the y direction.
- * @param {Object} [p] Tile properties.
+ * @param {number} value Actual tile value from the layer data.
+ * @param {Object} [p] Optional metadata supplying collision flags.
  *
  * @return {undefined}
  * @suppress {checkTypes}
  * @package
  * @ignore
  */
-rune.tilemap.Tile.prototype.set = function(i, x, y, p) {
+rune.tilemap.Tile.prototype.set = function(i, x, y, value, p) {
     this.m_index = i;
     this.m_x = x;
     this.m_y = y;
     this.m_previousX = x;
     this.m_previousY = y;
     
-    if (p) {
-        this.m_value = p['value'];
-        this.m_allowCollisions = parseInt(Number(p['collision']), 10) || rune.physics.Space.NONE;
-    } else {
-        this.m_value = 0;
-        this.m_allowCollisions = rune.physics.Space.NONE;
-    }
+    this.m_value = value;
+    this.m_allowCollisions = p ?
+        parseInt(Number(p['collision']), 10) || rune.physics.Space.NONE : rune.physics.Space.NONE;
 };

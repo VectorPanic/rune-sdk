@@ -268,27 +268,33 @@ rune.tilemap.TilemapDataLayer.prototype.getTileIndexesInRect = function(r) {
 };
 
 /**
- * Returns the tile index of a specific position.
+ * Returns the tile index at a pixel position, accounting for the layer origin.
+ * The right and bottom boundaries are outside the layer.
  *
- * @param {number} x The x-coordinate of the position.
- * @param {number} y The y-coordinate of the position.
+ * @param {number} x The x-coordinate of the position in pixels.
+ * @param {number} y The y-coordinate of the position in pixels.
  *
- * @returns {number}
+ * @returns {number} Tile index, or -1 for an invalid or outside position.
  */
 rune.tilemap.TilemapDataLayer.prototype.getTileIndexOf = function(x, y) {
+    if (this.m_map == null || typeof x !== "number" || typeof y !== "number" ||
+        !isFinite(x) || !isFinite(y)) {
+        return -1;
+    }
     var tw = this.m_map['tileWidth'];
     var th = this.m_map['tileHeight'];
     var wt = this.m_map['widthInTiles'];
+    if (!isFinite(tw) || !isFinite(th) || tw <= 0 || th <= 0) {
+        return -1;
+    }
 
     var sx = Math.floor((x - this.m_getOriginX()) / tw);
     var sy = Math.floor((y - this.m_getOriginY()) / th);
-    var si = sy * wt + sx;
-
-    return si;
+    return this.containsCell(sx, sy) ? sy * wt + sx : -1;
 };
 
 /**
- * Returns the tile index of a specific position, via a Point object.
+ * Returns the tile index at a pixel position, or -1 outside the layer.
  *
  * @param {rune.geom.Point} p Point object.
  *
@@ -381,7 +387,7 @@ rune.tilemap.TilemapDataLayer.prototype.getTileValuesInRect = function(r) {
 };
 
 /**
- * Returns the tile value of a specific position.
+ * Returns the tile value at a pixel position, or zero outside the layer.
  *
  * @param {number} x The x-coordinate of the position.
  * @param {number} y The y-coordinate of the position.
@@ -389,10 +395,7 @@ rune.tilemap.TilemapDataLayer.prototype.getTileValuesInRect = function(r) {
  * @returns {number}
  */
 rune.tilemap.TilemapDataLayer.prototype.getTileValueOf = function(x, y) {
-    var td = this.m_data;
-    var ti = this.getTileIndexOf(x, y);
-
-    return td[ti];
+    return this.getTileValueAt(this.getTileIndexOf(x, y));
 };
 
 /**
@@ -755,7 +758,7 @@ rune.tilemap.TilemapDataLayer.prototype.setTileValueInRect = function(r, v) {
 };
 
 /**
- * Sets a tile value for a tile at a specific position.
+ * Sets a tile value at a pixel position. Positions outside the layer are ignored.
  *
  * @param {number} x The x-coordinate of the position.
  * @param {number} y The y-coordinate of the position.

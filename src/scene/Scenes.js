@@ -240,7 +240,8 @@ rune.scene.Scenes.prototype.m_iniScenes = function() {
         }
         
         this.m_rb = null;
-        this.m_cb[0].onSelect(null);
+        this.m_cs = this.m_rs;
+        this.m_cb[this.m_cs].onSelect(null);
     } else throw new Error();
 };
 
@@ -259,8 +260,8 @@ rune.scene.Scenes.prototype.m_updateBatch = function(step) {
 };
 
 /**
- * Updates scene selection. Multiple scenes can be initiated simultaneously, 
- * but only one can be selected.
+ * Updates selection within the current batch. If another batch is pending,
+ * the requested index belongs to that batch and must not select an old scene.
  *
  * @param {number} step Current time step.
  *
@@ -268,7 +269,8 @@ rune.scene.Scenes.prototype.m_updateBatch = function(step) {
  * @private
  */
 rune.scene.Scenes.prototype.m_updateSelection = function(step) {
-    if (this.m_cb != null && this.m_rs > -1 && this.m_rs < this.m_cb.length && this.m_cs != this.m_rs) {
+    if (this.m_rb == null && this.m_cb != null &&
+        this.m_rs > -1 && this.m_rs < this.m_cb.length && this.m_cs != this.m_rs) {
         
         var o = this.m_cb[this.m_cs];
         var n = this.m_cb[this.m_rs];

@@ -63,6 +63,7 @@ demo.data.Requests.prototype.m_construct = function() {
     this.add("demo_raycast_billboard_rat_16x16",                      "./../demo/asset/gif/demo_raycast_billboard_rat_16x16.gif");
     this.add("demo_raycast_billboard_plant_16x16",                    "./../demo/asset/gif/demo_raycast_billboard_plant_16x16.gif");
     this.add("demo_raycast_billboard_desk_16x16",                     "./../demo/asset/gif/demo_raycast_billboard_desk_16x16.gif");
+    this.add("demo_raycast_surface_signboard_16x16",                    "./../demo/asset/gif/demo_raycast_surface_signboard_16x16.gif");
     this.add("demo_raycast_walls_16x16",                              "./../demo/asset/gif/demo_raycast_walls_16x16.gif");
     this.add("demo_raycast_floor_16x16",                              "./../demo/asset/gif/demo_raycast_floor_16x16.gif");
     this.add("demo_raycast_ceiling_16x16",                            "./../demo/asset/gif/demo_raycast_ceiling_16x16.gif");

@@ -129,6 +129,12 @@ demo.entity.Rat.prototype.m_initAnimation = function() {
     this.animation.create("down", [8, 9], 6, true);
     this.animation.create("up", [6, 7], 6, true);
     this.animation.create("left", [4, 5], 6, true);
-    this.setDirectionalAnimations("right", "down", "up", "left");
+    this.setDirectionalAnimations({
+        right: "right",
+        down: "down",
+        up: "up",
+        left: "left"
+    });
+    
     this.animation.gotoAndPlay("idle");
 };

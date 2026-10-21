@@ -215,9 +215,10 @@ rune.raycast.Viewport.prototype.render = function() {
         !isFinite(this.range) || this.range < 0) {
         throw new RangeError("A view requires a field of view between zero and PI and a finite non-negative range.");
     }
-    this.m_renderSurfaces();
-    this.m_renderWalls();
-    this.m_renderBillboards();
+    var projection = this.m_getProjection();
+    this.m_renderBackground(projection);
+    this.m_renderWalls(projection);
+    this.m_renderObjects(projection);
 };
 
 /**
@@ -243,13 +244,15 @@ rune.raycast.Viewport.prototype.dispose = function() {
 /**
  * Fills fallback colors and composites the optional floor and ceiling textures.
  *
+ * @param {Object} view Shared projection geometry for this render pass.
+ *
  * @returns {undefined}
  * @protected
  * @ignore
  */
-rune.raycast.Viewport.prototype.m_renderSurfaces = function() {
-    var viewWidth = this['canvas'].width;
-    var viewHeight = this['canvas'].height;
+rune.raycast.Viewport.prototype.m_renderBackground = function(view) {
+    var viewWidth = view.width;
+    var viewHeight = view.height;
     this['canvas'].clear();
     this['canvas'].drawRectFill(0, 0, viewWidth, Math.ceil(viewHeight / 2), this.ceilingColor, 1);
     this['canvas'].drawRectFill(0, Math.ceil(viewHeight / 2), viewWidth, viewHeight, this.floorColor, 1);
@@ -257,7 +260,7 @@ rune.raycast.Viewport.prototype.m_renderSurfaces = function() {
     var ceiling = this.world.ceilingEnabled ?
         this.m_getSurfacePixels(this.world['ceilingTexture'], 1) : null;
     if (!this.world.ceilingEnabled) {
-        this.m_renderSky();
+        this.m_renderSky(view);
     }
     if (!floor && !ceiling) {
         return;
@@ -268,10 +271,10 @@ rune.raycast.Viewport.prototype.m_renderSurfaces = function() {
         data[i] = 0;
     }
     if (ceiling) {
-        this.m_renderSurface(ceiling, false);
+        this.m_renderFloorOrCeiling(ceiling, false, view);
     }
     if (floor) {
-        this.m_renderSurface(floor, true);
+        this.m_renderFloorOrCeiling(floor, true, view);
     }
     this.m_surfaceCanvas['context'].putImageData(this.m_surfaceBuffer, 0, 0);
     this['canvas'].context.drawImage(this.m_surfaceCanvas['element'], 0, 0);
@@ -281,18 +284,20 @@ rune.raycast.Viewport.prototype.m_renderSurfaces = function() {
  * Draws a wrapping 360-degree panorama above the horizon.
  * Camera translation and view range do not affect the distant sky.
  *
+ * @param {Object} view Shared projection geometry for this render pass.
+ *
  * @returns {undefined}
  * @protected
  * @ignore
  */
-rune.raycast.Viewport.prototype.m_renderSky = function() {
+rune.raycast.Viewport.prototype.m_renderSky = function(view) {
     var texture = this.world['skyTexture'];
     if (!texture || !texture.width || !texture.height || texture.complete === false || texture.naturalWidth === 0) {
         return;
     }
-    var viewWidth = this['canvas'].width;
-    var viewHeight = Math.ceil(this['canvas'].height / 2);
-    var projection = viewWidth / (2 * Math.tan(this.camera.fov / 2));
+    var viewWidth = view.width;
+    var viewHeight = Math.ceil(view.height / 2);
+    var projection = view.scale;
     var turn = Math.PI * 2;
     for (var x = 0; x < viewWidth; x++) {
         var angle = this.camera.angle + Math.atan((x + 0.5 - viewWidth / 2) / projection);
@@ -308,17 +313,19 @@ rune.raycast.Viewport.prototype.m_renderSky = function() {
  * @param {Object} texture Cached source image pixels.
  * @param {boolean} floor Whether to render below the horizon.
  *
+ * @param {Object} view Shared projection geometry for this render pass.
+ *
  * @returns {undefined}
  * @protected
  * @ignore
  */
-rune.raycast.Viewport.prototype.m_renderSurface = function(texture, floor) {
-    var viewWidth = this['canvas'].width;
-    var viewHeight = this['canvas'].height;
+rune.raycast.Viewport.prototype.m_renderFloorOrCeiling = function(texture, floor, view) {
+    var viewWidth = view.width;
+    var viewHeight = view.height;
     var camera = this.camera;
-    var projection = viewWidth / (2 * Math.tan(camera.fov / 2));
-    var cos = Math.cos(camera.angle);
-    var sin = Math.sin(camera.angle);
+    var projection = view.scale;
+    var cos = view.headingX;
+    var sin = view.headingY;
     var data = this.m_surfaceBuffer.data;
     for (var y = 0; y < viewHeight; y++) {
         var offset = y + 0.5 - viewHeight / 2;
@@ -351,17 +358,19 @@ rune.raycast.Viewport.prototype.m_renderSurface = function(texture, floor) {
 /**
  * Projects unit-height wall columns using perpendicular depth to avoid fisheye.
  *
+ * @param {Object} view Shared projection geometry for this render pass.
+ *
  * @returns {undefined}
  * @protected
  * @ignore
  */
-rune.raycast.Viewport.prototype.m_renderWalls = function() {
-    var viewWidth = this['canvas'].width;
-    var viewHeight = this['canvas'].height;
+rune.raycast.Viewport.prototype.m_renderWalls = function(view) {
+    var viewWidth = view.width;
+    var viewHeight = view.height;
     var camera = this.camera;
-    var projection = viewWidth / (2 * Math.tan(camera.fov / 2));
-    var cos = Math.cos(camera.angle);
-    var sin = Math.sin(camera.angle);
+    var projection = view.scale;
+    var cos = view.headingX;
+    var sin = view.headingY;
     var texture = this.world.map['texture'];
     this.m_depth.length = viewWidth;
     for (var x = 0; x < viewWidth; x++) {
@@ -417,46 +426,126 @@ rune.raycast.Viewport.prototype.m_constructSurfaceBuffer = function(width, heigh
 };
 
 /**
- * Renders visible billboards from farthest to nearest without updating them.
+ * Collects the shared display and camera geometry for one render pass.
+ *
+ * @returns {Object} Buffer dimensions, perspective scale and camera heading.
+ * @private
+ */
+rune.raycast.Viewport.prototype.m_getProjection = function() {
+    var width = this['canvas'].width;
+    return {
+        width: width,
+        height: this['canvas'].height,
+        scale: width / (2 * Math.tan(this.camera.fov / 2)),
+        headingX: Math.cos(this.camera.angle),
+        headingY: Math.sin(this.camera.angle)
+    };
+};
+
+/**
+ * Updates an object's depth and texture offset for one display column.
+ * Fixed planes intersect the ray; billboards use their projected screen bounds.
+ *
+ * @param {Object} hit Prepared object projection.
+ * @param {number} x Display column.
+ * @param {number} dx Ray direction X.
+ * @param {number} dy Ray direction Y.
+ * @param {number} rayLength Ray direction length for range clipping.
+ *
+ * @returns {boolean} Whether the object intersects this column within range.
+ * @private
+ */
+rune.raycast.Viewport.prototype.m_intersectObjectColumn = function(hit, x, dx, dy, rayLength) {
+    if (hit.fixed) {
+        var camera = this.camera;
+        var distance = hit.object.getRayDistance(camera.x, camera.y, dx, dy);
+        if (distance <= 0.0001 || distance * rayLength > this.range) {
+            return false;
+        }
+        hit.depth = distance;
+        hit.u = hit.object.getTextureOffset(camera.x + dx * distance, camera.y + dy * distance);
+    } else {
+        if (x + 0.5 < hit.left || x + 0.5 >= hit.left + hit.width) {
+            return false;
+        }
+        hit.u = (x + 0.5 - hit.left) / hit.width;
+    }
+    return true;
+};
+
+/**
+ * Composites upright objects from farthest to nearest separately for each column.
+ * Per-column ordering handles crossing Surface planes and translucent textures
+ * without treating transparent pixels as an opaque depth barrier.
+ *
+ * @param {Object} view Shared projection geometry for this render pass.
  *
  * @returns {undefined}
  * @private
  */
-rune.raycast.Viewport.prototype.m_renderBillboards = function() {
-    var objects = this.m_getBillboards();
-    for (var i = 0; i < objects.length; i++) {
-        this.m_renderBillboard(objects[i]);
+rune.raycast.Viewport.prototype.m_renderObjects = function(view) {
+    var viewWidth = view.width;
+    var viewHeight = view.height;
+    var projection = view.scale;
+    var headingX = view.headingX;
+    var headingY = view.headingY;
+    var objects = this.m_getObjectProjections(view);
+    var hits = [];
+    for (var x = 0; x < viewWidth; x++) {
+        var lateral = (x + 0.5 - viewWidth / 2) / projection;
+        var dx = headingX - headingY * lateral;
+        var dy = headingY + headingX * lateral;
+        var rayLength = Math.sqrt(dx * dx + dy * dy);
+        hits.length = 0;
+        for (var i = 0; i < objects.length; i++) {
+            var hit = objects[i];
+            if (!this.m_intersectObjectColumn(hit, x, dx, dy, rayLength)) {
+                continue;
+            }
+            hits.push(hit);
+        }
+        hits.sort(function(a, b) {
+            return b.depth - a.depth;
+        });
+        for (var j = 0; j < hits.length; j++) {
+            this.m_renderObjectColumn(hits[j], x, projection, viewHeight);
+        }
     }
 };
 
 /**
- * Projects one Sprite frame and clips its columns against the wall depths.
+ * Projects one textured column, retaining Sprite alpha/flips and partial wall
+ * occlusion for tall or elevated objects. Frame data belongs to this view only.
  *
- * @param {rune.raycast.Billboard} object Billboard to render.
+ * @param {Object} hit Object projection and current column intersection.
+ * @param {number} x Display column.
+ * @param {number} projection Perspective scale in pixels.
+ * @param {number} viewHeight Display buffer height in pixels.
  *
  * @returns {undefined}
  * @private
  */
-rune.raycast.Viewport.prototype.m_renderBillboard = function(object) {
-    var camera = this.camera;
-    var cos = Math.cos(camera.angle);
-    var sin = Math.sin(camera.angle);
-    var dx = object.x - camera.x;
-    var dy = object.y - camera.y;
-    var depth = dx * cos + dy * sin;
-    var lateral = dy * cos - dx * sin;
-    var viewWidth = this['canvas'].width;
-    var viewHeight = this['canvas'].height;
-    var projection = viewWidth / (2 * Math.tan(camera.fov / 2));
-    var frame = object.getFrame(camera);
-    var texture = object['texture'].data;
-    var width = object.worldWidth * projection / depth;
-    var height = object.worldHeight * projection / depth;
-    if (width <= 0 || height <= 0) {
-        return;
+rune.raycast.Viewport.prototype.m_renderObjectColumn = function(hit, x, projection, viewHeight) {
+    var object = hit.object;
+    var height = object.worldHeight * projection / hit.depth;
+    var top = viewHeight / 2 + (0.5 - object.elevation - object.worldHeight) * projection / hit.depth;
+    var wallTop = 0;
+    var wallBottom = 0;
+    var clipped = hit.depth >= this.m_depth[x];
+    if (clipped) {
+        var wallHeight = projection / Math.max(this.m_depth[x], 0.0001);
+        wallTop = (viewHeight - wallHeight) / 2;
+        wallBottom = wallTop + wallHeight;
+        if (object.flippedY) {
+            var mirror = 2 * top + height;
+            var mirroredTop = mirror - wallBottom;
+            wallBottom = mirror - wallTop;
+            wallTop = mirroredTop;
+        }
+        if (wallTop <= top && wallBottom >= top + height) {
+            return;
+        }
     }
-    var left = viewWidth / 2 + lateral * projection / depth - width / 2;
-    var top = viewHeight / 2 + (0.5 - object.elevation - object.worldHeight) * projection / depth;
     var context = this['canvas'].context;
     context.save();
     context.globalAlpha = object['alpha'];
@@ -464,52 +553,89 @@ rune.raycast.Viewport.prototype.m_renderBillboard = function(object) {
         context.translate(0, 2 * top + height);
         context.scale(1, -1);
     }
-    for (var x = Math.max(0, Math.floor(left)); x < Math.min(viewWidth, Math.ceil(left + width)); x++) {
-        var clipped = depth >= this.m_depth[x];
-        if (clipped) {
-            var wallHeight = projection / Math.max(this.m_depth[x], 0.0001);
-            var wallTop = (viewHeight - wallHeight) / 2;
-            var wallBottom = wallTop + wallHeight;
-            if (object.flippedY) {
-                var mirror = 2 * top + height;
-                var mirroredTop = mirror - wallBottom;
-                wallBottom = mirror - wallTop;
-                wallTop = mirroredTop;
-            }
-            if (wallTop <= top && wallBottom >= top + height) {
-                continue;
-            }
-            context.save();
-            context.beginPath();
-            context.rect(x, top, 1, Math.max(0, Math.min(height, wallTop - top)));
-            var below = Math.max(top, wallBottom);
-            context.rect(x, below, 1, Math.max(0, top + height - below));
-            context.clip();
-        }
-        var u = rune.util.Math.clamp((x + 0.5 - left) / width, 0, 0.999999);
-        if (object.flippedX) {
-            u = 1 - u;
-        }
-        var tx = Math.min(frame.width - 1, Math.floor(u * frame.width));
-        context.drawImage(texture, frame.x + tx, frame.y, 1, frame.height, x, top, 1, height);
-        if (clipped) {
-            context.restore();
-        }
+    if (clipped) {
+        context.beginPath();
+        context.rect(x, top, 1, Math.max(0, Math.min(height, wallTop - top)));
+        var below = Math.max(top, wallBottom);
+        context.rect(x, below, 1, Math.max(0, top + height - below));
+        context.clip();
     }
+    var u = rune.util.Math.clamp(hit.u, 0, 0.999999);
+    if (object.flippedX) {
+        u = 1 - u;
+    }
+    var tx = Math.min(hit.frameWidth - 1, Math.floor(u * hit.frameWidth));
+    context.drawImage(hit.image, hit.frameX + tx, hit.frameY, 1, hit.frameHeight, x, top, 1, height);
     context.restore();
 };
 
 /**
- * Selects visible billboards in range and sorts them by camera depth.
+ * Prepares per-view geometry and copies each source frame once. The copied frame
+ * coordinates protect subclasses that reuse directional rectangles between views.
+ *
+ * @param {Object} view Shared projection geometry for this render pass.
+ *
+ * @returns {Array.<Object>}
+ * @private
+ */
+rune.raycast.Viewport.prototype.m_getObjectProjections = function(view) {
+    var camera = this.camera;
+    var projection = view.scale;
+    var headingX = view.headingX;
+    var headingY = view.headingY;
+    var viewWidth = view.width;
+    var objects = this.m_getVisibleObjects(view);
+    var projections = [];
+    for (var i = 0; i < objects.length; i++) {
+        var object = objects[i];
+        var fixed = object instanceof rune.raycast.Surface;
+        if (fixed && !object.doubleSided && !object.isFrontFacing(camera.x, camera.y)) {
+            continue;
+        }
+        if (!isFinite(object.worldWidth) || !isFinite(object.worldHeight) || !isFinite(object.elevation) ||
+            object.worldWidth <= 0 || object.worldHeight <= 0) {
+            continue;
+        }
+        var dx = object.x - camera.x;
+        var dy = object.y - camera.y;
+        var depth = dx * headingX + dy * headingY;
+        var lateral = dy * headingX - dx * headingY;
+        var width = fixed ? 0 : object.worldWidth * projection / depth;
+        var frame = object.getFrame(camera);
+        if (frame.width <= 0 || frame.height <= 0) {
+            continue;
+        }
+        projections.push({
+            object: object,
+            fixed: fixed,
+            depth: depth,
+            left: fixed ? 0 : viewWidth / 2 + lateral * projection / depth - width / 2,
+            width: width,
+            u: 0,
+            image: object['texture'].data,
+            frameX: frame.x,
+            frameY: frame.y,
+            frameWidth: frame.width,
+            frameHeight: frame.height
+        });
+    }
+    return projections;
+};
+
+/**
+ * Selects visible upright objects using their distance and camera depth.
+ * Surface bounds may intersect the view/range even when their centers do not.
  * The returned array contains the original objects without projection wrappers.
+ *
+ * @param {Object} view Shared projection geometry for this render pass.
  *
  * @returns {Array.<rune.raycast.Billboard>}
  * @private
  */
-rune.raycast.Viewport.prototype.m_getBillboards = function() {
+rune.raycast.Viewport.prototype.m_getVisibleObjects = function(view) {
     var camera = this.camera;
-    var cos = Math.cos(camera.angle);
-    var sin = Math.sin(camera.angle);
+    var cos = view.headingX;
+    var sin = view.headingY;
     var children = this.world.getChildren();
     var objects = [];
     for (var i = 0; i < children.length; i++) {
@@ -519,14 +645,12 @@ rune.raycast.Viewport.prototype.m_getBillboards = function() {
         }
         var dx = object.x - camera.x;
         var dy = object.y - camera.y;
-        if (dx * cos + dy * sin > 0.0001 && dx * dx + dy * dy <= this.range * this.range) {
+        var extent = object instanceof rune.raycast.Surface ? object.worldWidth / 2 : 0;
+        var range = this.range + extent;
+        if (dx * cos + dy * sin + extent > 0.0001 && dx * dx + dy * dy <= range * range) {
             objects.push(object);
         }
     }
-    objects.sort(function(a, b) {
-        return (b.x - camera.x) * cos + (b.y - camera.y) * sin -
-            ((a.x - camera.x) * cos + (a.y - camera.y) * sin);
-    });
     return objects;
 };
 

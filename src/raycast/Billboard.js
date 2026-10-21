@@ -166,7 +166,13 @@ rune.raycast.Billboard.prototype.faceTowards = function(target) {
  * timing; its normalized phase selects a frame in the observed sequence.
  * Unmapped animations use ordinary Sprite frames. Call without arguments to clear.
  *
- * @param {string} [right] Right-facing animation name.
+ * Pass an object with right/down/up/left names to avoid positional arguments.
+ *
+ * @example
+ * actor.setDirectionalAnimations({right: "walkRight", down: "walkDown",
+ *     up: "walkUp", left: "walkLeft"});
+ *
+ * @param {(string|Object)} [right] Direction map, or right-facing animation name.
  * @param {string} [down] Front-facing animation name.
  * @param {string} [up] Back-facing animation name.
  * @param {string} [left] Left-facing animation name.
@@ -180,7 +186,9 @@ rune.raycast.Billboard.prototype.setDirectionalAnimations = function(right, down
         return;
     }
     
-    var names = [right, down, up, left];
+    var names = right != null && typeof right === "object" ?
+        [right.right, right.down, right.up, right.left] : [right, down, up, left];
+        
     for (var i = 0; i < names.length; i++) {
         var animation = typeof names[i] === "string" ? this.animation.find(names[i]) : null;
         if (animation == null || animation.frames.length === 0) {

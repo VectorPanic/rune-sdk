@@ -89,6 +89,7 @@ demo.scene.Scene005.prototype.init = function() {
     this.m_initObserver();
     this.m_initActors();
     this.m_initDoors();
+    this.m_initSurfaces();
     this.m_initView();
     this.m_initControls();
 };
@@ -178,8 +179,25 @@ demo.scene.Scene005.prototype.m_initDoors = function() {
         door.canClose = function() {
             return !world.overlapsCell(observer, this.x, this.y);
         };
+        
         this.m_world.addChild(door);
     }
+};
+
+/**
+ * Places a fixed signboard surface beside the wall.
+ *
+ * @returns {undefined}
+ * @private
+ */
+demo.scene.Scene005.prototype.m_initSurfaces = function() {
+    var surface = new rune.raycast.Surface(
+        9.001, 4.5, 16, 16, "demo_raycast_surface_signboard_16x16", Math.PI / 2
+    );
+    
+    surface.worldWidth = 0.65;
+    surface.worldHeight = 0.65;
+    this.m_world.addChild(surface);
 };
 
 /**

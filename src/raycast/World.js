@@ -193,7 +193,8 @@ rune.raycast.World.prototype.getDoorAt = function(column, row) {
 
 /**
  * Returns the nearest blocking cell or active billboard hit. Cells win distance ties.
- * Billboard intersections use floor-plane radii independently of visibility.
+ * Billboards use floor-plane radii; Surfaces use their fixed plane segments.
+ * Both are independent of visual size along Y, elevation and image transparency.
  *
  * @param {number} x Ray origin in tile units.
  * @param {number} y Ray origin in tile units.
@@ -302,8 +303,8 @@ rune.raycast.World.prototype.isWithinDistance = function(a, b, range) {
  * an unrestricted sight query. Elevation and visual transparency are ignored.
  *
  * An optional filter selects active direct-child Billboards that also obstruct
- * sight, using the same radius/intersection hook as trace(). Source and target
- * are always excluded. Visibility and interactive flags do not affect blockers.
+ * sight, using the same circle/Surface intersection hook as trace(). Source and
+ * target are always excluded. Visibility and interactive flags do not affect blockers.
  * Without a filter, Billboards never obstruct this query.
  *
  * @param {Object} source Observer or point with x and y in tiles.
@@ -362,7 +363,16 @@ rune.raycast.World.prototype.hasLineOfSight = function(source, target, filter, s
  * The boundary is included. Visibility, interaction flags, object size and walls
  * do not affect the query. Results retain child order and contain original objects.
  *
- * @param {number} x Query center x in tiles.
+ * Also accepts (position, radius, filter, scope, output), where position is a
+ * point or actor. Like the coordinate form, this includes the query actor itself;
+ * use a filter when it should be excluded.
+ *
+ * @example
+ * var nearby = world.getObjectsInRadius(player, 3, function(object) {
+ *     return object !== player && object instanceof Enemy;
+ * });
+ *
+ * @param {(number|Object)} x Query center X, or point/actor in tiles.
  * @param {number} y Query center y in tiles.
  * @param {number} radius Non-negative radius in tiles.
  * @param {Function} [filter] Optional eligibility callback receiving each object in range.
@@ -373,6 +383,14 @@ rune.raycast.World.prototype.hasLineOfSight = function(source, target, filter, s
  * @throws {RangeError} If coordinates or radius are non-finite, or radius is negative.
  */
 rune.raycast.World.prototype.getObjectsInRadius = function(x, y, radius, filter, scope, output) {
+    if (x != null && typeof x === "object") {
+        output = /** @type {Array.<rune.display.DisplayObject>} */ (scope);
+        scope = filter;
+        filter = /** @type {Function} */ (/** @type {*} */ (radius));
+        radius = y;
+        y = x.y;
+        x = x.x;
+    }
     if (!isFinite(x) || !isFinite(y) || !isFinite(radius) || radius < 0) {
         throw new RangeError("A radius query requires finite coordinates and a non-negative radius.");
     }
@@ -502,7 +520,7 @@ rune.raycast.World.prototype.getOverlappingObjects = function(actor, filter, sco
 /**
  * Checks whether an actor fits at a position without moving it. Uses the actor's
  * radius (default 0.2 tiles) and the same circle/cell collision as move(). Walls,
- * closed or partly open doors, map bounds and custom isBlocked() rules apply.
+ * closed or partly open doors, solid surfaces, map bounds and custom isBlocked() rules apply.
  * Other actors, activity, visibility, elevation and visual size are ignored.
  * Only the destination is tested; this does not check the route to that position.
  *
@@ -522,11 +540,12 @@ rune.raycast.World.prototype.canOccupy = function(actor, position) {
         !this.layer.containsCell(Math.floor(position.x + radius), Math.floor(position.y + radius))) {
         return false;
     }
-    return !this.m_overlapsWall(position.x, position.y, radius);
+    return !this.m_overlapsWall(position.x, position.y, radius) &&
+        !this.m_overlapsSurfaces(this.m_getSolidSurfaces(actor), position.x, position.y, 0, 0, radius);
 };
 
 /**
- * Moves an object with circular wall collision and axis sliding.
+ * Moves an object with circular wall/surface collision and axis sliding.
  * Small displacement steps prevent tunneling through blocked cells.
  *
  * @param {Object} object Actor whose x and y coordinates are updated.
@@ -551,13 +570,16 @@ rune.raycast.World.prototype.move = function(object, dx, dy, radius) {
     if (!isFinite(steps)) {
         throw new RangeError("Movement displacement is too large.");
     }
+    var surfaces = this.m_getSolidSurfaces(object);
     dx /= steps;
     dy /= steps;
     for (var i = 0; i < steps; i++) {
-        if (!this.m_overlapsWall(object.x + dx, object.y, radius)) {
+        if (!this.m_overlapsWall(object.x + dx, object.y, radius) &&
+            !this.m_overlapsSurfaces(surfaces, object.x, object.y, dx, 0, radius)) {
             object.x += dx;
         }
-        if (!this.m_overlapsWall(object.x, object.y + dy, radius)) {
+        if (!this.m_overlapsWall(object.x, object.y + dy, radius) &&
+            !this.m_overlapsSurfaces(surfaces, object.x, object.y, 0, dy, radius)) {
             object.y += dy;
         }
     }
@@ -749,7 +771,7 @@ rune.raycast.World.prototype.castView = function(x, y, dx, dy, range, output) {
 //------------------------------------------------------------------------------
 
 /**
- * Intersects a ray with a billboard circle on the floor plane.
+ * Intersects a ray with a billboard circle or fixed Surface segment on the map.
  * Override this method to use a custom interaction shape.
  *
  * @param {rune.raycast.Billboard} object Billboard to intersect.
@@ -763,9 +785,14 @@ rune.raycast.World.prototype.castView = function(x, y, dx, dy, range, output) {
  * @ignore
  */
 rune.raycast.World.prototype.m_getObjectDistance = function(object, x, y, dx, dy) {
+    if (object instanceof rune.raycast.Surface) {
+        return object.getRayDistance(x, y, dx, dy);
+    }
+    
     if (!this.m_hasRadius(object)) {
         return -1;
     }
+    
     var ox = x - object.x;
     var oy = y - object.y;
     var a = dx * dx + dy * dy;
@@ -773,9 +800,11 @@ rune.raycast.World.prototype.m_getObjectDistance = function(object, x, y, dx, dy
     if (offsetSquared <= 0) {
         return 0;
     }
+    
     if (a === 0) {
         return -1;
     }
+    
     var b = ox * dx + oy * dy;
     var discriminant = b * b - a * offsetSquared;
     return discriminant < 0 ? -1 : (-b - Math.sqrt(discriminant)) / a;
@@ -816,19 +845,23 @@ rune.raycast.World.prototype.m_isInFieldOfView = function(source, dx, dy, fov) {
     if (typeof fov !== "number" || !isFinite(fov) || fov <= 0 || fov > Math.PI * 2) {
         throw new RangeError("Field of view must be greater than zero and at most 2*PI radians.");
     }
+    
     if (fov === Math.PI * 2 || (dx === 0 && dy === 0)) {
         return true;
     }
+    
     var angle = source.angle;
     if (angle == null) {
         var direction = source.direction;
         if (!this.m_hasPosition(direction) || (direction.x === 0 && direction.y === 0)) {
             throw new RangeError("Sight cones require an observer angle or non-zero direction.");
         }
+        
         angle = Math.atan2(direction.y, direction.x);
     } else if (typeof angle !== "number" || !isFinite(angle)) {
         throw new RangeError("Observer angle must be finite radians.");
     }
+    
     var difference = Math.atan2(dy, dx) - angle;
     difference = Math.atan2(Math.sin(difference), Math.cos(difference));
     return Math.abs(difference) <= fov / 2 + 0.000000000001;
@@ -899,6 +932,50 @@ rune.raycast.World.prototype.m_resetHit = function(hit, x, y, dx, dy, distance) 
     hit.tile = 0;
     hit.u = 0;
     return hit;
+};
+
+/**
+ * Selects active solid planes once for a movement or occupancy query.
+ * The list is local to the query so adding, removing or changing surfaces
+ * requires no persistent collision cache or invalidation rules.
+ *
+ * @param {Object} actor Moving object to exclude.
+ *
+ * @returns {Array.<rune.raycast.Surface>}
+ * @private
+ */
+rune.raycast.World.prototype.m_getSolidSurfaces = function(actor) {
+    var children = this.getChildren();
+    var surfaces = [];
+    for (var i = 0; i < children.length; i++) {
+        var object = children[i];
+        if (object !== actor && object instanceof rune.raycast.Surface && object.active && object.solid) {
+            surfaces.push(object);
+        }
+    }
+    return surfaces;
+};
+
+/**
+ * Tests a displacement against the selected solid planes.
+ *
+ * @param {Array.<rune.raycast.Surface>} surfaces Collision candidates.
+ * @param {number} x Start X in tiles.
+ * @param {number} y Start Y in tiles.
+ * @param {number} dx Displacement X in tiles.
+ * @param {number} dy Displacement Y in tiles.
+ * @param {number} radius Circle radius in tiles.
+ *
+ * @returns {boolean}
+ * @private
+ */
+rune.raycast.World.prototype.m_overlapsSurfaces = function(surfaces, x, y, dx, dy, radius) {
+    for (var i = 0; i < surfaces.length; i++) {
+        if (surfaces[i].blocksMovement(x, y, dx, dy, radius)) {
+            return true;
+        }
+    }
+    return false;
 };
 
 /**

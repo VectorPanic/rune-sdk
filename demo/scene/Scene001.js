@@ -3,22 +3,22 @@
 //------------------------------------------------------------------------------
 
 /**
- * Instances the Scene001 class.
+ * Creates a new Scene001 object.
  *
  * @constructor
  * @extends rune.scene.Scene
  *
  * @class
  * @classdesc
- * 
- * The Scene001 class is a test scene within the Demo application.
+ *
+ * Displays the demo selection menu, animated title and particle effects.
  */
 demo.scene.Scene001 = function() {
-    
+
     //--------------------------------------------------------------------------
     // Private properties
     //--------------------------------------------------------------------------
-    
+
     /**
      * Particle emitter.
      *
@@ -26,7 +26,7 @@ demo.scene.Scene001 = function() {
      * @private
      */
     this.m_emitter = null;
-    
+
     /**
      * Demo selection menu.
      *
@@ -42,7 +42,7 @@ demo.scene.Scene001 = function() {
      * @private
      */
     this.m_title = null;
-    
+
     /**
      * Selection sound.
      *
@@ -54,7 +54,7 @@ demo.scene.Scene001 = function() {
     //--------------------------------------------------------------------------
     // Super call
     //--------------------------------------------------------------------------
-    
+
     /**
      * Extend rune.scene.Scene.
      */
@@ -73,7 +73,7 @@ demo.scene.Scene001.prototype.constructor = demo.scene.Scene001;
 //------------------------------------------------------------------------------
 
 /**
- * @override
+ * @inheritDoc
  */
 demo.scene.Scene001.prototype.init = function() {
     rune.scene.Scene.prototype.init.call(this);
@@ -85,7 +85,7 @@ demo.scene.Scene001.prototype.init = function() {
 };
 
 /**
- * @override
+ * @inheritDoc
  */
 demo.scene.Scene001.prototype.update = function(step) {
     rune.scene.Scene.prototype.update.call(this, step);
@@ -99,7 +99,7 @@ demo.scene.Scene001.prototype.update = function(step) {
 /**
  * Create the menu.
  *
- * @return {undefined}
+ * @returns {undefined}
  * @private
  */
 demo.scene.Scene001.prototype.m_initMenu = function() {
@@ -108,13 +108,14 @@ demo.scene.Scene001.prototype.m_initMenu = function() {
     this.m_menu.add("Scene001");
     this.m_menu.add("Scene002");
     this.m_menu.add("Scene003");
+    this.m_menu.add("Scene004");
     this.stage.addChild(this.m_menu);
 };
 
 /**
  * Creates the heading and starts revealing its text automatically.
  *
- * @return {undefined}
+ * @returns {undefined}
  * @private
  */
 demo.scene.Scene001.prototype.m_initTitle = function() {
@@ -128,7 +129,7 @@ demo.scene.Scene001.prototype.m_initTitle = function() {
 /**
  * Creates the emitter with its emission area centered above the heading.
  *
- * @return {undefined}
+ * @returns {undefined}
  * @private
  */
 demo.scene.Scene001.prototype.m_initEmitter = function() {
@@ -143,10 +144,39 @@ demo.scene.Scene001.prototype.m_initEmitter = function() {
         minRotation:  -2,
         maxRotation:   2
     });
-    
+
     this.m_emitter.centerX = this.m_title.centerX;
     this.m_emitter.centerY = this.m_title.top - 16;
     this.stage.addChild(this.m_emitter);
+};
+
+/**
+ * Checks if there is input.
+ *
+ * @param {number} step Fixed time step.
+ *
+ * @returns {undefined}
+ * @private
+ */
+demo.scene.Scene001.prototype.m_updateInput = function(step) {
+    if (this.keyboard.justPressed("W") || this.gamepads.stickLeftJustUp) {
+        if (this.m_menu.up()) {
+            this.m_sound.play();
+            this.m_emitter.emit(10);
+        }
+    }
+
+    if (this.keyboard.justPressed("S") || this.gamepads.stickLeftJustDown) {
+        if (this.m_menu.down()) {
+            this.m_sound.play();
+            this.m_emitter.emit(10);
+        }
+    }
+
+    if (this.keyboard.justPressed("SPACE") || this.gamepads.justPressed(9)) {
+        this.m_menu.select();
+        this.m_emitter.emit(64);
+    }
 };
 
 /**
@@ -155,7 +185,7 @@ demo.scene.Scene001.prototype.m_initEmitter = function() {
  * excluded from the block height, and full heading dimensions keep it stable
  * while characters are revealed.
  *
- * @return {undefined}
+ * @returns {undefined}
  * @private
  */
 demo.scene.Scene001.prototype.m_layoutMenu = function() {
@@ -170,40 +200,11 @@ demo.scene.Scene001.prototype.m_layoutMenu = function() {
 };
 
 /**
- * Checks if there is input.
- *
- * @param {number} step Fixed time step.
- *
- * @return {undefined}
- * @private
- */
-demo.scene.Scene001.prototype.m_updateInput = function(step) {
-    if (this.keyboard.justPressed("W") || this.gamepads.stickLeftJustUp) {
-        if (this.m_menu.up()) {
-            this.m_sound.play();
-            this.m_emitter.emit(10);
-        }
-    }
-    
-    if (this.keyboard.justPressed("S") || this.gamepads.stickLeftJustDown) {
-        if (this.m_menu.down()) {
-            this.m_sound.play();
-            this.m_emitter.emit(10);
-        }
-    }
-    
-    if (this.keyboard.justPressed("SPACE") || this.gamepads.justPressed(9)) {
-        this.m_menu.select();
-        this.m_emitter.emit(64);
-    }
-};
-
-/**
  * Handler function for when a menu selection is made.
  *
  * @param {rune.ui.VTListElement} element The list element that was selected.
  *
- * @return {undefined}
+ * @returns {undefined}
  * @private
  */
 demo.scene.Scene001.prototype.m_onMenuSelect = function(element) {
@@ -211,13 +212,17 @@ demo.scene.Scene001.prototype.m_onMenuSelect = function(element) {
         case "Scene001":
             this.application.scenes.select(1);
             break;
-        
+            
         case "Scene002":
             this.application.scenes.select(2);
             break;
             
         case "Scene003":
-        this.application.scenes.select(3);
-        break;
+            this.application.scenes.select(3);
+            break;
+            
+        case "Scene004":
+            this.application.scenes.select(4);
+            break;
     }
 };

@@ -302,6 +302,22 @@ rune.tilemap.TilemapDataLayer.prototype.getTileIndexOfPoint = function(p) {
 };
 
 /**
+ * Checks whether integer cell coordinates lie within this layer.
+ * Coordinates are local columns and rows, independent of pixel size or origin.
+ *
+ * @param {number} column Cell column.
+ * @param {number} row Cell row.
+ *
+ * @returns {boolean}
+ */
+rune.tilemap.TilemapDataLayer.prototype.containsCell = function(column, row) {
+    return this.m_map != null && this.m_data != null &&
+        column === Math.floor(column) && row === Math.floor(row) &&
+        column >= 0 && row >= 0 &&
+        column < this.m_map['widthInTiles'] && row < this.m_map['heightInTiles'];
+};
+
+/**
  * Returns the tile value of a specific tile index.
  *
  * @param {number} i Tile index.
@@ -310,6 +326,20 @@ rune.tilemap.TilemapDataLayer.prototype.getTileIndexOfPoint = function(p) {
  */
 rune.tilemap.TilemapDataLayer.prototype.getTileValueAt = function(i) {
     return this.m_isValidIndex(i) ? this.m_data[i] || 0 : 0;
+};
+
+/**
+ * Returns a tile value using local cell coordinates instead of a linear index.
+ * Returns zero for cells outside the layer or non-integer coordinates.
+ *
+ * @param {number} column Cell column.
+ * @param {number} row Cell row.
+ *
+ * @returns {number}
+ */
+rune.tilemap.TilemapDataLayer.prototype.getTileValueAtCell = function(column, row) {
+    return this.containsCell(column, row) ?
+        this.getTileValueAt(row * this.m_map['widthInTiles'] + column) : 0;
 };
 
 /**
@@ -389,20 +419,23 @@ rune.tilemap.TilemapDataLayer.prototype.getTileValueOfPoint = function(p) {
  * @param {number} gy The y-coordinate of the target point.
  * @param {boolean} [md=false] Whether the Path object is allowed to include diagonal paths.
  *
+ * @param {Function} [isBlocked] Optional cell blocking rule (column, row).
+ * @param {Object} [scope] Callback scope.
  * @returns {rune.util.Path}
  */
-rune.tilemap.TilemapDataLayer.prototype.getPath = function(sx, sy, gx, gy, md) {
+rune.tilemap.TilemapDataLayer.prototype.getPath = function(sx, sy, gx, gy, md, isBlocked, scope) {
     var si = this.getTileIndexOf(sx, sy);
     var gi = this.getTileIndexOf(gx, gy);
 
     if (!this.m_isValidIndex(si) || !this.m_isValidIndex(gi)) return null;
 
-    var startBlocked = this.getTileAt(si)['allowCollisions'] > 0;
-    var goalBlocked  = this.getTileAt(gi)['allowCollisions'] > 0;
+    var wt = this.m_map['widthInTiles'];
+    var startBlocked = isBlocked ? isBlocked.call(scope, si % wt, Math.floor(si / wt)) : this.getTileAt(si)['allowCollisions'] > 0;
+    var goalBlocked = isBlocked ? isBlocked.call(scope, gi % wt, Math.floor(gi / wt)) : this.getTileAt(gi)['allowCollisions'] > 0;
 
     if (startBlocked || goalBlocked) return null;
 
-    var ad = this.m_computeDistance(si, gi, md);
+    var ad = this.m_computeDistance(si, gi, md, isBlocked, scope);
     if (ad == null) return null;
 
     var ap = [];
@@ -429,15 +462,19 @@ rune.tilemap.TilemapDataLayer.prototype.getPath = function(sx, sy, gx, gy, md) {
  * @param {rune.geom.Point} g Target point.
  * @param {boolean} [md=false] Whether the Path object is allowed to include diagonal paths.
  *
+ * @param {Function} [isBlocked] Optional cell blocking rule (column, row).
+ * @param {Object} [scope] Callback scope.
  * @returns {rune.util.Path}
  */
-rune.tilemap.TilemapDataLayer.prototype.getPathBetweenPoints = function(s, g, md) {
+rune.tilemap.TilemapDataLayer.prototype.getPathBetweenPoints = function(s, g, md, isBlocked, scope) {
     return this.getPath(
         s['x'],
         s['y'],
         g['x'],
         g['y'],
-        md
+        md,
+        isBlocked,
+        scope
     );
 };
 
@@ -776,12 +813,14 @@ rune.tilemap.TilemapDataLayer.prototype.dispose = function() {
  * @param {number} si Start index.
  * @param {number} gi Target index.
  * @param {boolean} [md=false] Whether the distance may be calculated with diagonal movement.
+ * @param {Function} [isBlocked] Optional cell blocking rule (column, row).
+ * @param {Object} [scope] Callback scope.
  *
  * @returns {Array.<number>}
  * @protected
  * @ignore
  */
-rune.tilemap.TilemapDataLayer.prototype.m_computeDistance = function(si, gi, md) {
+rune.tilemap.TilemapDataLayer.prototype.m_computeDistance = function(si, gi, md, isBlocked, scope) {
     var wt = this.m_map['widthInTiles'];
     var ht = this.m_map['heightInTiles'];
     var ms = this.m_map['numTiles'];
@@ -809,7 +848,7 @@ rune.tilemap.TilemapDataLayer.prototype.m_computeDistance = function(si, gi, md)
     while(ti < ms) {
         tt = this.getTileAt(ti);
 
-        if ((tt) && (tt['allowCollisions'] > 0)) {
+        if (isBlocked ? isBlocked.call(scope, ti % wt, Math.floor(ti / wt)) : ((tt) && (tt['allowCollisions'] > 0))) {
             ad[ti] = -2;
         } else {
             ad[ti] = -1;

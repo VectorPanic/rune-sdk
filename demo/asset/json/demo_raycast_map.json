@@ -1,0 +1,46 @@
+{
+  "name": "raycast demo",
+  "width": 12,
+  "height": 10,
+  "tileWidth": 16,
+  "tileHeight": 16,
+  "texture": "demo_raycast_walls_16x16",
+  "floorTexture": "demo_raycast_floor_16x16",
+  "ceilingTexture": "demo_raycast_ceiling_16x16",
+  "spawn": {
+    "x": 2.5,
+    "y": 2.5,
+    "angle": 0
+  },
+  "tiles": [
+    {
+      "value": 1,
+      "collision": "0x1111"
+    },
+    {
+      "value": 2,
+      "collision": "0x1111"
+    }
+  ],
+  "back": [
+    1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+    1, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1,
+    1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1,
+    1, 0, 0, 1, 0, 1, 0, 0, 2, 0, 0, 1,
+    1, 0, 0, 1, 0, 0, 0, 0, 2, 0, 0, 1,
+    1, 0, 2, 1, 0, 0, 0, 0, 2, 0, 0, 1,
+    1, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1,
+    1, 0, 0, 1, 1, 1, 1, 0, 0, 0, 0, 1,
+    1, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1,
+    1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1
+  ],
+  "skyTexture": "demo_raycast_sky_128x32",
+  "doors": [
+    {
+      "column": 3,
+      "row": 2,
+      "orientation": "vertical",
+      "texture": "demo_raycast_door_16x16"
+    }
+  ]
+}

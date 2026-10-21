@@ -192,6 +192,13 @@ var rune = function() {
 	 * @since 1.0
 	 */
 	m_this.resource = {};
+
+	/**
+	 * Wolfenstein-style world projection and navigation.
+	 * @namespace raycast
+	 * @memberof rune
+	 */
+	m_this.raycast = {};
 	
 	/**
 	 * the rune.scene package contains classes for managing scenes. A scene is 

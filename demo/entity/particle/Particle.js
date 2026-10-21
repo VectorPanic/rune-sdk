@@ -10,15 +10,15 @@
  *
  * @class
  * @classdesc
- * 
- * The Astronaut class represents an animated astronaut sprite.
+ *
+ * A colored menu particle that flickers near the end of its lifespan.
  */
 demo.entity.Particle = function() {
 
     //--------------------------------------------------------------------------
     // Super call
     //--------------------------------------------------------------------------
-    
+
     /**
      * Extend rune.particle.Particle.
      */
@@ -44,12 +44,12 @@ demo.entity.Particle.prototype.constructor = demo.entity.Particle;
  */
 demo.entity.Particle.LIFESPAN_FLICKERING = 750;
 
-//--------------------------------------------------------------------------
-// Override public prototype methods
-//--------------------------------------------------------------------------
+//------------------------------------------------------------------------------
+// Override public prototype methods (ENGINE)
+//------------------------------------------------------------------------------
 
 /**
- * @override
+ * @inheritDoc
  */
 demo.entity.Particle.prototype.init = function() {
     rune.particle.Particle.prototype.init.call(this);
@@ -57,20 +57,21 @@ demo.entity.Particle.prototype.init = function() {
 };
 
 /**
- * @override
+ * @inheritDoc
  */
 demo.entity.Particle.prototype.update = function(step) {
     rune.particle.Particle.prototype.update.call(this, step);
     this.m_updateLifespan(step);
 };
 
-//--------------------------------------------------------------------------
+//------------------------------------------------------------------------------
 // Protected prototype methods
-//--------------------------------------------------------------------------
+//------------------------------------------------------------------------------
 
 /**
- * Repaint the particle texture in random color.
+ * Repaints the particle texture in a random color.
  *
+ * @returns {undefined}
  * @protected
  * @ignore
  */
@@ -78,8 +79,8 @@ demo.entity.Particle.prototype.m_initTexture = function() {
     this.flicker.stop();
     var c1 = rune.color.Color24.fromHex("#FFFFFF");
     var c2 = rune.color.Color24.fromHex("#FFFFFF");
-        c2.random();
-    
+    c2.random();
+
     this.texture.replaceColor(
         c1,
         c2
@@ -87,9 +88,13 @@ demo.entity.Particle.prototype.m_initTexture = function() {
 };
 
 /**
- * Update the particle's life span.
+ * Updates the particle's lifespan and starts flickering before it expires.
  *
+ * @param {number} step Elapsed time in milliseconds.
+ *
+ * @returns {undefined}
  * @protected
+ * @inheritDoc
  * @ignore
  */
 demo.entity.Particle.prototype.m_updateLifespan = function(step) {

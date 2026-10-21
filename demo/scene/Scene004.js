@@ -3,22 +3,22 @@
 //------------------------------------------------------------------------------
 
 /**
- * Instances the Scene004 class.
+ * Creates a new Scene004 object.
  *
  * @constructor
  * @extends rune.scene.Scene
  *
  * @class
  * @classdesc
- * 
- * The Scene004 class is a test scene within the Demo application.
+ *
+ * Demonstrates a repeated texture with adjustable scrolling speed.
  */
 demo.scene.Scene004 = function() {
-    
+
     //--------------------------------------------------------------------------
     // Private properties
     //--------------------------------------------------------------------------
-    
+
     /**
      * Background texture.
      *
@@ -34,15 +34,15 @@ demo.scene.Scene004 = function() {
      * @private
      */
     this.m_controls;
-    
+
     /**
      * Scroll speed.
      *
      * @type {rune.geom.Point}
      * @private
      */
-    this.m_speed = new rune.geom.Point(0,0);
-    
+    this.m_speed = new rune.geom.Point(0, 0);
+
     /**
      * Scroll speed step.
      *
@@ -54,7 +54,7 @@ demo.scene.Scene004 = function() {
     //--------------------------------------------------------------------------
     // Super call
     //--------------------------------------------------------------------------
-    
+
     /**
      * Extend rune.scene.Scene.
      */
@@ -117,7 +117,7 @@ demo.scene.Scene004.prototype.m_initBackground = function() {
         this.application.height,
         "rune_image_logo_text_64x32"
     );
-    
+
     this.stage.addChild(this.m_background);
 };
 
@@ -142,7 +142,9 @@ demo.scene.Scene004.prototype.m_initControls = function() {
         this.m_controls.x = 8;
         this.m_controls.y = 8;
         this.cameras.getCameraAt(0).addChild(this.m_controls);
-    } else throw new Error();
+    } else {
+        throw new Error();
+    }
 };
 
 /**
@@ -157,19 +159,19 @@ demo.scene.Scene004.prototype.m_updateOffset = function(step) {
     if (this.keyboard.justPressed("W")) {
         this.m_speed.y -= this.m_speedStep;
     }
-    
+
     if (this.keyboard.justPressed("S")) {
         this.m_speed.y += this.m_speedStep;
     }
-    
+
     if (this.keyboard.justPressed("A")) {
         this.m_speed.x -= this.m_speedStep;
     }
-    
+
     if (this.keyboard.justPressed("D")) {
         this.m_speed.x += this.m_speedStep;
     }
-    
+
     this.m_background.offsetX += this.m_speed.x;
     this.m_background.offsetY += this.m_speed.y;
 };

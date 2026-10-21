@@ -12,11 +12,11 @@
  *
  * @class
  * @classdesc
- * 
+ *
  * A visual representation of a game controller's input data.
  */
 demo.entity.Controller = function(playerID) {
-    
+
     //--------------------------------------------------------------------------
     // Private properties
     //--------------------------------------------------------------------------
@@ -24,28 +24,31 @@ demo.entity.Controller = function(playerID) {
     /**
      * List of game controller buttons.
      *
-     * @type {Array.<demo.entity.ControllerButton>}
+     * @type {Array.<Object>}
+     * @private
      */
     this.m_buttons = [];
-    
+
     /**
-     *  Reference to the Gamepad API.
+     * Reference to the Gamepad API.
      *
-     *  @type {rune.input.Gamepad}
+     * @type {rune.input.Gamepad}
+     * @private
      */
     this.m_gamepad = null;
-    
+
     /**
-     *  Player ID (0-3).
+     * Player ID (0-3).
      *
-     *  @type {number}
+     * @type {number}
+     * @private
      */
     this.m_playerID = playerID || 0;
 
     //--------------------------------------------------------------------------
     // Super call
     //--------------------------------------------------------------------------
-    
+
     /**
      * Extend Sprite.
      */
@@ -64,7 +67,7 @@ demo.entity.Controller.prototype.constructor = demo.entity.Controller;
 //------------------------------------------------------------------------------
 
 /**
- * @override
+ * @inheritDoc
  */
 demo.entity.Controller.prototype.init = function() {
     rune.display.Sprite.prototype.init.call(this);
@@ -79,7 +82,7 @@ demo.entity.Controller.prototype.init = function() {
 /**
  * Creates a reference to the GamePad API.
  *
- * @return {undefined}
+ * @returns {undefined}
  * @private
  */
 demo.entity.Controller.prototype.m_initGamepad = function() {
@@ -91,7 +94,7 @@ demo.entity.Controller.prototype.m_initGamepad = function() {
 /**
  * Creates the control's buttons.
  *
- * @return {undefined}
+ * @returns {undefined}
  * @private
  */
 demo.entity.Controller.prototype.m_initButtons = function() {
@@ -102,7 +105,7 @@ demo.entity.Controller.prototype.m_initButtons = function() {
 /**
  * Creates a configuration of buttons to be used.
  *
- * @return {undefined}
+ * @returns {undefined}
  * @private
  */
 demo.entity.Controller.prototype.m_initButtonsConfig = function() {
@@ -126,7 +129,7 @@ demo.entity.Controller.prototype.m_initButtonsConfig = function() {
 /**
  * Creates the control's Button object.
  *
- * @return {undefined}
+ * @returns {undefined}
  * @private
  */
 demo.entity.Controller.prototype.m_initButtonsGraphics = function() {

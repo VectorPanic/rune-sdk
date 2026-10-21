@@ -87,6 +87,12 @@ npx google-closure-compiler \
 --js "./../../src/tilemap/TilemapDataLayer.js" \
 --js "./../../src/tilemap/TilemapLayer.js" \
 --js "./../../src/tilemap/Tilemap.js" \
+--js "./../../src/raycast/Camera.js" \
+--js "./../../src/raycast/Billboard.js" \
+--js "./../../src/raycast/Door.js" \
+--js "./../../src/raycast/World.js" \
+--js "./../../src/raycast/Navigator.js" \
+--js "./../../src/raycast/Viewport.js" \
 --js "./../../src/text/bitmapfont/BitmapFormat.js" \
 --js "./../../src/text/Typewriter.js" \
 --js "./../../src/text/TextScramble.js" \

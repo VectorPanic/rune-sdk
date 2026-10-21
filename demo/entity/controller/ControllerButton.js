@@ -12,15 +12,15 @@
  * @param {number} y Y position.
  * @param {rune.input.Gamepad} gamepad Reference to the GamePad API.
  * @param {number} buttonID Button ID (according to W3C's spec).
- * @param {string} The name of the resource file to be used as a texture. 
+ * @param {string} GFX The name of the resource file to be used as a texture.
  *
  * @class
  * @classdesc
- * 
+ *
  * Represents a button on a game controller.
  */
 demo.entity.ControllerButton = function(x, y, gamepad, buttonID, GFX) {
-    
+
     //--------------------------------------------------------------------------
     // Private properties (SCOPE BOUND)
     //--------------------------------------------------------------------------
@@ -32,33 +32,33 @@ demo.entity.ControllerButton = function(x, y, gamepad, buttonID, GFX) {
      * @private
      */
     var resource = this.application.resources.get(GFX).data;
-        
+
     //--------------------------------------------------------------------------
     // Private properties
     //--------------------------------------------------------------------------
 
     /**
      * Reference to the GamePad API.
-     * 
+     *
      * @type {rune.input.Gamepad}
      * @private
      */
     this.m_gamepad = gamepad;
-    
+
     /**
      * Button ID (according to W3C's spec).
-     * 
+     *
      * @type {number}
      * @private
      */
     this.m_buttonID = buttonID || 0;
 
     //--------------------------------------------------------------------------
-    //  Constructor call
+    // Super call
     //--------------------------------------------------------------------------
-    
+
     /**
-     *  Extend Sprite.
+     * Extend rune.display.Sprite.
      */
     rune.display.Sprite.call(this, x, y, resource.width >> 1, resource.height, resource);
 };
@@ -71,11 +71,11 @@ demo.entity.ControllerButton.prototype = Object.create(rune.display.Sprite.proto
 demo.entity.ControllerButton.prototype.constructor = demo.entity.ControllerButton;
 
 //------------------------------------------------------------------------------
-// Override public prototype methods
+// Override public prototype methods (ENGINE)
 //------------------------------------------------------------------------------
 
 /**
- * @override
+ * @inheritDoc
  */
 demo.entity.ControllerButton.prototype.init = function() {
     rune.display.Sprite.prototype.init.call(this);
@@ -83,7 +83,7 @@ demo.entity.ControllerButton.prototype.init = function() {
 };
 
 /**
- * @override
+ * @inheritDoc
  */
 demo.entity.ControllerButton.prototype.update = function(step) {
     this.m_updateInput();
@@ -96,8 +96,8 @@ demo.entity.ControllerButton.prototype.update = function(step) {
 
 /**
  * Creates the button's animation sequence.
- * 
- * @return {undefined}
+ *
+ * @returns {undefined}
  * @private
  */
 demo.entity.ControllerButton.prototype.m_initAnimation = function() {
@@ -109,13 +109,18 @@ demo.entity.ControllerButton.prototype.m_initAnimation = function() {
 
 /**
  * Updates the button's visual state.
- * 
- * @return {undefined}
+ *
+ * @param {number} [step] Elapsed time in milliseconds; unused by this input check.
+ *
+ * @returns {undefined}
  * @private
  */
 demo.entity.ControllerButton.prototype.m_updateInput = function(step) {
     if (this.m_gamepad != null) {
-        if (this.m_gamepad.pressed(this.m_buttonID)) this.animation.gotoAndStop("active");
-        else this.animation.gotoAndStop("inactive");
+        if (this.m_gamepad.pressed(this.m_buttonID)) {
+            this.animation.gotoAndStop("active");
+        } else {
+            this.animation.gotoAndStop("inactive");
+        }
     }
 };

@@ -3,26 +3,26 @@
 //------------------------------------------------------------------------------
 
 /**
- * Instances the Scene002 class.
+ * Creates a new Scene002 object.
  *
  * @constructor
  * @extends rune.scene.Scene
  *
  * @class
  * @classdesc
- * 
- * The Scene002 class is a test scene within the Demo application.
+ *
+ * Demonstrates multiple cameras and keyboard/gamepad controls.
  */
 demo.scene.Scene002 = function() {
-    
+
     //--------------------------------------------------------------------------
     // Private properties
     //--------------------------------------------------------------------------
-    
+
     /**
      * Contains the camera objects used by the scene.
      *
-     * @type {Array}
+     * @type {Array.<rune.camera.Camera>}
      * @private
      */
     this.m_cams = null;
@@ -30,7 +30,7 @@ demo.scene.Scene002 = function() {
     /**
      * Sprite representing a game controller and its input.
      *
-     * @type {rune.data.Logo}
+     * @type {demo.entity.Controller}
      * @private
      */
     this.m_controller = null;
@@ -52,7 +52,7 @@ demo.scene.Scene002 = function() {
     //--------------------------------------------------------------------------
     // Super call
     //--------------------------------------------------------------------------
-    
+
     /**
      * Extend rune.scene.Scene.
      */
@@ -91,7 +91,7 @@ demo.scene.Scene002.prototype.onDeselect = function(scene) {
 //------------------------------------------------------------------------------
 
 /**
- * @override
+ * @inheritDoc
  */
 demo.scene.Scene002.prototype.init = function() {
     rune.scene.Scene.prototype.init.call(this);
@@ -100,7 +100,7 @@ demo.scene.Scene002.prototype.init = function() {
 };
 
 /**
- * @override
+ * @inheritDoc
  */
 demo.scene.Scene002.prototype.update = function(step) {
     rune.scene.Scene.prototype.update.call(this, step);
@@ -120,7 +120,7 @@ demo.scene.Scene002.prototype.dispose = function() {
 //------------------------------------------------------------------------------
 
 /**
- * @override
+ * @inheritDoc
  */
 demo.scene.Scene002.prototype.m_initCamera = function() {
     this.cameras.splitScreen(4);
@@ -135,6 +135,12 @@ demo.scene.Scene002.prototype.m_initCamera = function() {
         this.m_cams.push(camera);
     }
 
+    /**
+     * Camera selected by the keyboard controls.
+     *
+     * @type {rune.camera.Camera}
+     * @private
+     */
     this.m_cam = this.m_cams[0];
 };
 
@@ -156,7 +162,7 @@ demo.scene.Scene002.prototype.m_initGamepad = function() {
         this.m_controller.scaleX = 0;
         this.m_controller.scaleY = 0;
         this.m_controller.rotation = 360;
-        
+
         this.tweens.create({
             target: this.m_controller,
             scope: this,
@@ -170,7 +176,7 @@ demo.scene.Scene002.prototype.m_initGamepad = function() {
                 rotation: 0
             }
         });
-        
+
         this.stage.addChild(this.m_controller);
     }
 };
@@ -204,7 +210,9 @@ demo.scene.Scene002.prototype.m_initControls = function() {
         this.m_controls.y = 8;
         this.m_controls.visible = false;
         this.application.screen.addChild(this.m_controls);
-    } else throw new Error();
+    } else {
+        throw new Error();
+    }
 };
 
 /**
@@ -266,7 +274,7 @@ demo.scene.Scene002.prototype.m_updateInputFlash = function() {
 };
 
 /**
- * Whether the camera should be able to move freely or follow the game 
+ * Whether the camera should be able to move freely or follow the game
  * control object.
  *
  * @returns {undefined}
@@ -333,7 +341,7 @@ demo.scene.Scene002.prototype.m_updateInputMove = function() {
     } else {
         obj = this.m_cam;
     }
-    
+
     if (this.keyboard.pressed("A")) {
         obj.x--;
     } else if (this.keyboard.pressed("D")) {
@@ -345,7 +353,7 @@ demo.scene.Scene002.prototype.m_updateInputMove = function() {
     } else if (this.keyboard.pressed("S")) {
         obj.y++;
     }
-    
+
     if (this.keyboard.pressed("Q")) {
         obj.rotation--;
     } else if (this.keyboard.pressed("E")) {

@@ -3,9 +3,9 @@
 //------------------------------------------------------------------------------
 
 /**
- * The demo package is used to include all classes included in the Demo 
+ * The demo package is used to include all classes included in the Demo
  * application.
- * 
+ *
  * @namespace demo
  */
 var demo = function() {
@@ -13,7 +13,7 @@ var demo = function() {
     //--------------------------------------------------------------------------
     // Public static scope
     //--------------------------------------------------------------------------
-    
+
     /**
      * Public scope.
      *
@@ -27,7 +27,7 @@ var demo = function() {
     //--------------------------------------------------------------------------
 
     /**
-     * The demo.data package contains data structures that are used to 
+     * The demo.data package contains data structures that are used to
      * represent objects and resource files within the application.
      *
      * @namespace data
@@ -44,9 +44,9 @@ var demo = function() {
      * @since 1.0
      */
     m_this.scene = {};
-    
+
     /**
-     * The demo.entity package contains classes that represent objects within 
+     * The demo.entity package contains classes that represent objects within
      * the application.
      *
      * @namespace entity
@@ -56,7 +56,7 @@ var demo = function() {
     m_this.entity = {};
 
     /**
-     * The demo.system package contains low-level classes that are used to run 
+     * The demo.system package contains low-level classes that are used to run
      * the application.
      *
      * @namespace system

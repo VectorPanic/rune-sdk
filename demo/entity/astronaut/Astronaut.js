@@ -10,10 +10,10 @@
  *
  * @param {number} [x] The x position of the object.
  * @param {number} [y] The y position of the object.
- * 
+ *
  * @class
  * @classdesc
- * 
+ *
  * The Astronaut class represents an animated astronaut sprite.
  */
 demo.entity.Astronaut = function(x, y) {
@@ -21,7 +21,7 @@ demo.entity.Astronaut = function(x, y) {
     //--------------------------------------------------------------------------
     // Super call
     //--------------------------------------------------------------------------
-    
+
     /**
      * Extend rune.display.Sprite.
      */
@@ -35,12 +35,12 @@ demo.entity.Astronaut = function(x, y) {
 demo.entity.Astronaut.prototype = Object.create(rune.display.Sprite.prototype);
 demo.entity.Astronaut.prototype.constructor = demo.entity.Astronaut;
 
-//--------------------------------------------------------------------------
-// Override public prototype methods
-//--------------------------------------------------------------------------
+//------------------------------------------------------------------------------
+// Override public prototype methods (ENGINE)
+//------------------------------------------------------------------------------
 
 /**
- * @override
+ * @inheritDoc
  */
 demo.entity.Astronaut.prototype.init = function() {
     rune.display.Sprite.prototype.init.call(this);
@@ -84,7 +84,7 @@ demo.entity.Astronaut.prototype.m_initVelocity = function() {
 
 /**
  * Configures the astronaut's animation sequence.
- * 
+ *
  * @returns {undefined}
  * @private
  */

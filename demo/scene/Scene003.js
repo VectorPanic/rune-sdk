@@ -3,22 +3,22 @@
 //------------------------------------------------------------------------------
 
 /**
- * Instances the Scene003 class.
+ * Creates a new Scene003 object.
  *
  * @constructor
  * @extends rune.scene.Scene
  *
  * @class
  * @classdesc
- * 
- * The Scene003 class is a test scene within the Demo application.
+ *
+ * Demonstrates animated astronauts, collisions and automatic camera framing.
  */
 demo.scene.Scene003 = function() {
-    
+
     //--------------------------------------------------------------------------
     // Private properties
     //--------------------------------------------------------------------------
-    
+
     /**
      * A group of astronauts sprites.
      *
@@ -46,7 +46,7 @@ demo.scene.Scene003 = function() {
     //--------------------------------------------------------------------------
     // Super call
     //--------------------------------------------------------------------------
-    
+
     /**
      * Extend rune.scene.Scene.
      */
@@ -92,34 +92,34 @@ demo.scene.Scene003.prototype.update = function(step) {
     if (this.keyboard.justPressed("A")) {
         this.m_toggleAutoZoom();
     }
-    
+
     // CAMERA MOVEMENT
     if (this.keyboard.pressed("RIGHT")) {
         camera.viewport.x += 1;
     }
-    
+
     if (this.keyboard.pressed("LEFT")) {
         camera.viewport.x -= 1;
     }
-    
+
     if (this.keyboard.pressed("UP")) {
         camera.viewport.y -= 1;
     }
-    
+
     if (this.keyboard.pressed("DOWN")) {
         camera.viewport.y += 1;
     }
-    
+
     // CAMERA ZOOM OUT
     if (!camera.autoZoom.enabled && this.keyboard.pressed("X")) {
         camera.viewport.zoomBy(-0.01);
     }
-    
+
     // CAMERA ZOOM IN
     if (!camera.autoZoom.enabled && this.keyboard.pressed("Z")) {
         camera.viewport.zoomBy(0.01);
     }
-    
+
     // CAMERA RESET
     if (this.keyboard.pressed("R")) {
         camera.autoZoom.enabled = false;
@@ -128,7 +128,7 @@ demo.scene.Scene003.prototype.update = function(step) {
         camera.viewport.x = 0;
         camera.viewport.y = 0;
     }
-    
+
     // BACK TO MAIN MENU
     if (this.keyboard.pressed("ESCAPE")) {
         this.application.scenes.select(0);
@@ -176,7 +176,9 @@ demo.scene.Scene003.prototype.m_initAstronauts = function() {
         this.m_astronauts = this.groups.add(new demo.entity.Astronauts());
         this.m_astronauts.useQuadtree = true;
         this.m_astronauts.add();
-    } else throw new Error();
+    } else {
+        throw new Error();
+    }
 };
 
 /**
@@ -193,7 +195,9 @@ demo.scene.Scene003.prototype.m_initCounter = function() {
         this.m_counter.y = 8;
         this.cameras.getCameraAt(0).addChild(this.m_counter);
         this.m_updateCounter();
-    } else throw new Error();
+    } else {
+        throw new Error();
+    }
 };
 
 /**
@@ -220,7 +224,9 @@ demo.scene.Scene003.prototype.m_initControls = function() {
         this.m_controls.x = 8;
         this.m_controls.y = this.m_counter.bottom + 8;
         this.cameras.getCameraAt(0).addChild(this.m_controls);
-    } else throw new Error();
+    } else {
+        throw new Error();
+    }
 };
 
 /**

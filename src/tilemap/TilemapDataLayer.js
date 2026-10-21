@@ -965,7 +965,8 @@ rune.tilemap.TilemapDataLayer.prototype.m_computeDistance = function(si, gi, md,
 
 /**
  * Recursive function that walks through the grid backwards, with the aim of
- * finding the shortest path back to the starting position.
+ * finding the shortest path back to the starting position. Diagonal steps
+ * require both neighboring orthogonal cells to be open, matching the search.
  *
  * @param {Array} ad Distance array.
  * @param {number} si Start index.
@@ -1035,7 +1036,8 @@ rune.tilemap.TilemapDataLayer.prototype.m_walk = function(ad, si, ap, md) {
 
         if (du && dr) {
             ci = si - wt + 1;
-            if ((ad[ci] >= 0) && (ad[ci] < cd)) {
+            if ((ad[ci] >= 0) && (ad[ci] < cd) &&
+                (ad[si - wt] >= -1) && (ad[si + 1] >= -1)) {
                 this.m_walk(ad, ci, ap, md);
                 return;
             }
@@ -1043,7 +1045,8 @@ rune.tilemap.TilemapDataLayer.prototype.m_walk = function(ad, si, ap, md) {
 
         if (dr && dd) {
             ci = si + wt + 1;
-            if ((ad[ci] >= 0) && (ad[ci] < cd)) {
+            if ((ad[ci] >= 0) && (ad[ci] < cd) &&
+                (ad[si + wt] >= -1) && (ad[si + 1] >= -1)) {
                 this.m_walk(ad, ci, ap, md);
                 return;
             }
@@ -1051,7 +1054,8 @@ rune.tilemap.TilemapDataLayer.prototype.m_walk = function(ad, si, ap, md) {
 
         if (dl && dd) {
             ci = si + wt - 1;
-            if ((ad[ci] >= 0) && (ad[ci] < cd)) {
+            if ((ad[ci] >= 0) && (ad[ci] < cd) &&
+                (ad[si + wt] >= -1) && (ad[si - 1] >= -1)) {
                 this.m_walk(ad, ci, ap, md);
                 return;
             }
@@ -1059,7 +1063,8 @@ rune.tilemap.TilemapDataLayer.prototype.m_walk = function(ad, si, ap, md) {
 
         if (du && dl) {
             ci = si - wt - 1;
-            if ((ad[ci] >= 0) && (ad[ci] < cd)) {
+            if ((ad[ci] >= 0) && (ad[ci] < cd) &&
+                (ad[si - wt] >= -1) && (ad[si - 1] >= -1)) {
                 this.m_walk(ad, ci, ap, md);
                 return;
             }

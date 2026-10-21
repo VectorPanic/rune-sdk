@@ -3,10 +3,9 @@
 //------------------------------------------------------------------------------
 
 /**
- * The rune package contains all subpackages (namespaces) and classes that 
- * together make up the Rune SDK. All SDK-related operations must therefore be 
- * addressed via this package. Be careful not to overwrite the package's global 
- * memory reference as it renders the SDK unusable.
+ * The root namespace for the Rune SDK. Groups the components used to build
+ * browser-based games, including rendering, input, audio and scene management.
+ * Access SDK classes through rune and its package namespaces.
  * 
  * @namespace rune
  * @global
@@ -54,9 +53,8 @@ var rune = function() {
 	//--------------------------------------------------------------------------
 	
 	/**
-	 * The animation package contains classes for creating keyframe-based 
-	 * animations. The classes are primarily designed for use with the Sprite 
-	 * class.
+	 * Sprite animation sequences, playback control and frame-specific callbacks.
+	 * Coordinates keyframes and timing without owning the animated display object.
 	 *
 	 * @namespace animation
 	 * @memberof rune
@@ -65,8 +63,8 @@ var rune = function() {
 	m_this.animation = {};
 	
 	/**
-	 * The rune.camera package contains all classes related to the camera 
-	 * system.
+	 * Two-dimensional cameras with target tracking, zoom and viewport control.
+	 * Includes camera effects such as shake, fade, flash, tint and glitch.
 	 *
 	 * @namespace camera
 	 * @memberof rune
@@ -75,8 +73,8 @@ var rune = function() {
 	m_this.camera = {};
 	
 	/**
-	 * the rune.color package contains classes used to represent digital 
-	 * colors.
+	 * Color representations with RGB and alpha components.
+	 * Provides access to individual channels and packed numeric color values.
 	 *
 	 * @namespace color
 	 * @memberof rune
@@ -85,8 +83,8 @@ var rune = function() {
 	m_this.color = {};
 	
 	/**
-	 * the rune.console package contains classes to represent the rune 
-	 * developer console.
+	 * An in-application developer console with command execution and history.
+	 * Includes text input, output and cursor handling.
 	 *
 	 * @namespace console
 	 * @memberof rune
@@ -95,7 +93,8 @@ var rune = function() {
 	m_this.console = {};
 	
 	/**
-	 * The rune.data package contains data structures used within Rune.
+	 * Built-in SDK assets, resource declarations and loading scenes.
+	 * Also provides application-scoped local storage and highscore tables.
 	 *
 	 * @namespace data
 	 * @memberof rune
@@ -104,8 +103,8 @@ var rune = function() {
 	m_this.data = {};
 	
 	/**
-	 * The rune.debug package contains classes to support debugging of 
-	 * Rune-based applications.
+	 * Runtime diagnostics for frame rate, timing, memory and rendering.
+	 * Includes diagnostic views for resolution and audio settings.
 	 *
 	 * @namespace debug
 	 * @memberof rune
@@ -114,8 +113,8 @@ var rune = function() {
 	m_this.debug = {};
 	
 	/**
-	 * The rune.display package contains the core classes that the Rune SDK 
-	 * uses to build visual displays.
+	 * The display hierarchy and core two-dimensional rendering components.
+	 * Includes sprites, graphics, drawing buffers, groups and visual effects.
 	 *
 	 * @namespace display
 	 * @memberof rune
@@ -124,8 +123,8 @@ var rune = function() {
 	m_this.display = {};
 	
 	/**
-	 * The rune.geom package contains geometry classes, such as points and 
-	 * rectangles.
+	 * Points, rectangles and two-dimensional vectors for spatial calculations.
+	 * Provides geometry shared by rendering, movement and collision queries.
 	 *
 	 * @namespace geom
 	 * @memberof rune
@@ -134,8 +133,8 @@ var rune = function() {
 	m_this.geom = {};
 	
 	/**
-	 * The rune.input package contains classes for handling input devices such 
-	 * as keyboards, gamepads, etc..
+	 * Keyboard and gamepad input with configurable device handling.
+	 * Tracks button states and exposes gamepad axes for application controls.
 	 *
 	 * @namespace input
 	 * @memberof rune
@@ -144,8 +143,8 @@ var rune = function() {
 	m_this.input = {};
 	
 	/**
-	 * The rune.media package contains classes for managing and playing audio 
-	 * files. Useful for sound effects and background music.
+	 * Audio playback for sound effects and music.
+	 * Manages sounds, playback channels and echo effects.
 	 *
 	 * @namespace media
 	 * @memberof rune
@@ -154,8 +153,8 @@ var rune = function() {
 	m_this.media = {};
 	
 	/**
-	 * The rune.net package contains classes for sending and receiving over a 
-	 * network.
+	 * URL requests, asynchronous loading and response data.
+	 * Provides the network transport used by resource loading.
 	 *
 	 * @namespace net
 	 * @memberof rune
@@ -164,8 +163,8 @@ var rune = function() {
 	m_this.net = {};
 	
 	/**
-	 * The rune.particle package contains classes for creating, removing, and 
-	 * managing particle effects.
+	 * Two-dimensional particle effects using display objects and emitters.
+	 * Configures particle emission and manages particle lifecycles.
 	 *
 	 * @namespace particle
 	 * @memberof rune
@@ -174,8 +173,8 @@ var rune = function() {
 	m_this.particle = {};
 	
 	/**
-	 * the rune.physics package contains classes for "box-based" 
-	 * two-dimensional physics and collision management.
+	 * Two-dimensional velocity, acceleration, drag and collision handling.
+	 * Resolves display-object collisions using rectangular hitboxes.
 	 *
 	 * @namespace physics
 	 * @memberof rune
@@ -184,8 +183,8 @@ var rune = function() {
 	m_this.physics = {};
 	
 	/**
-	 * The rune.resource package contains classes for storing loaded resources 
-	 * such as image and audio files.
+	 * Resource requests, loading and lookup by resource name.
+	 * Maintains the shared library of loaded image, audio and other asset data.
 	 *
 	 * @namespace resource
 	 * @memberof rune
@@ -194,15 +193,18 @@ var rune = function() {
 	m_this.resource = {};
 
 	/**
-	 * Wolfenstein-style world projection and navigation.
+	 * Raycast rendering of tile-based worlds through independent camera views.
+	 * Includes animated billboards, fixed surfaces, doors, collision queries and
+	 * actor navigation. Integrates with the SDK display and tilemap components.
+	 *
 	 * @namespace raycast
 	 * @memberof rune
 	 */
 	m_this.raycast = {};
 	
 	/**
-	 * the rune.scene package contains classes for managing scenes. A scene is 
-	 * a visual state within the current application.
+	 * Application scenes and transitions between active scenes.
+	 * Coordinates scene initialization, updates, rendering and disposal.
 	 *
 	 * @namespace scene
 	 * @memberof rune
@@ -211,8 +213,8 @@ var rune = function() {
 	m_this.scene = {};
 	
 	/**
-	 * The rune.state package contains classes that represent a finite-state 
-	 * machine (FSM).
+	 * Finite-state machines for organizing application and object behavior.
+	 * Manages states and transitions through their lifecycle methods.
 	 *
 	 * @namespace state
 	 * @memberof rune
@@ -221,8 +223,8 @@ var rune = function() {
 	m_this.state = {};
 
 	/**
-	 * The rune.system package contains classes for accessing system-level 
-	 * functionality.
+	 * Application setup, configuration and frame timing.
+	 * Coordinates the main loop and the SDK services used by an application.
 	 *
 	 * @namespace system
 	 * @memberof rune
@@ -231,8 +233,8 @@ var rune = function() {
 	m_this.system = {};
 	
 	/**
-	 * The rune.text package contains classes to represent characters and text 
-	 * fields.
+	 * Bitmap text rendering, formatting and animated text effects.
+	 * Includes typewriter playback, scrambling and numeric text counters.
 	 *
 	 * @namespace text
 	 * @memberof rune
@@ -241,7 +243,8 @@ var rune = function() {
 	m_this.text = {};
 	
 	/**
-	 * The rune.tilemap package contains classes for managing and rendering tilemaps.
+	 * Tile-based maps with visual layers, data layers and collision metadata.
+	 * Provides cell queries and pathfinding alongside two-dimensional rendering.
 	 *
 	 * @namespace tilemap
 	 * @memberof rune
@@ -250,7 +253,8 @@ var rune = function() {
 	m_this.tilemap = {};
 	
 	/**
-	 * The rune.timer package contains countdown classes.
+	 * Countdown timers with scheduled callbacks and repeat options.
+	 * Manages timer updates and lifecycles through timer collections.
 	 *
 	 * @namespace timer
 	 * @memberof rune
@@ -259,7 +263,8 @@ var rune = function() {
 	m_this.timer = {};
 	
 	/**
-	 * The rune.tween package contains classes for interpolation.
+	 * Time-based interpolation of object properties.
+	 * Provides tween management and linear, polynomial and other easing functions.
 	 *
 	 * @namespace tween
 	 * @memberof rune
@@ -268,8 +273,8 @@ var rune = function() {
 	m_this.tween = {};
 	
 	/**
-	 * The rune.ui package contains classes that represent user interface 
-	 * components.
+	 * Reusable interface components built on the display hierarchy.
+	 * Includes buttons, counters, progress bars, vertical lists and menus.
 	 *
 	 * @namespace ui
 	 * @memberof rune
@@ -278,8 +283,8 @@ var rune = function() {
 	m_this.ui = {};
 	
 	/**
-	 * The rune.utils package contains utility classes, such as data structures 
-	 * and mathematical calculations.
+	 * Shared helpers for mathematics, paths, stacks and callback execution.
+	 * Also includes palette, filtering and URL utilities.
 	 *
 	 * @namespace util
 	 * @memberof rune

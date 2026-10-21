@@ -148,11 +148,21 @@ rune.tilemap.TilemapDataLayer.prototype.clear = function() {
 };
 
 /**
- * Returns a Tile object based on a specified tile index.
+ * Returns a temporary Tile describing the specified tile index.
+ * Each layer reuses one Tile for getTileAt(), getTileOf() and getTileOfPoint().
+ * The next query on this layer overwrites the same object. Pathfinding and
+ * collision checks can also overwrite it through their internal tile queries.
+ * Do not retain, modify or dispose the returned Tile. Copy the needed values
+ * immediately when they must survive another layer operation. Use
+ * getTileValueAt() when only the numeric tile value is needed.
+ *
+ * @example
+ * var tile = layer.getTileAt(5);
+ * var saved = {index: tile.index, value: tile.value, x: tile.x, y: tile.y};
  *
  * @param {number} i Tile index.
  *
- * @returns {rune.tilemap.Tile}
+ * @returns {rune.tilemap.Tile} Layer-owned reusable Tile, not an independent object.
  */
 rune.tilemap.TilemapDataLayer.prototype.getTileAt = function(i) {
     var tw = this.m_map['tileWidth'];
@@ -182,12 +192,16 @@ rune.tilemap.TilemapDataLayer.prototype.getTileAt = function(i) {
 };
 
 /**
- * Returns a Tile object based on the given x and y coordinates.
+ * Returns the layer's reusable Tile at a pixel position.
+ * Shares the temporary object used by getTileAt() and getTileOfPoint().
+ * Later tile queries, pathfinding or collision checks on this layer can
+ * overwrite it. Copy needed values immediately; do not modify or dispose it.
  *
- * @param {number} x X coordinate.
- * @param {number} y Y coordinate.
+ * @param {number} x X coordinate in pixels.
+ * @param {number} y Y coordinate in pixels.
  *
- * @returns {rune.tilemap.Tile}
+ * @returns {rune.tilemap.Tile} Layer-owned reusable Tile.
+ * @see rune.tilemap.TilemapDataLayer#getTileAt
  */
 rune.tilemap.TilemapDataLayer.prototype.getTileOf = function(x, y) {
     return this.getTileAt(
@@ -196,11 +210,15 @@ rune.tilemap.TilemapDataLayer.prototype.getTileOf = function(x, y) {
 };
 
 /**
- * Returns a Tile object based on the specified Point object.
+ * Returns the layer's reusable Tile at a point's pixel coordinates.
+ * Shares the temporary object used by getTileAt() and getTileOf().
+ * Later tile queries, pathfinding or collision checks on this layer can
+ * overwrite it. Copy needed values immediately; do not modify or dispose it.
  *
- * @param {rune.geom.Point} p Point object.
+ * @param {rune.geom.Point} p Point in pixel coordinates.
  *
- * @returns {rune.tilemap.Tile}
+ * @returns {rune.tilemap.Tile} Layer-owned reusable Tile.
+ * @see rune.tilemap.TilemapDataLayer#getTileAt
  */
 rune.tilemap.TilemapDataLayer.prototype.getTileOfPoint = function(p) {
     return this.getTileOf(

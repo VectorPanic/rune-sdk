@@ -449,10 +449,19 @@ rune.tilemap.Tilemap.prototype.getProperty = function(name, defaultValue) {
  * Returns a rectangle object that describes a value's location in the 
  * texture atlas. The method is mainly intended for internal use, 
  * but can be useful if you want to copy a "piece" of the texture atlas.
+ * The same map-owned Rectangle is reused and overwritten on every call,
+ * including calls made internally during rendering. Do not modify or retain
+ * it as a snapshot. Use Rectangle.clone() for an independent copy, or
+ * Rectangle.copy() to copy its values into a caller-owned rectangle.
+ *
+ * @example
+ * var saved = rune.geom.Rectangle.clone(map.getTileTextureRectOf(3));
  *
  * @param {number} v Tile value.
  *
- * @returns {rune.geom.Rectangle}
+ * @returns {rune.geom.Rectangle} Map-owned reusable rectangle.
+ * @see rune.geom.Rectangle.clone
+ * @see rune.geom.Rectangle.copy
  */
 rune.tilemap.Tilemap.prototype.getTileTextureRectOf = function(v) {
     var texture = this['texture'];

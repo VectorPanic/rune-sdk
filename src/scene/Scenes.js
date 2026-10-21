@@ -153,18 +153,32 @@ rune.scene.Scenes.prototype.findAndSelect = function(name) {
  * are requested before then, the latest request replaces the pending batch.
  * The array is copied; later array edits do not affect the manager. Scene
  * objects are retained by reference and disposed when removed by the manager.
+ * Every scene must provide callable init, update, render, dispose, onSelect
+ * and onDeselect methods. Invalid input leaves current and pending batches
+ * unchanged.
  *
  * @param {Array.<rune.scene.Scene>} batch Scene list to copy into the manager.
  *
- * @throws {Error} If the specified batch is invalid.
+ * @throws {Error} If the batch is empty, is not an array or contains an invalid scene.
  *
  * @returns {undefined}
  */
 rune.scene.Scenes.prototype.load = function(batch) {
-    if (Array.isArray(batch) === true && batch.length > 0) {
-        this.m_rb = batch.slice();
-        this.m_rs = 0;
-    } else throw new Error("Invalid scene batch");
+    if (!Array.isArray(batch) || batch.length === 0) {
+        throw new Error("Invalid scene batch");
+    }
+    var scenes = batch.slice();
+    for (var i = 0; i < scenes.length; i++) {
+        var scene = scenes[i];
+        if (scene == null || typeof scene !== "object" ||
+            typeof scene.init !== "function" || typeof scene.update !== "function" ||
+            typeof scene.render !== "function" || typeof scene.dispose !== "function" ||
+            typeof scene.onSelect !== "function" || typeof scene.onDeselect !== "function") {
+            throw new Error("Invalid scene at index " + i);
+        }
+    }
+    this.m_rb = scenes;
+    this.m_rs = 0;
 };
 
 /**

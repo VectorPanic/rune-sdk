@@ -425,7 +425,9 @@ rune.animation.Animation.prototype.dispose = function() {
 };
 
 /**
- * Updates the playback of the animation.
+ * Updates playback, allowing each frame its full display time.
+ * Non-looping animations stop after the final frame interval and retain that frame.
+ * Frame scripts execute when entering a frame, before its display interval.
  *
  * @param {number} step Current time step.
  *
@@ -448,11 +450,6 @@ rune.animation.Animation.prototype.update = function(step) {
 			
 			this['index']++;
 			this.m_execScript();
-			
-			if (this.looped == false && this['index'] >= this.frames.length - 1) {
-				this.stop();
-				this.m_elapsed = 0;
-			}
 		}
 	}
 };

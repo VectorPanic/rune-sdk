@@ -14,6 +14,9 @@
  * textured rectangles (Tiles). A Tilemap contains two layers (buffers) of 
  * tiles; back and front, where each layer is represented by a TilemapLayer 
  * object. Rune's Scene objects automatically instantiate their own Tilemap.
+ * Tile sizes and the map width are in pixels; widthInTiles and heightInTiles
+ * are cell counts. Layer methods document whether they take pixel positions,
+ * local cell coordinates or linear tile indices.
  *
  * @see rune.scene.Scene
  * @see rune.tilemap.TilemapLayer

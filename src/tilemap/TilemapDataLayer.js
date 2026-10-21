@@ -17,6 +17,14 @@
  * The TilemapDataLayer class represents tilemap layer data, collision and
  * pathfinding behavior that can be shared by tilemap and display based tile
  * structures.
+ *
+ * Coordinate conventions:
+ * - Methods ending in At use linear indices: row * widthInTiles + column.
+ * - Of/OfPoint methods use pixels, including the optional owner's x/y origin.
+ * - In methods use pixel rectangles in the same coordinate space.
+ * - Cell methods use zero-based local columns and rows, ignoring pixel origin.
+ * Path endpoints and returned path points use pixels; isBlocked callbacks
+ * receive local cell columns and rows.
  */
 rune.tilemap.TilemapDataLayer = function(map, data, owner) {
 
@@ -160,7 +168,7 @@ rune.tilemap.TilemapDataLayer.prototype.clear = function() {
  * var tile = layer.getTileAt(5);
  * var saved = {index: tile.index, value: tile.value, x: tile.x, y: tile.y};
  *
- * @param {number} i Tile index.
+ * @param {number} i Zero-based linear tile index.
  *
  * @returns {rune.tilemap.Tile} Layer-owned reusable Tile, not an independent object.
  */
@@ -230,10 +238,10 @@ rune.tilemap.TilemapDataLayer.prototype.getTileOfPoint = function(p) {
 /**
  * Returns a list of Tile indices that fit within a specified rectangular area.
  *
- * @param {number} x The x-coordinate of the clipping area.
- * @param {number} y The y-coordinate of the clipping area.
- * @param {number} w The width of the clipping area.
- * @param {number} h The height of the clipping area.
+ * @param {number} x Clipping area X in pixels.
+ * @param {number} y Clipping area Y in pixels.
+ * @param {number} w Clipping area width in pixels.
+ * @param {number} h Clipping area height in pixels.
  *
  * @returns {Array.<number>}
  */
@@ -275,7 +283,7 @@ rune.tilemap.TilemapDataLayer.prototype.getTileIndexesIn = function(x, y, w, h) 
 /**
  * Returns a list of Tile indices contained within a described Rectangle object.
  *
- * @param {rune.geom.Rectangle} r Rectangle object.
+ * @param {rune.geom.Rectangle} r Rectangle in pixel coordinates.
  *
  * @returns {Array.<number>}
  */
@@ -317,7 +325,7 @@ rune.tilemap.TilemapDataLayer.prototype.getTileIndexOf = function(x, y) {
 /**
  * Returns the tile index at a pixel position, or -1 outside the layer.
  *
- * @param {rune.geom.Point} p Point object.
+ * @param {rune.geom.Point} p Point in pixel coordinates.
  *
  * @returns {number}
  */
@@ -332,8 +340,8 @@ rune.tilemap.TilemapDataLayer.prototype.getTileIndexOfPoint = function(p) {
  * Checks whether integer cell coordinates lie within this layer.
  * Coordinates are local columns and rows, independent of pixel size or origin.
  *
- * @param {number} column Cell column.
- * @param {number} row Cell row.
+ * @param {number} column Zero-based local cell column.
+ * @param {number} row Zero-based local cell row.
  *
  * @returns {boolean}
  */
@@ -347,7 +355,7 @@ rune.tilemap.TilemapDataLayer.prototype.containsCell = function(column, row) {
 /**
  * Returns the tile value of a specific tile index.
  *
- * @param {number} i Tile index.
+ * @param {number} i Zero-based linear tile index.
  *
  * @returns {number}
  */
@@ -359,8 +367,8 @@ rune.tilemap.TilemapDataLayer.prototype.getTileValueAt = function(i) {
  * Returns a tile value using local cell coordinates instead of a linear index.
  * Returns zero for cells outside the layer or non-integer coordinates.
  *
- * @param {number} column Cell column.
- * @param {number} row Cell row.
+ * @param {number} column Zero-based local cell column.
+ * @param {number} row Zero-based local cell row.
  *
  * @returns {number}
  */
@@ -372,10 +380,10 @@ rune.tilemap.TilemapDataLayer.prototype.getTileValueAtCell = function(column, ro
 /**
  * Returns tile values that fit within a specific rectangle.
  *
- * @param {number} x The x-coordinate of the clipping area.
- * @param {number} y The y-coordinate of the clipping area.
- * @param {number} w The width of the clipping area.
- * @param {number} h The height of the clipping area.
+ * @param {number} x Clipping area X in pixels.
+ * @param {number} y Clipping area Y in pixels.
+ * @param {number} w Clipping area width in pixels.
+ * @param {number} h Clipping area height in pixels.
  *
  * @returns {Array.<number>}
  */
@@ -394,7 +402,7 @@ rune.tilemap.TilemapDataLayer.prototype.getTileValuesIn = function(x, y, w, h) {
 /**
  * Returns tile values that fit within a specific rectangle object.
  *
- * @param {rune.geom.Rectangle} r Rectangle object.
+ * @param {rune.geom.Rectangle} r Rectangle in pixel coordinates.
  *
  * @returns {Array.<number>}
  */
@@ -410,8 +418,8 @@ rune.tilemap.TilemapDataLayer.prototype.getTileValuesInRect = function(r) {
 /**
  * Returns the tile value at a pixel position, or zero outside the layer.
  *
- * @param {number} x The x-coordinate of the position.
- * @param {number} y The y-coordinate of the position.
+ * @param {number} x Position X in pixels.
+ * @param {number} y Position Y in pixels.
  *
  * @returns {number}
  */
@@ -422,7 +430,7 @@ rune.tilemap.TilemapDataLayer.prototype.getTileValueOf = function(x, y) {
 /**
  * Return the tile value of a specific position, defined via a Point object.
  *
- * @param {rune.geom.Point} p Point object.
+ * @param {rune.geom.Point} p Point in pixel coordinates.
  *
  * @returns {number}
  */
@@ -437,15 +445,15 @@ rune.tilemap.TilemapDataLayer.prototype.getTileValueOfPoint = function(p) {
  * Returns a Path object that describes the shortest path between two points
  * within the layer data.
  *
- * @param {number} sx The x-coordinate of the starting point.
- * @param {number} sy The y-coordinate of the starting point.
- * @param {number} gx The x-coordinate of the target point.
- * @param {number} gy The y-coordinate of the target point.
+ * @param {number} sx Starting position X in pixels.
+ * @param {number} sy Starting position Y in pixels.
+ * @param {number} gx Target position X in pixels.
+ * @param {number} gy Target position Y in pixels.
  * @param {boolean} [md=false] Whether the Path object is allowed to include diagonal paths.
  *
- * @param {Function} [isBlocked] Optional cell blocking rule (column, row).
+ * @param {Function} [isBlocked] Optional blocking rule using local cell (column, row).
  * @param {Object} [scope] Callback scope.
- * @returns {rune.util.Path}
+ * @returns {rune.util.Path} Path through cell centers in pixels, or null if unreachable.
  */
 rune.tilemap.TilemapDataLayer.prototype.getPath = function(sx, sy, gx, gy, md, isBlocked, scope) {
     var si = this.getTileIndexOf(sx, sy);
@@ -482,13 +490,13 @@ rune.tilemap.TilemapDataLayer.prototype.getPath = function(sx, sy, gx, gy, md, i
 /**
  * Returns a Path object that describes the shortest path between two points.
  *
- * @param {rune.geom.Point} s Starting point.
- * @param {rune.geom.Point} g Target point.
+ * @param {rune.geom.Point} s Starting point in pixels.
+ * @param {rune.geom.Point} g Target point in pixels.
  * @param {boolean} [md=false] Whether the Path object is allowed to include diagonal paths.
  *
- * @param {Function} [isBlocked] Optional cell blocking rule (column, row).
+ * @param {Function} [isBlocked] Optional blocking rule using local cell (column, row).
  * @param {Object} [scope] Callback scope.
- * @returns {rune.util.Path}
+ * @returns {rune.util.Path} Path through cell centers in pixels, or null if unreachable.
  */
 rune.tilemap.TilemapDataLayer.prototype.getPathBetweenPoints = function(s, g, md, isBlocked, scope) {
     return this.getPath(
@@ -608,7 +616,7 @@ rune.tilemap.TilemapDataLayer.prototype.hitTestGroup = function(group, callback,
 /**
  * Evaluates whether a point overlaps a solid tile.
  *
- * @param {rune.geom.Point} point The point to evaluate.
+ * @param {rune.geom.Point} point Point in pixel coordinates.
  * @param {Function} [callback] Executed for each detected collision.
  * @param {Object} [scope] Scope of execution for the callback method.
  *
@@ -730,7 +738,7 @@ rune.tilemap.TilemapDataLayer.prototype.hitTestAndSeparateGroup = function(group
 /**
  * Sets a tile value at a specified index.
  *
- * @param {number} i Index.
+ * @param {number} i Zero-based linear tile index.
  * @param {number} v Value.
  *
  * @returns {undefined}
@@ -743,12 +751,35 @@ rune.tilemap.TilemapDataLayer.prototype.setTileValueAt = function(i, v) {
 };
 
 /**
+ * Sets a tile value using local cell coordinates instead of a linear index.
+ * Ignores cells outside the layer and non-integer coordinates. Pixel size and
+ * owner position do not affect these coordinates. Uses setTileValueAt() for
+ * value conversion and render-cache invalidation.
+ *
+ * @example
+ * layer.setTileValueAtCell(2, 1, 5);
+ * var value = layer.getTileValueAtCell(2, 1);
+ *
+ * @param {number} column Zero-based local cell column.
+ * @param {number} row Zero-based local cell row.
+ * @param {number} value Tile value to set.
+ *
+ * @returns {undefined}
+ * @see rune.tilemap.TilemapDataLayer#getTileValueAtCell
+ */
+rune.tilemap.TilemapDataLayer.prototype.setTileValueAtCell = function(column, row, value) {
+    if (this.containsCell(column, row)) {
+        this.setTileValueAt(row * this.m_map['widthInTiles'] + column, value);
+    }
+};
+
+/**
  * Sets a tile value for all tiles that fit within a specific rectangular area.
  *
- * @param {number} x The x-position of the area.
- * @param {number} y The y-position of the area.
- * @param {number} w The width of the area.
- * @param {number} h The height of the area.
+ * @param {number} x Area X in pixels.
+ * @param {number} y Area Y in pixels.
+ * @param {number} w Area width in pixels.
+ * @param {number} h Area height in pixels.
  * @param {number} v The value to be set.
  *
  * @returns {undefined}
@@ -763,7 +794,7 @@ rune.tilemap.TilemapDataLayer.prototype.setTileValueIn = function(x, y, w, h, v)
 /**
  * Sets a tile value for all tiles that fit within a specific rectangular area.
  *
- * @param {rune.geom.Rectangle} r Rectangle object.
+ * @param {rune.geom.Rectangle} r Rectangle in pixel coordinates.
  * @param {number} v The value to be set.
  *
  * @returns {undefined}
@@ -781,8 +812,8 @@ rune.tilemap.TilemapDataLayer.prototype.setTileValueInRect = function(r, v) {
 /**
  * Sets a tile value at a pixel position. Positions outside the layer are ignored.
  *
- * @param {number} x The x-coordinate of the position.
- * @param {number} y The y-coordinate of the position.
+ * @param {number} x Position X in pixels.
+ * @param {number} y Position Y in pixels.
  * @param {number} v The value to be set.
  *
  * @returns {undefined}
@@ -796,7 +827,7 @@ rune.tilemap.TilemapDataLayer.prototype.setTileValueOf = function(x, y, v) {
 /**
  * Sets a tile value for a tile at a specific position.
  *
- * @param {rune.geom.Point} p Point object.
+ * @param {rune.geom.Point} p Point in pixel coordinates.
  * @param {number} v The value to be set.
  *
  * @returns {undefined}
@@ -837,7 +868,7 @@ rune.tilemap.TilemapDataLayer.prototype.dispose = function() {
  * @param {number} si Start index.
  * @param {number} gi Target index.
  * @param {boolean} [md=false] Whether the distance may be calculated with diagonal movement.
- * @param {Function} [isBlocked] Optional cell blocking rule (column, row).
+ * @param {Function} [isBlocked] Optional blocking rule using local cell (column, row).
  * @param {Object} [scope] Callback scope.
  *
  * @returns {Array.<number>}
@@ -1208,7 +1239,7 @@ rune.tilemap.TilemapDataLayer.prototype.m_breakOwnerCache = function() {
 /**
  * Returns whether the specified index is valid.
  *
- * @param {number} i Index.
+ * @param {number} i Zero-based linear tile index.
  *
  * @returns {boolean}
  * @protected

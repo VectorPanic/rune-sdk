@@ -966,9 +966,9 @@ rune.tilemap.TilemapDataLayer.prototype.m_computeDistance = function(si, gi, md,
 };
 
 /**
- * Recursive function that walks through the grid backwards, with the aim of
- * finding the shortest path back to the starting position. Diagonal steps
- * require both neighboring orthogonal cells to be open, matching the search.
+ * Iteratively walks the grid backwards to reconstruct the shortest path
+ * without growing the call stack. Diagonal steps require both neighboring
+ * orthogonal cells to be open, matching the search.
  *
  * @param {Array} ad Distance array.
  * @param {number} si Start index.
@@ -985,92 +985,99 @@ rune.tilemap.TilemapDataLayer.prototype.m_walk = function(ad, si, ap, md) {
     var tw = this.m_map['tileWidth'];
     var th = this.m_map['tileHeight'];
 
-    ap.push(new rune.geom.Point(
-        this.m_getOriginX() + parseInt(si % wt, 10) * tw + tw * 0.5,
-        this.m_getOriginY() + parseInt(si / wt, 10) * th + th * 0.5
-    ));
+    var originX = this.m_getOriginX();
+    var originY = this.m_getOriginY();
 
-    if (ad[si] == 0) return;
-
-    var sx = si % wt;
-    var sy = Math.floor(si / wt);
-    var dl = (sx > 0);
-    var dr = (sx < wt - 1);
-    var du = (sy > 0);
-    var dd = (sy < ht - 1);
-
-    var cd = ad[si];
-    var ci = 0;
-
-    if (du) {
-        ci = si - wt;
-        if ((ad[ci] >= 0) && (ad[ci] < cd)) {
-            this.m_walk(ad, ci, ap, md);
-            return;
-        }
-    }
-
-    if (dr) {
-        ci = si + 1;
-        if ((ad[ci] >= 0) && (ad[ci] < cd)) {
-            this.m_walk(ad, ci, ap, md);
-            return;
-        }
-    }
-
-    if (dd) {
-        ci = si + wt;
-        if((ad[ci] >= 0) && (ad[ci] < cd)) {
-            this.m_walk(ad, ci, ap, md);
-            return;
-        }
-    }
-
-    if (dl) {
-        ci = si - 1;
-        if ((ad[ci] >= 0) && (ad[ci] < cd)) {
-            this.m_walk(ad, ci, ap, md);
-            return;
-        }
-    }
-
-    if (md == true) {
-
-        if (du && dr) {
-            ci = si - wt + 1;
-            if ((ad[ci] >= 0) && (ad[ci] < cd) &&
-                (ad[si - wt] >= -1) && (ad[si + 1] >= -1)) {
-                this.m_walk(ad, ci, ap, md);
-                return;
+    while (true) {
+        ap.push(new rune.geom.Point(
+            originX + (si % wt) * tw + tw * 0.5,
+            originY + Math.floor(si / wt) * th + th * 0.5
+        ));
+        
+        if (ad[si] == 0) return;
+        
+        var sx = si % wt;
+        var sy = Math.floor(si / wt);
+        var dl = (sx > 0);
+        var dr = (sx < wt - 1);
+        var du = (sy > 0);
+        var dd = (sy < ht - 1);
+        
+        var cd = ad[si];
+        var ci = 0;
+        
+        if (du) {
+            ci = si - wt;
+            if ((ad[ci] >= 0) && (ad[ci] < cd)) {
+                si = ci;
+                continue;
             }
         }
-
-        if (dr && dd) {
-            ci = si + wt + 1;
-            if ((ad[ci] >= 0) && (ad[ci] < cd) &&
-                (ad[si + wt] >= -1) && (ad[si + 1] >= -1)) {
-                this.m_walk(ad, ci, ap, md);
-                return;
+        
+        if (dr) {
+            ci = si + 1;
+            if ((ad[ci] >= 0) && (ad[ci] < cd)) {
+                si = ci;
+                continue;
             }
         }
-
-        if (dl && dd) {
-            ci = si + wt - 1;
-            if ((ad[ci] >= 0) && (ad[ci] < cd) &&
-                (ad[si + wt] >= -1) && (ad[si - 1] >= -1)) {
-                this.m_walk(ad, ci, ap, md);
-                return;
+        
+        if (dd) {
+            ci = si + wt;
+            if ((ad[ci] >= 0) && (ad[ci] < cd)) {
+                si = ci;
+                continue;
             }
         }
-
-        if (du && dl) {
-            ci = si - wt - 1;
-            if ((ad[ci] >= 0) && (ad[ci] < cd) &&
-                (ad[si - wt] >= -1) && (ad[si - 1] >= -1)) {
-                this.m_walk(ad, ci, ap, md);
-                return;
+        
+        if (dl) {
+            ci = si - 1;
+            if ((ad[ci] >= 0) && (ad[ci] < cd)) {
+                si = ci;
+                continue;
             }
         }
+        
+        if (md == true) {
+            
+            if (du && dr) {
+                ci = si - wt + 1;
+                if ((ad[ci] >= 0) && (ad[ci] < cd) &&
+                    (ad[si - wt] >= -1) && (ad[si + 1] >= -1)) {
+                    si = ci;
+                    continue;
+                }
+            }
+            
+            if (dr && dd) {
+                ci = si + wt + 1;
+                if ((ad[ci] >= 0) && (ad[ci] < cd) &&
+                    (ad[si + wt] >= -1) && (ad[si + 1] >= -1)) {
+                    si = ci;
+                    continue;
+                }
+            }
+            
+            if (dl && dd) {
+                ci = si + wt - 1;
+                if ((ad[ci] >= 0) && (ad[ci] < cd) &&
+                    (ad[si + wt] >= -1) && (ad[si - 1] >= -1)) {
+                    si = ci;
+                    continue;
+                }
+            }
+            
+            if (du && dl) {
+                ci = si - wt - 1;
+                if ((ad[ci] >= 0) && (ad[ci] < cd) &&
+                    (ad[si - wt] >= -1) && (ad[si - 1] >= -1)) {
+                    si = ci;
+                    continue;
+                }
+            }
+        }
+        
+        return;
     }
 };
 

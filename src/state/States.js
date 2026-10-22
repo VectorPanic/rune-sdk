@@ -83,7 +83,9 @@ Object.defineProperty(rune.state.States.prototype, "selected", {
 //------------------------------------------------------------------------------
 
 /**
- * Load a new batch of states. A "batch" is represented by a list.
+ * Loads a new batch from a copied list. Later changes to the caller's array
+ * do not affect the pending or active list, and cleanup never modifies it.
+ * State objects retain their identity; only the containing array is copied.
  *
  * @param {Array.<rune.state.State>} states List of instantiated states.
  *
@@ -93,11 +95,12 @@ Object.defineProperty(rune.state.States.prototype, "selected", {
  */
 rune.state.States.prototype.load = function(states) {
     if (this.m_validateStates(states) === true) {
-        if (this.m_swap != null && this.m_swap !== states) {
-            this.m_disposeStateList(this.m_swap);
+        var batch = states.slice();
+        if (this.m_swap != null) {
+            this.m_disposeStateList(this.m_swap, batch);
         }
-        
-        this.m_swap = states;
+
+        this.m_swap = batch;
     } else throw new Error();
 };
 

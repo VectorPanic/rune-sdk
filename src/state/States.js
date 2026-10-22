@@ -86,6 +86,7 @@ Object.defineProperty(rune.state.States.prototype, "selected", {
  * Loads a new batch from a copied list. Later changes to the caller's array
  * do not affect the pending or active list, and cleanup never modifies it.
  * State objects retain their identity; only the containing array is copied.
+ * Replacing a pending list retains states still used by the active or new list.
  *
  * @param {Array.<rune.state.State>} states List of instantiated states.
  *
@@ -97,7 +98,7 @@ rune.state.States.prototype.load = function(states) {
     if (this.m_validateStates(states) === true) {
         var batch = states.slice();
         if (this.m_swap != null) {
-            this.m_disposeStateList(this.m_swap, batch);
+            this.m_disposeStateList(this.m_swap, this.m_states.concat(batch));
         }
 
         this.m_swap = batch;
@@ -166,8 +167,8 @@ rune.state.States.prototype.render = function() {
  * @ignore
  */
 rune.state.States.prototype.dispose = function() {
-    this.m_disposeStates();
     this.m_disposeSwap();
+    this.m_disposeStates();
     this.m_owner = null;
 };
 
@@ -201,7 +202,7 @@ rune.state.States.prototype.m_initStates = function() {
         
         this.m_swap = null;
         this.m_states[this.m_selected].onEnter(oldState);
-        this.m_disposeStateList(oldStates, this.m_states);
+        this.m_disposeStateList(oldStates, this.m_states.concat(this.m_swap || []));
     } else throw new Error();
 };
 
@@ -269,7 +270,8 @@ rune.state.States.prototype.m_disposeSwap = function() {
 };
 
 /**
- * Destroys a list of states.
+ * Disposes each distinct state not included in keep exactly once.
+ * The input arrays are not modified.
  *
  * @param {Array.<rune.state.State>} states List of states.
  * @param {Array.<rune.state.State>} [keep] List of states not to destroy.
@@ -280,13 +282,14 @@ rune.state.States.prototype.m_disposeSwap = function() {
 rune.state.States.prototype.m_disposeStateList = function(states, keep) {
     if (Array.isArray(states) === true) {
         keep = keep || [];
+        var disposed = [];
         for (var i = 0; i < states.length; i++) {
-            if (states[i] instanceof rune.state.State && keep.indexOf(states[i]) == -1) {
-                states[i].dispose();
-                states[i].setOwner(null);
+            var state = states[i];
+            if (state instanceof rune.state.State && keep.indexOf(state) < 0 && disposed.indexOf(state) < 0) {
+                disposed.push(state);
+                state.dispose();
+                state.setOwner(null);
             }
-            
-            states[i] = null;
         }
     }
 };

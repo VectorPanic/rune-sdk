@@ -32,6 +32,14 @@ rune.state.States = function(owner) {
     this.m_owner = owner || null;
     
     /**
+     * Guards cleanup against recursive dispose() calls from state callbacks.
+     *
+     * @type {boolean}
+     * @private
+     */
+    this.m_disposing = false;
+
+    /**
      * Index of selected state.
      *
      * @type {number}
@@ -100,11 +108,9 @@ Object.defineProperty(rune.state.States.prototype, "selected", {
 rune.state.States.prototype.load = function(states) {
     if (this.m_validateStates(states) === true) {
         var batch = states.slice();
-        if (this.m_swap != null) {
-            this.m_disposeStateList(this.m_swap, this.m_states.concat(batch));
-        }
-        
+        var previous = this.m_swap;
         this.m_swap = batch;
+        this.m_disposeStateList(previous, this.m_states.concat(batch));
     } else throw new Error("Invalid state batch");
 };
 
@@ -126,10 +132,14 @@ rune.state.States.prototype.select = function(name) {
             if (this.m_selected != i) {
                 var a = i;
                 var b = this.m_selected;
-                states[b]['onExit'](states[a]);
-                if (this.m_states !== states) return false;
-                this.m_selected = a;
-                states[a]['onEnter'](states[b]);
+                try {
+                    states[b]['onExit'](states[a]);
+                    if (this.m_states !== states) return false;
+                    this.m_selected = a;
+                    states[a]['onEnter'](states[b]);
+                } catch (error) {
+                    this.m_abortTransition(error);
+                }
             }
             
             return true;
@@ -167,15 +177,20 @@ rune.state.States.prototype.render = function() {
 };
 
 /**
- * Destroys all states.
+ * Disposes active and pending states, releasing the machine owner.
+ * Cleanup continues after callback failures, then rethrows the first error.
  *
  * @returns {undefined}
  * @ignore
  */
 rune.state.States.prototype.dispose = function() {
-    this.m_disposeSwap();
-    this.m_disposeStates();
-    this.m_owner = null;
+    if (this.m_disposing) return;
+
+    try {
+        this.m_disposeAllStates();
+    } finally {
+        this.m_owner = null;
+    }
 };
 
 //------------------------------------------------------------------------------
@@ -183,7 +198,8 @@ rune.state.States.prototype.dispose = function() {
 //------------------------------------------------------------------------------
 
 /**
- * Initiates current states.
+ * Initiates a new batch. A failed lifecycle hook aborts the transition,
+ * attempts cleanup of all owned states and propagates the original error.
  *
  * @throws {Error} In case of invalid state swap.
  *
@@ -191,15 +207,18 @@ rune.state.States.prototype.dispose = function() {
  * @private
  */
 rune.state.States.prototype.m_initStates = function() {
-    if (this.m_swap != null && this.m_swap.length > 0) {
-        var oldStates = this.m_states;
+    if (this.m_swap == null || this.m_swap.length === 0) {
+        throw new Error("Invalid state swap");
+    }
+    var oldStates = this.m_states;
+    try {
         var oldState = this['selected'] || null;
         var newState = this.m_swap[0];
         if (oldState != null && oldState !== newState) {
             oldState.onExit(newState);
             if (this.m_states !== oldStates) return;
         }
-        
+
         this.m_states = this.m_swap;
         this.m_swap = null;
         this.m_selected = 0;
@@ -207,10 +226,14 @@ rune.state.States.prototype.m_initStates = function() {
             this.m_states[i].setOwner(this.m_owner);
             this.m_states[i].init();
         }
-        
+
         this.m_states[this.m_selected].onEnter(oldState);
-        this.m_disposeStateList(oldStates, this.m_states.concat(this.m_swap || []));
-    } else throw new Error();
+        var retired = oldStates;
+        oldStates = null;
+        this.m_disposeStateList(retired, this.m_states.concat(this.m_swap || []));
+    } catch (error) {
+        this.m_abortTransition(error, oldStates);
+    }
 };
 
 /**
@@ -222,7 +245,7 @@ rune.state.States.prototype.m_initStates = function() {
  * @private
  */
 rune.state.States.prototype.m_updateSwap = function(step) {
-    if (this.m_swap != null) {
+    if (this.m_hasPendingStates()) {
         this.m_initStates();
     }
 };
@@ -254,31 +277,81 @@ rune.state.States.prototype.m_renderStates = function() {
 };
 
 /**
- * Destroys all states.
+ * Detaches and cleans up active, pending and optional retired states once each.
+ * Loads requested by cleanup callbacks are drained without initialization.
+ * Every cleanup is attempted before the first error is rethrown.
+ *
+ * @param {Array.<rune.state.State>} [retired] Previous states awaiting cleanup.
  *
  * @returns {undefined}
  * @private
  */
-rune.state.States.prototype.m_disposeStates = function() {
-    this.m_disposeStateList(this.m_states);
-    this.m_states = [];
-    this.m_selected = 0;
+rune.state.States.prototype.m_disposeAllStates = function(retired) {
+    if (this.m_disposing) return;
+
+    this.m_disposing = true;
+    var disposed = [];
+    var failure = null;
+    try {
+        do {
+            var batch = (retired || []).concat(this.m_states, this.m_swap || []);
+            retired = null;
+            this.m_states = [];
+            this.m_swap = null;
+            this.m_selected = 0;
+            var states = [];
+            for (var i = 0; i < batch.length; i++) {
+                if (disposed.indexOf(batch[i]) < 0) {
+                    disposed.push(batch[i]);
+                    states.push(batch[i]);
+                }
+            }
+            try {
+                this.m_disposeStateList(states);
+            } catch (error) {
+                if (failure == null) failure = {error: error};
+            }
+        } while (this.m_hasPendingStates());
+    } finally {
+        this.m_disposing = false;
+    }
+    if (failure != null) throw failure.error;
 };
 
 /**
- * Destroys pending states.
+ * Clears a failed transition while preserving the original lifecycle error.
+ * The machine retains its owner so a fresh batch can be loaded after recovery.
  *
+ * @param {*} error Original lifecycle error.
+ * @param {Array.<rune.state.State>} [retired] Previous states awaiting cleanup.
+ *
+ * @throws {*} The original error after cleanup attempts finish.
  * @returns {undefined}
  * @private
  */
-rune.state.States.prototype.m_disposeSwap = function() {
-    this.m_disposeStateList(this.m_swap, this.m_states);
-    this.m_swap = null;
+rune.state.States.prototype.m_abortTransition = function(error, retired) {
+    try {
+        this.m_disposeAllStates(retired);
+    } catch (cleanupError) {
+        // Cleanup errors must not hide the failed transition's original error.
+    }
+    throw error;
+};
+
+/**
+ * Checks pending requests after lifecycle callbacks have run.
+ *
+ * @returns {boolean}
+ * @private
+ */
+rune.state.States.prototype.m_hasPendingStates = function() {
+    return this.m_swap != null;
 };
 
 /**
  * Disposes each distinct state not included in keep exactly once.
- * The input arrays are not modified.
+ * The input arrays are not modified. Owner references are released even if
+ * dispose() throws. Remaining states are attempted before rethrowing the first error.
  *
  * @param {Array.<rune.state.State>} states List of states.
  * @param {Array.<rune.state.State>} [keep] List of states not to destroy.
@@ -290,14 +363,21 @@ rune.state.States.prototype.m_disposeStateList = function(states, keep) {
     if (Array.isArray(states) === true) {
         keep = keep || [];
         var disposed = [];
+        var failure = null;
         for (var i = 0; i < states.length; i++) {
             var state = states[i];
             if (state instanceof rune.state.State && keep.indexOf(state) < 0 && disposed.indexOf(state) < 0) {
                 disposed.push(state);
-                state.dispose();
-                state.setOwner(null);
+                try {
+                    state.dispose();
+                } catch (error) {
+                    if (failure == null) failure = {error: error};
+                } finally {
+                    state.setOwner(null);
+                }
             }
         }
+        if (failure != null) throw failure.error;
     }
 };
 

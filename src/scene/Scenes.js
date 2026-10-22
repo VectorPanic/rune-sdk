@@ -243,6 +243,7 @@ rune.scene.Scenes.prototype.render = function() {
 /**
  * Cancels pending loads and disposes current and pending scenes once each.
  * Requests made by disposal callbacks are also canceled and cleaned up.
+ * Cleanup continues after callback failures, then rethrows the first error.
  * A later explicit load() may reuse this manager.
  *
  * @returns {undefined}
@@ -253,6 +254,7 @@ rune.scene.Scenes.prototype.dispose = function() {
 
     this.m_disposing = true;
     var disposed = [];
+    var failure = null;
     try {
         do {
             var batch = this.m_cb.concat(this.m_rb || []);
@@ -265,16 +267,40 @@ rune.scene.Scenes.prototype.dispose = function() {
                     this.m_cb.push(scene);
                 }
             }
-            this.m_disposeScenes();
+            try {
+                this.m_disposeScenes();
+            } catch (error) {
+                if (failure == null) failure = {error: error};
+            }
         } while (this.m_hasPendingBatch());
     } finally {
         this.m_disposing = false;
     }
+    if (failure != null) throw failure.error;
 };
 
 //------------------------------------------------------------------------------
 // Private prototype methods
 //------------------------------------------------------------------------------
+
+/**
+ * Cancels a failed transition and attempts cleanup of all owned scenes.
+ * Cleanup failures must not hide the original lifecycle error.
+ *
+ * @param {*} error Original initialization or selection error.
+ *
+ * @throws {*} The original error after cleanup attempts finish.
+ * @returns {undefined}
+ * @private
+ */
+rune.scene.Scenes.prototype.m_abortTransition = function(error) {
+    try {
+        this.dispose();
+    } catch (cleanupError) {
+        // Preserve the transition error; dispose() has attempted every scene.
+    }
+    throw error;
+};
 
 /**
  * Checks pending state after lifecycle callbacks, which may request a new load.
@@ -287,7 +313,8 @@ rune.scene.Scenes.prototype.m_hasPendingBatch = function() {
 };
 
 /**
- * Replaces the current batch with a new one.
+ * Replaces the current batch with a new one. A lifecycle failure aborts the
+ * transition, clears owned scenes and propagates the original error.
  *
  * @throws {Error} Unless there is a new batch of scenes.
  *
@@ -295,23 +322,28 @@ rune.scene.Scenes.prototype.m_hasPendingBatch = function() {
  * @private
  */
 rune.scene.Scenes.prototype.m_iniScenes = function() {
-    if (this.m_rb != null && this.m_rb.length > 0) {  
-        var batch = this.m_rb;
-        var selection = this.m_rs;
+    if (this.m_rb == null || this.m_rb.length === 0) {
+        throw new Error("No pending scene batch");
+    }
+    var batch = this.m_rb;
+    var selection = this.m_rs;
 
+    try {
         this.m_disposeScenes();
 
         this.m_cb = batch;
         this.m_rb = null;
         this.m_cs = (selection > -1 && selection < batch.length) ? selection : 0;
         this.m_rs = this.m_cs;
-        
+
         for (var i = 0; i < this.m_cb.length; i++) {
             this.m_cb[i].init();
         }
-        
+
         this.m_selectInitialScene();
-    } else throw new Error();
+    } catch (error) {
+        this.m_abortTransition(error);
+    }
 };
 
 /**
@@ -360,8 +392,12 @@ rune.scene.Scenes.prototype.m_updateSelection = function(step) {
         
         this.m_cs = this.m_rs;
         
-        o['onDeselect'](n);
-        n['onSelect'](o);
+        try {
+            o['onDeselect'](n);
+            n['onSelect'](o);
+        } catch (error) {
+            this.m_abortTransition(error);
+        }
     }
 };
 
@@ -400,7 +436,8 @@ rune.scene.Scenes.prototype.m_renderScenes = function() {
 
 /**
  * Disposes scenes abandoned by a replacement request. Check live ownership
- * before each callback because dispose() may request another batch.
+ * before each callback because dispose() may request another batch. Attempts
+ * every abandoned scene before rethrowing the first cleanup error.
  *
  * @param {?Array.<rune.scene.Scene>} batch Previous pending batch.
  *
@@ -411,39 +448,54 @@ rune.scene.Scenes.prototype.m_disposeAbandonedScenes = function(batch) {
     if (batch == null) return;
 
     var disposed = [];
+    var failure = null;
     for (var i = batch.length - 1; i >= 0; i--) {
         var scene = batch[i];
         if (this.m_cb.indexOf(scene) < 0 &&
             (this.m_rb == null || this.m_rb.indexOf(scene) < 0) && disposed.indexOf(scene) < 0) {
             disposed.push(scene);
-            scene.dispose();
+            try {
+                scene.dispose();
+            } catch (error) {
+                if (failure == null) failure = {error: error};
+            }
         }
     }
+    if (failure != null) throw failure.error;
 };
 
 /**
- * Removes allocated scenes.
+ * Detaches the current batch before callbacks and attempts every scene cleanup.
+ * Throws the first error only after all remaining scenes have been attempted.
  *
  * @returns {undefined}
  * @private
  */
 rune.scene.Scenes.prototype.m_disposeScenes = function() {
-    if (this.m_cb != null) {
+    var batch = this.m_cb;
+    this.m_cb = [];
+    this.m_cs = 0;
+    this.m_rs = 0;
+
+    var failure = null;
+    try {
         if (rune.system.Application['instance'] != null && rune.system.Application['instance']['sounds'] != null) {
             rune.system.Application['instance']['sounds'].clear();
         }
-        
-        var i = this.m_cb.length;
-        while (i--) {
-            if (this.m_cb[i] != null) {
-                this.m_cb[i].dispose();
-            }
-            
-            this.m_cb[i] = null;
-        }
-        
-        this.m_cb = [];
-        this.m_cs = 0;
-        this.m_rs = 0;
+    } catch (error) {
+        failure = {error: error};
     }
+
+    if (batch != null) {
+        for (var i = batch.length - 1; i >= 0; i--) {
+            if (batch[i] != null) {
+                try {
+                    batch[i].dispose();
+                } catch (error) {
+                    if (failure == null) failure = {error: error};
+                }
+            }
+        }
+    }
+    if (failure != null) throw failure.error;
 };

@@ -399,6 +399,8 @@ rune.state.States.prototype.m_hasPendingStates = function() {
 
 /**
  * Disposes each distinct state not included in keep exactly once.
+ * Active and pending lists are checked again after each callback so newly
+ * retained states survive, except during full cleanup.
  * The input arrays are not modified. Owner references are released even if
  * dispose() throws. Remaining states are attempted before rethrowing the first error.
  *
@@ -415,7 +417,9 @@ rune.state.States.prototype.m_disposeStateList = function(states, keep) {
         var failure = null;
         for (var i = 0; i < states.length; i++) {
             var state = states[i];
-            if (state instanceof rune.state.State && keep.indexOf(state) < 0 && disposed.indexOf(state) < 0) {
+            var retained = !this.m_disposing && (this.m_states.indexOf(state) >= 0 ||
+                (this.m_swap != null && this.m_swap.indexOf(state) >= 0));
+            if (state instanceof rune.state.State && !retained && keep.indexOf(state) < 0 && disposed.indexOf(state) < 0) {
                 disposed.push(state);
                 try {
                     state.dispose();

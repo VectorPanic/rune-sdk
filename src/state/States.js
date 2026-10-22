@@ -88,7 +88,8 @@ Object.defineProperty(rune.state.States.prototype, "selected", {
  * State objects retain their identity; only the containing array is copied.
  * Replacing a pending list retains states still used by the active or new list.
  * Each state object may occur only once in a batch. Invalid input leaves the
- * active and pending lists unchanged.
+ * active and pending lists unchanged. A load requested from init() is kept
+ * pending until the next update; the latest pending request takes precedence.
  *
  * @param {Array.<rune.state.State>} states List of instantiated states.
  *
@@ -196,13 +197,13 @@ rune.state.States.prototype.m_initStates = function() {
         }
         
         this.m_states = this.m_swap;
+        this.m_swap = null;
         this.m_selected = 0;
         for (var i = 0; i < this.m_states.length; i++) {
             this.m_states[i].setOwner(this.m_owner);
             this.m_states[i].init();
         }
         
-        this.m_swap = null;
         this.m_states[this.m_selected].onEnter(oldState);
         this.m_disposeStateList(oldStates, this.m_states.concat(this.m_swap || []));
     } else throw new Error();

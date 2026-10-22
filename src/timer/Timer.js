@@ -382,7 +382,7 @@ rune.timer.Timer.prototype.m_updateElapsed = function(step) {
 
 /**
  * Checks whether the timer has reached the end.
- * Stops processing if a tick callback disposes the timer.
+ * Stops processing if a tick callback stops or disposes the timer.
  *
  * @param {number} step Current time step.
  *
@@ -399,7 +399,7 @@ rune.timer.Timer.prototype.m_updateComplete = function(step) {
         while (repeats > this.m_repeats) {
             this.m_repeats++;
             this.m_arguments.onTick.call(this.m_arguments.scope, this);
-            if (this.m_arguments == null || this.m_disposed) return;
+            if (this.m_arguments == null || this.m_disposed || !this.m_active) return;
         }
         
         if (this.complete) {

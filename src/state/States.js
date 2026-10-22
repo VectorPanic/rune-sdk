@@ -40,6 +40,22 @@ rune.state.States = function(owner) {
     this.m_disposing = false;
 
     /**
+     * Whether initialization or a transition is invoking lifecycle callbacks.
+     *
+     * @type {boolean}
+     * @private
+     */
+    this.m_transitioning = false;
+
+    /**
+     * Latest callback selection, deferred until the next update.
+     *
+     * @type {?rune.state.State}
+     * @private
+     */
+    this.m_requested = null;
+
+    /**
      * Index of selected state.
      *
      * @type {number}
@@ -109,6 +125,7 @@ rune.state.States.prototype.load = function(states) {
     if (this.m_validateStates(states) === true) {
         var batch = states.slice();
         var previous = this.m_swap;
+        this.m_requested = null;
         this.m_swap = batch;
         this.m_disposeStateList(previous, this.m_states.concat(batch));
     } else throw new Error("Invalid state batch");
@@ -116,7 +133,9 @@ rune.state.States.prototype.load = function(states) {
 
 /**
  * Selects and activates a state based on its name. Aborts if onExit()
- * disposes or replaces the active list.
+ * disposes or replaces the active list. Selections requested from lifecycle
+ * callbacks are queued for the next update; the latest valid request wins.
+ * A later direct selection or load supersedes a queued request.
  *
  * @param {string} name Name of state to be selected.
  *
@@ -129,9 +148,15 @@ rune.state.States.prototype.select = function(name) {
 
     for (var i = 0; i < states.length; i++) {
         if (states[i]['name'].toUpperCase() == name) {
+            if (this.m_transitioning) {
+                this.m_requested = states[i];
+                return true;
+            }
+            this.m_requested = null;
             if (this.m_selected != i) {
                 var a = i;
                 var b = this.m_selected;
+                this.m_transitioning = true;
                 try {
                     states[b]['onExit'](states[a]);
                     if (this.m_states !== states) return false;
@@ -139,6 +164,8 @@ rune.state.States.prototype.select = function(name) {
                     states[a]['onEnter'](states[b]);
                 } catch (error) {
                     this.m_abortTransition(error);
+                } finally {
+                    this.m_transitioning = false;
                 }
             }
             
@@ -162,7 +189,13 @@ rune.state.States.prototype.select = function(name) {
  * @ignore
  */
 rune.state.States.prototype.update = function(step) {
+    var states = this.m_states;
+    var requested = this.m_requested;
+    this.m_requested = null;
     this.m_updateSwap(step);
+    if (requested != null && this.m_states === states && states.indexOf(requested) >= 0) {
+        this.select(requested['name']);
+    }
     this.m_updateStates(step);
 };
 
@@ -212,6 +245,8 @@ rune.state.States.prototype.m_initStates = function() {
         throw new Error("Invalid state swap");
     }
     var oldStates = this.m_states;
+    var transitioning = this.m_transitioning;
+    this.m_transitioning = true;
     try {
         var oldState = this['selected'] || null;
         var newState = this.m_swap[0];
@@ -223,6 +258,7 @@ rune.state.States.prototype.m_initStates = function() {
         var states = this.m_swap;
         this.m_states = states;
         this.m_swap = null;
+        this.m_requested = null;
         this.m_selected = 0;
         for (var i = 0; this.m_states === states && i < states.length; i++) {
             states[i].setOwner(this.m_owner);
@@ -243,6 +279,8 @@ rune.state.States.prototype.m_initStates = function() {
         this.m_disposeStateList(retired, keep);
     } catch (error) {
         this.m_abortTransition(error, oldStates);
+    } finally {
+        this.m_transitioning = transitioning;
     }
 };
 
@@ -308,6 +346,7 @@ rune.state.States.prototype.m_disposeAllStates = function(retired) {
             retired = null;
             this.m_states = [];
             this.m_swap = null;
+            this.m_requested = null;
             this.m_selected = 0;
             var states = [];
             for (var i = 0; i < batch.length; i++) {

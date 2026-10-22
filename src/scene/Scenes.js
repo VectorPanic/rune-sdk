@@ -152,7 +152,8 @@ rune.scene.Scenes.prototype.findAndSelect = function(name) {
  * Activates a batch of scenes. This process removes any previous scenes and 
  * frees up allocated memory, hence the process can not be undone. All scenes 
  * in the batch are initialized on the next update tick. A load requested
- * during init() remains pending until the following update. If several loads
+ * during init() or old-batch dispose() remains pending until the following
+ * update. If several loads
  * are requested before then, the latest request replaces the pending batch.
  * Replacing a pending batch disposes its abandoned scenes immediately; scenes
  * still in the current or new pending batch are retained.
@@ -260,15 +261,17 @@ rune.scene.Scenes.prototype.dispose = function() {
             var batch = this.m_cb.concat(this.m_rb || []);
             this.m_rb = null;
             this.m_cb = [];
+            this.m_cs = this.m_rs = 0;
+            var scenes = [];
             for (var i = 0; i < batch.length; i++) {
                 var scene = batch[i];
                 if (scene != null && disposed.indexOf(scene) < 0) {
                     disposed.push(scene);
-                    this.m_cb.push(scene);
+                    scenes.push(scene);
                 }
             }
             try {
-                this.m_disposeScenes();
+                this.m_disposeBatch(scenes);
             } catch (error) {
                 if (failure == null) failure = {error: error};
             }
@@ -326,15 +329,18 @@ rune.scene.Scenes.prototype.m_iniScenes = function() {
     if (this.m_rb == null || this.m_rb.length === 0) {
         throw new Error("No pending scene batch");
     }
+    var previous = this.m_cb;
     var batch = this.m_rb;
     var selection = this.m_rs;
 
+    this.m_cb = batch;
+    this.m_rb = null;
+    this.m_cs = (selection > -1 && selection < batch.length) ? selection : 0;
+    this.m_rs = this.m_cs;
+
     try {
-        this.m_disposeScenes();
-        this.m_cb = batch;
-        this.m_rb = null;
-        this.m_cs = (selection > -1 && selection < batch.length) ? selection : 0;
-        this.m_rs = this.m_cs;
+        this.m_disposeBatch(previous);
+        if (this.m_cb !== batch) return;
 
         for (var i = 0; i < batch.length; i++) {
             batch[i].init();
@@ -469,18 +475,16 @@ rune.scene.Scenes.prototype.m_disposeAbandonedScenes = function(batch) {
 };
 
 /**
- * Detaches the current batch before callbacks and attempts every scene cleanup.
- * Throws the first error only after all remaining scenes have been attempted.
+ * Attempts cleanup of a detached batch without changing current or pending
+ * ownership. Callback load requests belong to the next update. Throws the
+ * first error only after all remaining scenes have been attempted.
+ *
+ * @param {Array.<rune.scene.Scene>} batch Scenes to dispose.
  *
  * @returns {undefined}
  * @private
  */
-rune.scene.Scenes.prototype.m_disposeScenes = function() {
-    var batch = this.m_cb;
-    this.m_cb = [];
-    this.m_cs = 0;
-    this.m_rs = 0;
-
+rune.scene.Scenes.prototype.m_disposeBatch = function(batch) {
     var failure = null;
     try {
         if (rune.system.Application['instance'] != null && rune.system.Application['instance']['sounds'] != null) {

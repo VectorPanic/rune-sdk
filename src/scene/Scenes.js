@@ -154,6 +154,8 @@ rune.scene.Scenes.prototype.findAndSelect = function(name) {
  * in the batch are initialized on the next update tick. A load requested
  * during init() remains pending until the following update. If several loads
  * are requested before then, the latest request replaces the pending batch.
+ * Replacing a pending batch disposes its abandoned scenes immediately; scenes
+ * still in the current or new pending batch are retained.
  * The array is copied; later array edits do not affect the manager. Scene
  * objects are retained by reference and disposed when removed by the manager.
  * Every scene must provide callable init, update, render, dispose, onSelect
@@ -180,8 +182,10 @@ rune.scene.Scenes.prototype.load = function(batch) {
             throw new Error("Invalid scene at index " + i);
         }
     }
+    var previous = this.m_rb;
     this.m_rb = scenes;
     this.m_rs = 0;
+    this.m_disposeAbandonedScenes(previous);
 };
 
 /**
@@ -385,6 +389,29 @@ rune.scene.Scenes.prototype.m_updateScenes = function(step) {
 rune.scene.Scenes.prototype.m_renderScenes = function() {
     if (this.m_cb != null && this.m_cb.length > this.m_cs) {
         this.m_cb[this.m_cs].render();
+    }
+};
+
+/**
+ * Disposes scenes abandoned by a replacement request. Check live ownership
+ * before each callback because dispose() may request another batch.
+ *
+ * @param {?Array.<rune.scene.Scene>} batch Previous pending batch.
+ *
+ * @returns {undefined}
+ * @private
+ */
+rune.scene.Scenes.prototype.m_disposeAbandonedScenes = function(batch) {
+    if (batch == null) return;
+
+    var disposed = [];
+    for (var i = batch.length - 1; i >= 0; i--) {
+        var scene = batch[i];
+        if (this.m_cb.indexOf(scene) < 0 &&
+            (this.m_rb == null || this.m_rb.indexOf(scene) < 0) && disposed.indexOf(scene) < 0) {
+            disposed.push(scene);
+            scene.dispose();
+        }
     }
 };
 

@@ -40,6 +40,14 @@ rune.state.States = function(owner) {
     this.m_disposing = false;
 
     /**
+     * States already cleaned up by the current nested disposal operation.
+     *
+     * @type {?Array.<rune.state.State>}
+     * @private
+     */
+    this.m_disposed = null;
+
+    /**
      * Whether initialization or a transition is invoking lifecycle callbacks.
      *
      * @type {boolean}
@@ -349,7 +357,8 @@ rune.state.States.prototype.m_disposeAllStates = function(retired) {
     if (this.m_disposing) return;
 
     this.m_disposing = true;
-    var disposed = [];
+    var nested = this.m_disposed != null;
+    if (!nested) this.m_disposed = [];
     var failure = null;
     try {
         do {
@@ -360,20 +369,14 @@ rune.state.States.prototype.m_disposeAllStates = function(retired) {
             this.m_incoming = null;
             this.m_requested = null;
             this.m_selected = 0;
-            var states = [];
-            for (var i = 0; i < batch.length; i++) {
-                if (disposed.indexOf(batch[i]) < 0) {
-                    disposed.push(batch[i]);
-                    states.push(batch[i]);
-                }
-            }
             try {
-                this.m_disposeStateList(states);
+                this.m_disposeStateList(batch);
             } catch (error) {
                 if (failure == null) failure = {error: error};
             }
         } while (this.m_hasPendingStates());
     } finally {
+        if (!nested) this.m_disposed = null;
         this.m_disposing = false;
     }
     if (failure != null) throw failure.error;
@@ -411,6 +414,7 @@ rune.state.States.prototype.m_hasPendingStates = function() {
 
 /**
  * Disposes each distinct state not included in keep exactly once.
+ * Nested cleanup callbacks share the same record of disposed states.
  * Active, incoming and pending lists are checked after each callback so newly
  * retained states survive, except during full cleanup.
  * The input arrays are not modified. Owner references are released even if
@@ -425,23 +429,29 @@ rune.state.States.prototype.m_hasPendingStates = function() {
 rune.state.States.prototype.m_disposeStateList = function(states, keep) {
     if (Array.isArray(states) === true) {
         keep = keep || [];
-        var disposed = [];
+        var nested = this.m_disposed != null;
+        if (!nested) this.m_disposed = [];
+        var disposed = this.m_disposed;
         var failure = null;
-        for (var i = 0; i < states.length; i++) {
-            var state = states[i];
-            var retained = !this.m_disposing && (this.m_states.indexOf(state) >= 0 ||
-                (this.m_incoming != null && this.m_incoming.indexOf(state) >= 0) ||
-                (this.m_swap != null && this.m_swap.indexOf(state) >= 0));
-            if (state instanceof rune.state.State && !retained && keep.indexOf(state) < 0 && disposed.indexOf(state) < 0) {
-                disposed.push(state);
-                try {
-                    state.dispose();
-                } catch (error) {
-                    if (failure == null) failure = {error: error};
-                } finally {
-                    state.setOwner(null);
+        try {
+            for (var i = 0; i < states.length; i++) {
+                var state = states[i];
+                var retained = !this.m_disposing && (this.m_states.indexOf(state) >= 0 ||
+                    (this.m_incoming != null && this.m_incoming.indexOf(state) >= 0) ||
+                    (this.m_swap != null && this.m_swap.indexOf(state) >= 0));
+                if (state instanceof rune.state.State && !retained && keep.indexOf(state) < 0 && disposed.indexOf(state) < 0) {
+                    disposed.push(state);
+                    try {
+                        state.dispose();
+                    } catch (error) {
+                        if (failure == null) failure = {error: error};
+                    } finally {
+                        state.setOwner(null);
+                    }
                 }
             }
+        } finally {
+            if (!nested) this.m_disposed = null;
         }
         if (failure != null) throw failure.error;
     }

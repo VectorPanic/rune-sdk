@@ -127,16 +127,19 @@ rune.scene.Scenes.prototype.find = function(name) {
 };
 
 /**
- * Searching for a specific scene. The scene is automatically activated 
- * if it is found.
+ * Requests selection by name in the pending batch, or the current batch if
+ * no load is pending. Uses the same batch as select(); activation is deferred
+ * until update(). A missing name returns false without changing the request.
+ * Unlike find(), this searches the pending batch when one exists.
  *
  * @param {string} name The name of the searched scene.
  *
  * @returns {boolean}
  */
 rune.scene.Scenes.prototype.findAndSelect = function(name) {
-    for (var i = 0; i < this.m_cb.length; i++) {
-        if (this.m_cb[i]['name'] === name) {
+    var batch = this.m_rb || this.m_cb;
+    for (var i = 0; i < batch.length; i++) {
+        if (batch[i]['name'] === name) {
             this.select(i);
             return true;
         }

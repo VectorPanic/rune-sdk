@@ -87,10 +87,12 @@ Object.defineProperty(rune.state.States.prototype, "selected", {
  * do not affect the pending or active list, and cleanup never modifies it.
  * State objects retain their identity; only the containing array is copied.
  * Replacing a pending list retains states still used by the active or new list.
+ * Each state object may occur only once in a batch. Invalid input leaves the
+ * active and pending lists unchanged.
  *
  * @param {Array.<rune.state.State>} states List of instantiated states.
  *
- * @throws {Error} If invalid or empty batch.
+ * @throws {Error} If the batch is empty, invalid or contains duplicate state objects.
  *
  * @returns {undefined}
  */
@@ -100,9 +102,9 @@ rune.state.States.prototype.load = function(states) {
         if (this.m_swap != null) {
             this.m_disposeStateList(this.m_swap, this.m_states.concat(batch));
         }
-
+        
         this.m_swap = batch;
-    } else throw new Error();
+    } else throw new Error("Invalid state batch");
 };
 
 /**
@@ -295,7 +297,7 @@ rune.state.States.prototype.m_disposeStateList = function(states, keep) {
 };
 
 /**
- * Validates a list of states.
+ * Validates a non-empty list of distinct State instances.
  *
  * @param {Array.<rune.state.State>} states List of states.
  *
@@ -308,7 +310,7 @@ rune.state.States.prototype.m_validateStates = function(states) {
     }
 
     for (var i = 0; i < states.length; i++) {
-        if (states[i] instanceof rune.state.State === false) {
+        if (states[i] instanceof rune.state.State === false || states.indexOf(states[i]) !== i) {
             return false;
         }
     }

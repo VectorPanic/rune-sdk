@@ -127,20 +127,24 @@ Object.defineProperty(rune.state.States.prototype, "selected", {
  * do not affect the pending or active list, and cleanup never modifies it.
  * State objects retain their identity; only the containing array is copied.
  * Replacing a pending list retains states still used by the active or new list.
- * Each state object may occur only once in a batch. Invalid input leaves the
+ * Each state object may occur only once in a batch and belong to one machine.
+ * States are reserved on load and released after cleanup. Invalid input leaves the
  * active and pending lists unchanged. A load requested from init() is kept
  * pending until the next update; the latest pending request takes precedence.
  * Loads from onExit() do not replace the batch currently being activated.
  *
  * @param {Array.<rune.state.State>} states List of instantiated states.
  *
- * @throws {Error} If the batch is empty, invalid or contains duplicate state objects.
+ * @throws {Error} If the batch is empty, invalid, contains duplicates or uses another machine's states.
  *
  * @returns {undefined}
  */
 rune.state.States.prototype.load = function(states) {
     if (this.m_validateStates(states) === true) {
         var batch = states.slice();
+        for (var i = 0; i < batch.length; i++) {
+            batch[i].m_machine = this;
+        }
         var previous = this.m_swap;
         this.m_requested = null;
         this.m_swap = batch;
@@ -449,6 +453,12 @@ rune.state.States.prototype.m_disposeStateList = function(states, keep) {
                         state.setOwner(null);
                     }
                 }
+                if (state instanceof rune.state.State && state.m_machine === this &&
+                    disposed.indexOf(state) >= 0 && this.m_states.indexOf(state) < 0 &&
+                    (this.m_incoming == null || this.m_incoming.indexOf(state) < 0) &&
+                    (this.m_swap == null || this.m_swap.indexOf(state) < 0)) {
+                    state.m_machine = null;
+                }
             }
         } finally {
             if (!nested) this.m_disposed = null;
@@ -471,7 +481,8 @@ rune.state.States.prototype.m_validateStates = function(states) {
     }
 
     for (var i = 0; i < states.length; i++) {
-        if (states[i] instanceof rune.state.State === false || states.indexOf(states[i]) !== i) {
+        if (states[i] instanceof rune.state.State === false || states.indexOf(states[i]) !== i ||
+            (states[i].m_machine != null && states[i].m_machine !== this)) {
             return false;
         }
     }

@@ -41,6 +41,15 @@ rune.state.State = function(name) {
      * @private
      */
     this.m_owner = null;
+
+    /**
+     * Machine reserving this state until its cleanup has completed.
+     *
+     * @type {?rune.state.States}
+     * @package
+     * @ignore
+     */
+    this.m_machine = null;
     
     //--------------------------------------------------------------------------
     // Constructor call

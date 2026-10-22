@@ -159,12 +159,13 @@ rune.scene.Scenes.prototype.findAndSelect = function(name) {
  * The array is copied; later array edits do not affect the manager. Scene
  * objects are retained by reference and disposed when removed by the manager.
  * Every scene must provide callable init, update, render, dispose, onSelect
- * and onDeselect methods. Invalid input leaves current and pending batches
- * unchanged.
+ * and onDeselect methods. A scene object may occur only once per batch;
+ * distinct objects may share a name. Invalid input leaves current and pending
+ * batches unchanged.
  *
  * @param {Array.<rune.scene.Scene>} batch Scene list to copy into the manager.
  *
- * @throws {Error} If the batch is empty, is not an array or contains an invalid scene.
+ * @throws {Error} If the batch is empty, is not an array or contains invalid or duplicate scenes.
  *
  * @returns {undefined}
  */
@@ -180,6 +181,9 @@ rune.scene.Scenes.prototype.load = function(batch) {
             typeof scene.render !== "function" || typeof scene.dispose !== "function" ||
             typeof scene.onSelect !== "function" || typeof scene.onDeselect !== "function") {
             throw new Error("Invalid scene at index " + i);
+        }
+        if (scenes.indexOf(scene) !== i) {
+            throw new Error("Duplicate scene at index " + i);
         }
     }
     var previous = this.m_rb;

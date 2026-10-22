@@ -276,6 +276,7 @@ rune.scene.Scenes.prototype.dispose = function() {
     } finally {
         this.m_disposing = false;
     }
+    
     if (failure != null) throw failure.error;
 };
 
@@ -330,7 +331,6 @@ rune.scene.Scenes.prototype.m_iniScenes = function() {
 
     try {
         this.m_disposeScenes();
-
         this.m_cb = batch;
         this.m_rb = null;
         this.m_cs = (selection > -1 && selection < batch.length) ? selection : 0;
@@ -339,7 +339,7 @@ rune.scene.Scenes.prototype.m_iniScenes = function() {
         for (var i = 0; i < this.m_cb.length; i++) {
             this.m_cb[i].init();
         }
-
+        
         this.m_selectInitialScene();
     } catch (error) {
         this.m_abortTransition(error);

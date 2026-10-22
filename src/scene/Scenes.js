@@ -153,20 +153,21 @@ rune.scene.Scenes.prototype.findAndSelect = function(name) {
  * frees up allocated memory, hence the process can not be undone. All scenes 
  * in the batch are initialized on the next update tick. A load requested
  * during init() or old-batch dispose() remains pending until the following
- * update. If several loads
- * are requested before then, the latest request replaces the pending batch.
+ * update. If several loads are requested before then, the latest request
+ * replaces the pending batch.
  * Replacing a pending batch disposes its abandoned scenes immediately; scenes
  * still in the current or new pending batch are retained.
  * The array is copied; later array edits do not affect the manager. Scene
  * objects are retained by reference and disposed when removed by the manager.
  * Every scene must provide callable init, update, render, dispose, onSelect
  * and onDeselect methods. A scene object may occur only once per batch;
- * distinct objects may share a name. Invalid input leaves current and pending
- * batches unchanged.
+ * distinct objects may share a name. Objects in the current batch cannot be
+ * loaded again: use select() to switch scenes, or create a new instance to
+ * restart one. Invalid input leaves current and pending batches unchanged.
  *
  * @param {Array.<rune.scene.Scene>} batch Scene list to copy into the manager.
  *
- * @throws {Error} If the batch is empty, is not an array or contains invalid or duplicate scenes.
+ * @throws {Error} If the batch is empty, is not an array or contains invalid, duplicate or current scenes.
  *
  * @returns {undefined}
  */
@@ -185,6 +186,9 @@ rune.scene.Scenes.prototype.load = function(batch) {
         }
         if (scenes.indexOf(scene) !== i) {
             throw new Error("Duplicate scene at index " + i);
+        }
+        if (this.m_cb.indexOf(scenes[i]) >= 0) {
+            throw new Error("Scene at index " + i + " already belongs to the current batch");
         }
     }
     var previous = this.m_rb;

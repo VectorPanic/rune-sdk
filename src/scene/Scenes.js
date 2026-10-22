@@ -366,7 +366,8 @@ rune.scene.Scenes.prototype.m_updateSelection = function(step) {
 };
 
 /**
- * Updates active scenes.
+ * Updates active scenes while the same batch remains current.
+ * Stops if a scene callback disposes or replaces the batch.
  *
  * @param {number} step Current time step.
  *
@@ -374,12 +375,13 @@ rune.scene.Scenes.prototype.m_updateSelection = function(step) {
  * @private
  */
 rune.scene.Scenes.prototype.m_updateScenes = function(step) {
-    if (this.m_cb != null) {
-        var l = this.m_cb.length;
-        for (var i = 0; i < l; i++) {
-            if (i == this.m_cs || this.m_cb[i].persistent == true) {
-                this.m_cb[i].update(step);
-            }
+    var batch = this.m_cb;
+    if (batch == null) return;
+
+    for (var i = 0; this.m_cb === batch && i < batch.length; i++) {
+        var scene = batch[i];
+        if (i == this.m_cs || scene.persistent == true) {
+            scene.update(step);
         }
     }
 };

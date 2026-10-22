@@ -230,14 +230,17 @@ rune.timer.Timers.prototype.m_updateTimers = function(step) {
         return;
     }
     
-    for (var i = 0; i < this.m_timers.length; i++) {
-        if (this.m_timers[i].disposed || this.m_timers[i]['complete'] === true) {
-            this.remove(this.m_timers[i]);
-            i--;
+    // Callbacks may remove timers or dispose the manager. New timers wait
+    // until the next update, and each remaining timer is updated once.
+    var timers = this.m_timers.slice();
+    for (var i = 0; i < timers.length; i++) {
+        var timer = timers[i];
+        if (this.m_timers == null) return;
+        if (this.m_timers.indexOf(timer) < 0) continue;
+        if (timer.disposed || timer['complete'] === true) {
+            this.remove(timer);
         } else {
-            if (this.m_updateTimer(i, step) == true) {
-                i--;
-            }
+            this.m_updateTimer(timer, step);
         }
     }
 };
@@ -245,21 +248,17 @@ rune.timer.Timers.prototype.m_updateTimers = function(step) {
 /**
  * Updating a Timer object.
  *
- * @param {number} index Timer index.
+ * @param {rune.timer.Timer} timer Timer to update.
  * @param {number} step Current time step.
  *
  * @return {boolean}
  * @private
  */
-rune.timer.Timers.prototype.m_updateTimer = function(index, step) {
-    if (this.m_timers[index].update(step)) {
-        this.m_timers[index].dispose();
-        this.m_timers[index] = null;
-        this.m_timers.splice(index, 1);
-        
-        return true;
+rune.timer.Timers.prototype.m_updateTimer = function(timer, step) {
+    if (timer.update(step) && this.m_timers != null && this.m_timers.indexOf(timer) >= 0) {
+        return this.remove(timer);
     }
-    
+
     return false;
 };
 

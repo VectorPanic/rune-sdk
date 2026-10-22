@@ -78,6 +78,14 @@ rune.state.States = function(owner) {
      * @private
      */
     this.m_swap = null;
+
+    /**
+     * Batch being activated, protected while the previous state exits.
+     *
+     * @type {?Array.<rune.state.State>}
+     * @private
+     */
+    this.m_incoming = null;
 };
 
 //------------------------------------------------------------------------------
@@ -114,6 +122,7 @@ Object.defineProperty(rune.state.States.prototype, "selected", {
  * Each state object may occur only once in a batch. Invalid input leaves the
  * active and pending lists unchanged. A load requested from init() is kept
  * pending until the next update; the latest pending request takes precedence.
+ * Loads from onExit() do not replace the batch currently being activated.
  *
  * @param {Array.<rune.state.State>} states List of instantiated states.
  *
@@ -127,7 +136,7 @@ rune.state.States.prototype.load = function(states) {
         var previous = this.m_swap;
         this.m_requested = null;
         this.m_swap = batch;
-        this.m_disposeStateList(previous, this.m_states.concat(batch));
+        this.m_disposeStateList(previous, this.m_states.concat(this.m_incoming || [], batch));
     } else throw new Error("Invalid state batch");
 };
 
@@ -249,15 +258,17 @@ rune.state.States.prototype.m_initStates = function() {
     this.m_transitioning = true;
     try {
         var oldState = this['selected'] || null;
-        var newState = this.m_swap[0];
+        var states = this.m_swap;
+        this.m_swap = null;
+        this.m_incoming = states;
+        var newState = states[0];
         if (oldState != null && oldState !== newState) {
             oldState.onExit(newState);
-            if (this.m_states !== oldStates) return;
+            if (this.m_states !== oldStates || this.m_incoming !== states) return;
         }
 
-        var states = this.m_swap;
         this.m_states = states;
-        this.m_swap = null;
+        this.m_incoming = null;
         this.m_requested = null;
         this.m_selected = 0;
         for (var i = 0; this.m_states === states && i < states.length; i++) {
@@ -325,7 +336,7 @@ rune.state.States.prototype.m_renderStates = function() {
 };
 
 /**
- * Detaches and cleans up active, pending and optional retired states once each.
+ * Detaches and cleans up active, incoming, pending and retired states once each.
  * Loads requested by cleanup callbacks are drained without initialization.
  * Every cleanup is attempted before the first error is rethrown.
  *
@@ -342,10 +353,11 @@ rune.state.States.prototype.m_disposeAllStates = function(retired) {
     var failure = null;
     try {
         do {
-            var batch = (retired || []).concat(this.m_states, this.m_swap || []);
+            var batch = (retired || []).concat(this.m_states, this.m_incoming || [], this.m_swap || []);
             retired = null;
             this.m_states = [];
             this.m_swap = null;
+            this.m_incoming = null;
             this.m_requested = null;
             this.m_selected = 0;
             var states = [];
@@ -399,7 +411,7 @@ rune.state.States.prototype.m_hasPendingStates = function() {
 
 /**
  * Disposes each distinct state not included in keep exactly once.
- * Active and pending lists are checked again after each callback so newly
+ * Active, incoming and pending lists are checked after each callback so newly
  * retained states survive, except during full cleanup.
  * The input arrays are not modified. Owner references are released even if
  * dispose() throws. Remaining states are attempted before rethrowing the first error.
@@ -418,6 +430,7 @@ rune.state.States.prototype.m_disposeStateList = function(states, keep) {
         for (var i = 0; i < states.length; i++) {
             var state = states[i];
             var retained = !this.m_disposing && (this.m_states.indexOf(state) >= 0 ||
+                (this.m_incoming != null && this.m_incoming.indexOf(state) >= 0) ||
                 (this.m_swap != null && this.m_swap.indexOf(state) >= 0));
             if (state instanceof rune.state.State && !retained && keep.indexOf(state) < 0 && disposed.indexOf(state) < 0) {
                 disposed.push(state);

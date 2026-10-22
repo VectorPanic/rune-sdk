@@ -109,24 +109,27 @@ rune.state.States.prototype.load = function(states) {
 };
 
 /**
- * Selects and activates a state based on its name.
+ * Selects and activates a state based on its name. Aborts if onExit()
+ * disposes or replaces the active list.
  *
  * @param {string} name Name of state to be selected.
  *
- * @returns {boolean} Whether a state could be selected.
+ * @returns {boolean} Whether a state could be selected without canceling the transition.
  */
 rune.state.States.prototype.select = function(name) {
     name = (name == null) ? "" : name.toString().toUpperCase();
-    if (this.m_states == null) return false;
+    var states = this.m_states;
+    if (states == null) return false;
 
-    for (var i = 0; i < this.m_states.length; i++) {
-        if (this.m_states[i]['name'].toUpperCase() == name) {
+    for (var i = 0; i < states.length; i++) {
+        if (states[i]['name'].toUpperCase() == name) {
             if (this.m_selected != i) {
                 var a = i;
                 var b = this.m_selected;
-                this.m_states[this.m_selected]['onExit'](this.m_states[a]);
+                states[b]['onExit'](states[a]);
+                if (this.m_states !== states) return false;
                 this.m_selected = a;
-                this.m_states[this.m_selected]['onEnter'](this.m_states[b]);
+                states[a]['onEnter'](states[b]);
             }
             
             return true;
@@ -194,6 +197,7 @@ rune.state.States.prototype.m_initStates = function() {
         var newState = this.m_swap[0];
         if (oldState != null && oldState !== newState) {
             oldState.onExit(newState);
+            if (this.m_states !== oldStates) return;
         }
         
         this.m_states = this.m_swap;

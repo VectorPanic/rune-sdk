@@ -336,8 +336,9 @@ rune.scene.Scenes.prototype.m_iniScenes = function() {
         this.m_cs = (selection > -1 && selection < batch.length) ? selection : 0;
         this.m_rs = this.m_cs;
 
-        for (var i = 0; i < this.m_cb.length; i++) {
-            this.m_cb[i].init();
+        for (var i = 0; i < batch.length; i++) {
+            batch[i].init();
+            if (this.m_cb !== batch) return;
         }
         
         this.m_selectInitialScene();
@@ -377,6 +378,7 @@ rune.scene.Scenes.prototype.m_updateBatch = function(step) {
 /**
  * Updates selection within the current batch. If another batch is pending,
  * the requested index belongs to that batch and must not select an old scene.
+ * Stops the transition if onDeselect() disposes or replaces the current batch.
  *
  * @param {number} step Current time step.
  *
@@ -387,13 +389,15 @@ rune.scene.Scenes.prototype.m_updateSelection = function(step) {
     if (!this.m_hasPendingBatch() && this.m_cb != null &&
         this.m_rs > -1 && this.m_rs < this.m_cb.length && this.m_cs != this.m_rs) {
         
-        var o = this.m_cb[this.m_cs];
-        var n = this.m_cb[this.m_rs];
+        var batch = this.m_cb;
+        var o = batch[this.m_cs];
+        var n = batch[this.m_rs];
         
         this.m_cs = this.m_rs;
         
         try {
             o['onDeselect'](n);
+            if (this.m_cb !== batch) return;
             n['onSelect'](o);
         } catch (error) {
             this.m_abortTransition(error);

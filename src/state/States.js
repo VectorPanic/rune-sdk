@@ -200,6 +200,7 @@ rune.state.States.prototype.dispose = function() {
 /**
  * Initiates a new batch. A failed lifecycle hook aborts the transition,
  * attempts cleanup of all owned states and propagates the original error.
+ * Initialization stops if a callback disposes or replaces the active list.
  *
  * @throws {Error} In case of invalid state swap.
  *
@@ -219,18 +220,27 @@ rune.state.States.prototype.m_initStates = function() {
             if (this.m_states !== oldStates) return;
         }
 
-        this.m_states = this.m_swap;
+        var states = this.m_swap;
+        this.m_states = states;
         this.m_swap = null;
         this.m_selected = 0;
-        for (var i = 0; i < this.m_states.length; i++) {
-            this.m_states[i].setOwner(this.m_owner);
-            this.m_states[i].init();
+        for (var i = 0; this.m_states === states && i < states.length; i++) {
+            states[i].setOwner(this.m_owner);
+            states[i].init();
         }
 
-        this.m_states[this.m_selected].onEnter(oldState);
+        if (this.m_states === states) {
+            states[this.m_selected].onEnter(oldState);
+        }
         var retired = oldStates;
         oldStates = null;
-        this.m_disposeStateList(retired, this.m_states.concat(this.m_swap || []));
+        var keep = this.m_states.concat(this.m_swap || []);
+        if (this.m_states !== states) {
+            // The canceled batch has already been cleaned up. Do not dispose
+            // its shared states again while retiring the previous list.
+            keep = keep.concat(states);
+        }
+        this.m_disposeStateList(retired, keep);
     } catch (error) {
         this.m_abortTransition(error, oldStates);
     }

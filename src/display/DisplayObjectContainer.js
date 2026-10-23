@@ -410,8 +410,8 @@ rune.display.DisplayObjectContainer.prototype.sendChildToBack = function(child) 
 };
 
 /**
- * Sorts the instance's child objects based on the specified function. Any 
- * kind of sorting breaks the instance's pixel buffer cache.
+ * Sorts the instance's child objects based on the specified function.
+ * Invalidates the pixel cache only when the child order changes.
  *
  * @param {Function} func Sort function
  *
@@ -421,9 +421,15 @@ rune.display.DisplayObjectContainer.prototype.sendChildToBack = function(child) 
  */
 rune.display.DisplayObjectContainer.prototype.sortChildren = function(func) {
     if (typeof func === "function") {
-        if (this.m_children != null) {
+        if (this.m_children != null && this.m_children.length > 1) {
+            var children = this.m_children.slice();
             this.m_children.sort(func);
-            this.breakCache();
+            for (var i = 0; i < children.length; i++) {
+                if (children[i] !== this.m_children[i]) {
+                    this.breakCache();
+                    break;
+                }
+            }
         }
     } else throw new TypeError();
 };

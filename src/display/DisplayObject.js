@@ -27,20 +27,6 @@
 rune.display.DisplayObject = function(x, y, width, height) {
     
     //--------------------------------------------------------------------------
-    // Public properties
-    //--------------------------------------------------------------------------
-    
-    /**
-     * If debug mode is enabled, this color is used to visualize the geometric 
-     * size of the display object. Note that it is the size of the entire 
-     * display object and not just the object's hitbox.
-     *
-     * @type {string}
-     * @default rune.util.Palette.WHITE
-     */
-    this.debugColor = rune.util.Palette.WHITE;
-    
-    //--------------------------------------------------------------------------
     // Protected properties
     //--------------------------------------------------------------------------
     
@@ -103,6 +89,15 @@ rune.display.DisplayObject = function(x, y, width, height) {
      * @ignore
      */
     this.m_debug = false;
+
+    /**
+     * Color used to visualize the display object's geometric bounds.
+     *
+     * @type {string}
+     * @protected
+     * @ignore
+     */
+    this.m_debugColor = rune.util.Palette.WHITE;
     
     /**
      * Represents a subsystem for a flicker effect.
@@ -500,6 +495,38 @@ Object.defineProperty(rune.display.DisplayObject.prototype, "debug", {
             if (this['parent'] != null) {
                 this['parent'].breakCache();
             }   
+        }
+    }
+});
+
+/**
+ * Color used to visualize the entire display object's bounds in debug mode.
+ * Changing the color invalidates parent buffers containing the debug outline.
+ *
+ * @member {string} debugColor
+ * @memberof rune.display.DisplayObject
+ * @instance
+ * @default rune.util.Palette.WHITE
+ */
+Object.defineProperty(rune.display.DisplayObject.prototype, "debugColor", {
+    /**
+     * @this rune.display.DisplayObject
+     * @ignore
+     */
+    get : function() {
+        return this.m_debugColor;
+    },
+
+    /**
+     * @this rune.display.DisplayObject
+     * @ignore
+     */
+    set : function(value) {
+        if (this.m_debugColor != value) {
+            this.m_debugColor = value;
+            if (this['parent'] != null) {
+                this['parent'].breakCache();
+            }
         }
     }
 });

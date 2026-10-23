@@ -593,7 +593,7 @@ rune.display.DisplayObjectContainer.prototype.m_renderChildDebug = function(chil
             child['y'],
             child['width'],
             child['height'],
-            child.debugColor,
+            child['debugColor'],
             1
         );   
     }

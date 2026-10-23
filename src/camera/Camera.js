@@ -395,10 +395,15 @@ rune.camera.Camera.prototype.update = function(step) {
 
 /**
  * @inheritDoc
+ * Keeps ancestor buffers uncached because camera input and effects can change
+ * independently of the display list containing the camera.
+ * @suppress {accessControls}
  */
 rune.camera.Camera.prototype.render = function() {
-    //@note: Never perform cache checking, cameras do not use cache.
-    //@note: Always use custom render flow.
+    this.breakCache();
+
+    // NEVER PERFORM CACHE CHECKING, CAMERAS DO NOT USE CACHE.
+    // ALWAYS USE CUSTOM RENDER FLOW.
     this.m_updateViewportOffset();
     this.m_renderBackgroundColor();
     this.m_renderMapBackBuffer();

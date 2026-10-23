@@ -14,12 +14,12 @@
  * @class
  * @classdesc
  * Accepts Button children and navigates in insertion order, independently of
- * display depth or sorting. Navigation skips disabled buttons and wraps by
+ * display depth or sorting. Navigation skips hidden or disabled buttons and wraps by
  * default; set wrap to false to stop at the ends. The
  * first enabled button receives focus. Game code positions the children and
  * supplies input through next(), previous(), select(), press() and release().
  * Focus is reconciled during update(), selection queries and input calls, so
- * disabling the selected button moves focus to the next enabled button.
+ * hiding or disabling the selected button moves focus to the next available button.
  * Button focus is owned by the group while the button is a child.
  * The pixel buffer automatically fits the buttons, including negative positions,
  * scaling and rotation. Child coordinates remain relative to the group origin.
@@ -411,7 +411,7 @@ rune.ui.ButtonGroup.prototype.cancel = function() {
 
 /**
  * Focuses a button by its insertion-order index without activating it.
- * Invalid indices, disabled buttons and disabled groups are ignored.
+ * Invalid indices, hidden or disabled buttons and disabled groups are ignored.
  *
  * @param {number} index Insertion-order index.
  *
@@ -424,7 +424,7 @@ rune.ui.ButtonGroup.prototype.focusAt = function(index) {
 };
 
 /**
- * Focuses an enabled child button without activating it.
+ * Focuses a visible, enabled child button without activating it.
  *
  * @param {rune.ui.Button} button Button belonging to this group.
  *
@@ -432,7 +432,7 @@ rune.ui.ButtonGroup.prototype.focusAt = function(index) {
  */
 rune.ui.ButtonGroup.prototype.focusButton = function(button) {
     if (this.m_enabled === false || this.m_buttons.indexOf(button) === -1 ||
-        button.enabled === false) return false;
+        button.enabled === false || button['visible'] === false) return false;
     return this.m_setSelection(button);
 };
 
@@ -533,7 +533,7 @@ rune.ui.ButtonGroup.prototype.m_renderChild = function(child) {
  */
 rune.ui.ButtonGroup.prototype.m_updateSelection = function() {
     var index = this.m_buttons.indexOf(this.m_selected);
-    if (index === -1 || this.m_selected.enabled === false) {
+    if (index === -1 || this.m_selected.enabled === false || this.m_selected['visible'] === false) {
         this.m_setSelection(this.m_findButton(index, 1));
     }
     for (var i = 0; i < this.m_buttons.length; i++) {
@@ -564,7 +564,9 @@ rune.ui.ButtonGroup.prototype.m_findButton = function(index, direction, wrap) {
         index += direction;
         if (wrap === false && (index < 0 || index >= count)) return null;
         index = (index + count) % count;
-        if (this.m_buttons[index].enabled === true) return this.m_buttons[index];
+        if (this.m_buttons[index].enabled === true && this.m_buttons[index]['visible'] === true) {
+            return this.m_buttons[index];
+        }
     }
     return null;
 };

@@ -23,6 +23,8 @@
  * the inherited animation getter or override m_initAnimations(). Menus and
  * input handlers call focus(), blur(), press(), release() and cancel(). This
  * keeps gamepad navigation independent of future pointer input handling.
+ * Invisible buttons reject focus and activation. Hiding cancels pending presses;
+ * temporary flicker effects do not affect navigation or activation.
  */
 rune.ui.Button = function(x, y, width, height, resource) {
 
@@ -82,6 +84,36 @@ rune.ui.Button.prototype.constructor = rune.ui.Button;
 //------------------------------------------------------------------------------
 // Public getter and setter methods
 //------------------------------------------------------------------------------
+
+/**
+ * Whether the button is visible. Hiding clears focus and cancels a press.
+ *
+ * @member {boolean} visible
+ * @memberof rune.ui.Button
+ * @instance
+ */
+Object.defineProperty(rune.ui.Button.prototype, "visible", {
+    /**
+     * @this rune.ui.Button
+     * @ignore
+     */
+    get : function() {
+        return Object.getOwnPropertyDescriptor(rune.display.DisplayObject.prototype, "visible").get.call(this);
+    },
+
+    /**
+     * @this rune.ui.Button
+     * @ignore
+     */
+    set : function(value) {
+        value = Boolean(value);
+        Object.getOwnPropertyDescriptor(rune.display.DisplayObject.prototype, "visible").set.call(this, value);
+        if (value === false) {
+            this.blur();
+            this.cancel();
+        }
+    }
+});
 
 /**
  * Whether the button accepts input. Disabling clears focus and cancels a press.
@@ -197,12 +229,12 @@ rune.ui.Button.prototype.dispose = function() {
 //------------------------------------------------------------------------------
 
 /**
- * Gives an enabled button navigation focus.
+ * Gives a visible, enabled button navigation focus.
  *
  * @return {boolean} Whether focus changed.
  */
 rune.ui.Button.prototype.focus = function() {
-    if (this.m_enabled === false || this.m_focused === true) return false;
+    if (this.m_enabled === false || this['visible'] === false || this.m_focused === true) return false;
     this.m_focused = true;
     this.m_updateAppearance();
     return true;
@@ -227,7 +259,7 @@ rune.ui.Button.prototype.blur = function() {
  * @return {boolean} Whether a new press began.
  */
 rune.ui.Button.prototype.press = function() {
-    if (this.m_enabled === false || this.m_focused === false || this.m_pressed === true) return false;
+    if (this.m_enabled === false || this['visible'] === false || this.m_focused === false || this.m_pressed === true) return false;
     this.m_pressed = true;
     this.m_updateAppearance();
     return true;
@@ -260,13 +292,13 @@ rune.ui.Button.prototype.cancel = function() {
 };
 
 /**
- * Activates an enabled button directly, without requiring focus or a press.
+ * Activates a visible, enabled button without requiring focus or a press.
  * The handler receives this button as its only argument.
  *
  * @return {boolean} Whether activation was accepted.
  */
 rune.ui.Button.prototype.activate = function() {
-    if (this.m_enabled === false) return false;
+    if (this.m_enabled === false || this['visible'] === false) return false;
     if (this.m_onActivate != null) {
         this.m_onActivate.execute(this);
     }

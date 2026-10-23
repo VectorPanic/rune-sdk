@@ -352,6 +352,7 @@ rune.ui.ButtonGroup.prototype.previous = function() {
 /**
  * Activates the selected button directly. Any pending group press is cancelled
  * first so a later release cannot trigger a second activation.
+ * Activation is cancelled if a focus-change callback disables the group.
  *
  * @return {boolean} Whether activation was accepted.
  */
@@ -359,7 +360,7 @@ rune.ui.ButtonGroup.prototype.select = function() {
     if (this.m_enabled === false) return false;
     this.m_updateSelection();
     this.cancel();
-    return this.m_selected != null ? this.m_selected.activate() : false;
+    return this.m_enabled === true && this.m_selected != null ? this.m_selected.activate() : false;
 };
 
 /**

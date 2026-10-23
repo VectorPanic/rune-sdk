@@ -427,8 +427,10 @@ demo.scene.Scene002.prototype.m_updateInputZoom = function() {
  * @private
  */
 demo.scene.Scene002.prototype.m_updateSceneSelect = function() {
-    if (this.keyboard.pressed("ESCAPE")) {
-        this.application.scenes.select(0);
+    if (this.keyboard.justPressed("ESCAPE")) {
+        this.application.transitions.select(0, new rune.transition.Crossfade({
+            duration: 600
+        }));
     }
 };
 

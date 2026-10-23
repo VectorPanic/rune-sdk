@@ -294,7 +294,10 @@ demo.scene.Scene005.prototype.m_updateInput = function() {
     }
     
     if (keys.justPressed("ESCAPE")) {
-        this.application.scenes.select(0);
+        this.application.transitions.select(0, new rune.transition.Slide({
+            duration: 600,
+            direction: "right"
+        }));
     }
 };
 

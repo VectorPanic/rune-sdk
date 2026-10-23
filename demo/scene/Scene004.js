@@ -245,8 +245,11 @@ demo.scene.Scene004.prototype.m_updateInput = function(step) {
         this.m_toggleControls();
     }
 
-    if (this.keyboard.pressed("ESCAPE")) {
-        this.application.scenes.select(0);
+    if (this.keyboard.justPressed("ESCAPE")) {
+        this.application.transitions.select(0, new rune.transition.Checkerboard({
+            duration: 800,
+            tileSize: 16
+        }));
     }
 };
 

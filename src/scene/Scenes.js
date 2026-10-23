@@ -104,6 +104,24 @@ Object.defineProperty(rune.scene.Scenes.prototype, "selected", {
     },
 });
 
+/**
+ * Whether a requested batch or selection still awaits lifecycle processing.
+ *
+ * @member {boolean} pending
+ * @memberof rune.scene.Scenes
+ * @instance
+ * @readonly
+ */
+Object.defineProperty(rune.scene.Scenes.prototype, "pending", {
+    /**
+     * @this rune.scene.Scenes
+     * @ignore
+     */
+    get : function() {
+        return this.m_rb != null || this.m_cs !== this.m_rs;
+    }
+});
+
 //------------------------------------------------------------------------------
 // Public prototype methods (API)
 //------------------------------------------------------------------------------
@@ -222,17 +240,18 @@ rune.scene.Scenes.prototype.select = function(index) {
 //------------------------------------------------------------------------------
 
 /**
- * Updates current scenes.
+ * Processes requested lifecycle changes and optionally updates scene logic.
  *
  * @param {number} step Current time step.
+ * @param {boolean} [active=true] Whether scene updates should run after lifecycle processing.
  *
  * @returns {undefined}
  * @ignore
  */
-rune.scene.Scenes.prototype.update = function(step) {
+rune.scene.Scenes.prototype.update = function(step, active) {
     this.m_updateBatch(step);
     this.m_updateSelection(step);
-    this.m_updateScenes(step);
+    if (active !== false) this.m_updateScenes(step);
 };
 
 /**

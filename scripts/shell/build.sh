@@ -130,6 +130,12 @@ npx google-closure-compiler \
 --js "./../../src/camera/Cameras.js" \
 --js "./../../src/scene/Scene.js" \
 --js "./../../src/scene/Scenes.js" \
+--js "./../../src/transition/Transition.js" \
+--js "./../../src/transition/Crossfade.js" \
+--js "./../../src/transition/Iris.js" \
+--js "./../../src/transition/Checkerboard.js" \
+--js "./../../src/transition/Slide.js" \
+--js "./../../src/transition/Transitions.js" \
 --js "./../../src/ui/button/Button.js" \
 --js "./../../src/ui/button/ButtonGroup.js" \
 --js "./../../src/ui/counter/CounterDigit.js" \

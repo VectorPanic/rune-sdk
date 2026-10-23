@@ -277,18 +277,39 @@ rune.display.Screen.prototype.render = function() {
     if (this["visible"] == true) {
         var screenshot = this.m_screenshot;
         this.m_screenshot = null;
-        this.m_renderBackgroundColor();
-        this.m_renderCameras();
-        this.m_renderChildren();
+        var transitions = rune.system.Application['instance']['transitions'];
+        
+        if (transitions == null || transitions.render(this.m_canvas) === false) {
+            this.renderContent();
+        }
+        
         if (screenshot != null && screenshot['includeDebug'] === false) {
             this.m_captureScreenshot(screenshot['filename']);
         }
+        
         this.m_renderDebugger();
         this.m_renderConsole();
+        
         if (screenshot != null && screenshot['includeDebug'] === true) {
             this.m_captureScreenshot(screenshot['filename']);
         }
     }
+};
+
+/**
+ * Renders clean application content before screenshots and debug overlays.
+ * Used by frozen-image transitions when capturing a scene.
+ *
+ * @return {undefined}
+ * @ignore
+ */
+rune.display.Screen.prototype.renderContent = function() {
+    this.m_renderBackgroundColor();
+    if (rune.system.Application['instance']['scenes']['selected'] != null) {
+        this.m_renderCameras();
+    }
+    
+    this.m_renderChildren();
 };
 
 /**

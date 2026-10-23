@@ -211,6 +211,15 @@ var rune = function() {
 	 * @since 1.0
 	 */
 	m_this.scene = {};
+
+	/**
+	 * Frozen screen-image effects coordinated with scene selection and loading.
+	 * Provides reusable transitions and supports effects defined in game code.
+	 *
+	 * @namespace transition
+	 * @memberof rune
+	 */
+	m_this.transition = {};
 	
 	/**
 	 * Finite-state machines for organizing application and object behavior.

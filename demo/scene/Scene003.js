@@ -130,8 +130,10 @@ demo.scene.Scene003.prototype.update = function(step) {
     }
 
     // BACK TO MAIN MENU
-    if (this.keyboard.pressed("ESCAPE")) {
-        this.application.scenes.select(0);
+    if (this.keyboard.justPressed("ESCAPE")) {
+        this.application.transitions.select(0, new rune.transition.Iris({
+            duration: 600
+        }));
     }
 };
 

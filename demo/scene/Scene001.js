@@ -200,7 +200,7 @@ demo.scene.Scene001.prototype.m_layoutMenu = function() {
 };
 
 /**
- * Handler function for when a menu selection is made.
+ * Opens the selected demo using a frozen-image transition.
  *
  * @param {rune.ui.VTListElement} element The list element that was selected.
  *
@@ -210,19 +210,29 @@ demo.scene.Scene001.prototype.m_layoutMenu = function() {
 demo.scene.Scene001.prototype.m_onMenuSelect = function(element) {
     switch (element.text) {
         case "Scene001":
-            this.application.scenes.select(1);
+            this.application.transitions.select(1, new rune.transition.Crossfade({
+                duration: 600
+            }));
             break;
             
         case "Scene002":
-            this.application.scenes.select(2);
+            this.application.transitions.select(2, new rune.transition.Iris({
+                duration: 600
+            }));
             break;
             
         case "Scene003":
-            this.application.scenes.select(3);
+            this.application.transitions.select(3, new rune.transition.Checkerboard({
+                duration: 800,
+                tileSize: 16
+            }));
             break;
             
         case "Scene004":
-            this.application.scenes.select(4);
+            this.application.transitions.select(4, new rune.transition.Slide({
+                duration: 600,
+                direction: "left"
+            }));
             break;
     }
 };

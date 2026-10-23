@@ -68,6 +68,14 @@ rune.system.Application = function(options) {
      * @private
      */
     this.m_scenes = null;
+
+    /**
+     * Application-owned frozen scene-image transitions.
+     *
+     * @type {rune.transition.Transitions}
+     * @private
+     */
+    this.m_transitions = null;
     
     /**
      * Represents the application screen, ie. the rectangular surface where 
@@ -311,6 +319,24 @@ Object.defineProperty(rune.system.Application.prototype, "scenes", {
      */
     get : function() {
         return this.m_scenes;
+    }
+});
+
+/**
+ * Coordinates image transitions during scene selection and batch loading.
+ *
+ * @member {rune.transition.Transitions} transitions
+ * @memberof rune.system.Application
+ * @instance
+ * @readonly
+ */
+Object.defineProperty(rune.system.Application.prototype, "transitions", {
+    /**
+     * @this rune.system.Application
+     * @ignore
+     */
+    get : function() {
+        return this.m_transitions;
     }
 });
 
@@ -572,6 +598,7 @@ rune.system.Application.prototype.m_init = function() {
     this.m_initScreen();
     this.m_initTime();
     this.m_initScenes();
+    this.m_initTransitions();
     this.m_initCommands();
 };
 
@@ -732,6 +759,17 @@ rune.system.Application.prototype.m_initScenes = function() {
 };
 
 /**
+ * Initializes transitions after the screen and scene manager are available.
+ *
+ * @return {undefined}
+ * @private
+ */
+rune.system.Application.prototype.m_initTransitions = function() {
+    this.m_disposeTransitions();
+    this.m_transitions = new rune.transition.Transitions(this);
+};
+
+/**
  * Adds standard commands to Rune's debug console.
  *
  * @return {undefined}
@@ -794,7 +832,9 @@ rune.system.Application.prototype.m_updateInputs = function(step) {
  * @private
  */
 rune.system.Application.prototype.m_updateScenes = function(step) {
-    if (this.m_scenes != null) {
+    if (this.m_transitions != null && this.m_transitions['active']) {
+        this.m_transitions.update(step);
+    } else if (this.m_scenes != null) {
         this.m_scenes.update(step);
     }
 };
@@ -834,8 +874,19 @@ rune.system.Application.prototype.m_updateSounds = function(step) {
  * @private
  */
 rune.system.Application.prototype.m_render = function() {
-    this.m_renderScenes();
-    this.m_renderScreen();
+    try {
+        this.m_renderScenes();
+        this.m_renderScreen();
+    } catch (error) {
+        if (this.m_transitions != null) {
+            try {
+                this.m_transitions.cancel();
+            } catch (cleanupError) {
+                // CLEANUP MUST NOT HIDE THE ORIGINAL RENDERING ERROR.
+            }
+        }
+        throw error;
+    }
 };
 
 /**
@@ -845,7 +896,8 @@ rune.system.Application.prototype.m_render = function() {
  * @private
  */
 rune.system.Application.prototype.m_renderScenes = function() {
-    if (this.m_scenes!= null) {
+    if (this.m_scenes!= null && (this.m_transitions == null ||
+        !this.m_transitions['active'] || this.m_transitions['needsScene'])) {
         this.m_scenes.render();
     }
 };
@@ -869,6 +921,7 @@ rune.system.Application.prototype.m_renderScreen = function() {
  * @private
  */
 rune.system.Application.prototype.m_dispose = function() {
+    this.m_disposeTransitions();
     this.m_disposeScenes();
     this.m_disposeTime();
     this.m_disposeScreen();
@@ -878,6 +931,22 @@ rune.system.Application.prototype.m_dispose = function() {
     this.m_disposeHighscores();
     this.m_disposeInstance();
     this.m_disposeResources();
+};
+
+/**
+ * Releases frozen images before scene and screen disposal.
+ *
+ * @return {undefined}
+ * @private
+ */
+rune.system.Application.prototype.m_disposeTransitions = function() {
+    if (this.m_transitions != null) {
+        try {
+            this.m_transitions.dispose();
+        } finally {
+            this.m_transitions = null;
+        }
+    }
 };
 
 /**

@@ -95,13 +95,17 @@ Object.defineProperty(rune.display.Graphics.prototype, "numOperations", {
 //------------------------------------------------------------------------------
 
 /**
- * Clears the graphics that were drawn with this Graphics object.
+ * Clears the drawing queue and invalidates the owner and its parent caches.
+ * Existing graphics disappear the next time the owner is rendered.
  *
  * @returns {undefined}
  */
 rune.display.Graphics.prototype.clear = function() {
 	if (this.m_queue != null) {
 		this.m_queue.clear();
+		if (this.m_displayObject != null) {
+			this.m_displayObject.breakCache();
+		}
 	}
 };
 
@@ -271,7 +275,7 @@ rune.display.Graphics.prototype.dispose = function() {
 rune.display.Graphics.prototype.render = function() {
 	this.m_renderQueue();
     if (this.autoClear == true && this.m_queue != null) {
-        this.clear();
+        this.m_queue.clear();
     }
 };
 

@@ -356,11 +356,13 @@ rune.display.DisplayObjectContainer.prototype.getChildren = function() {
  */
 rune.display.DisplayObjectContainer.prototype.getContentBounds = function(rect) {
     rect = rect || new rune.geom.Rectangle();
+    
     var children = this.m_children;
     var left = Infinity;
     var top = Infinity;
     var right = -Infinity;
     var bottom = -Infinity;
+    
     if (children != null) {
         for (var i = 0; i < children.length; i++) {
             var child = children[i];
@@ -384,10 +386,12 @@ rune.display.DisplayObjectContainer.prototype.getContentBounds = function(rect) 
             }
         }
     }
-    rect['x'] = left === Infinity ? 0 : left;
-    rect['y'] = top === Infinity ? 0 : top;
-    rect['width'] = left === Infinity ? 0 : right - left;
-    rect['height'] = top === Infinity ? 0 : bottom - top;
+    
+    rect['x']       = left === Infinity ? 0 : left;
+    rect['y']       = top  === Infinity ? 0 : top;
+    rect['width']   = left === Infinity ? 0 : right - left;
+    rect['height']  = top  === Infinity ? 0 : bottom - top;
+    
     return rect;
 };
 

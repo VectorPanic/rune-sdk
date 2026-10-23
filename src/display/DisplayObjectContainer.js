@@ -270,6 +270,55 @@ rune.display.DisplayObjectContainer.prototype.getChildren = function() {
 };
 
 /**
+ * Returns the bounds of direct children's rendered rectangles in local pixels.
+ * Includes hidden children and accounts for their scale, pivot, rotation and
+ * reflection. The container's own transform, background and drawing commands
+ * are excluded. Descendants are represented by their direct parent's buffer.
+ * Does not resize the container or reposition children. Empty containers return
+ * a zero rectangle. Results are calculated on each call and are not shared.
+ *
+ * @param {rune.geom.Rectangle} [rect] Rectangle to overwrite instead of allocating.
+ *
+ * @returns {rune.geom.Rectangle} Content bounds, or the supplied rectangle.
+ */
+rune.display.DisplayObjectContainer.prototype.getContentBounds = function(rect) {
+    rect = rect || new rune.geom.Rectangle();
+    var children = this.m_children;
+    var left = Infinity;
+    var top = Infinity;
+    var right = -Infinity;
+    var bottom = -Infinity;
+    if (children != null) {
+        for (var i = 0; i < children.length; i++) {
+            var child = children[i];
+            var frame = child.getRenderFrame();
+            var angle = child['rotation'] * rune.util.Math.DEG_TO_RAD;
+            var cos = Math.cos(angle);
+            var sin = Math.sin(angle);
+            var px = child['pivotX'];
+            var py = child['pivotY'];
+            var fx = child['flippedX'] ? -1 : 1;
+            var fy = child['flippedY'] ? -1 : 1;
+            for (var corner = 0; corner < 4; corner++) {
+                var x = (corner % 2) * frame['width'] - px;
+                var y = Math.floor(corner / 2) * frame['height'] - py;
+                var tx = frame['x'] + px + fx * (cos * x - sin * y);
+                var ty = frame['y'] + py + fy * (sin * x + cos * y);
+                left = Math.min(left, tx);
+                top = Math.min(top, ty);
+                right = Math.max(right, tx);
+                bottom = Math.max(bottom, ty);
+            }
+        }
+    }
+    rect['x'] = left === Infinity ? 0 : left;
+    rect['y'] = top === Infinity ? 0 : top;
+    rect['width'] = left === Infinity ? 0 : right - left;
+    rect['height'] = top === Infinity ? 0 : bottom - top;
+    return rect;
+};
+
+/**
  * Checks whether a display object is a child of the DisplayObjectContainer 
  * instance.
  *

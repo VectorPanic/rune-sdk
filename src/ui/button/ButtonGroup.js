@@ -56,6 +56,14 @@ rune.ui.ButtonGroup = function(x, y) {
     this.m_contentY = 0;
 
     /**
+     * Reused rectangle for measuring the button content.
+     *
+     * @type {rune.geom.Rectangle}
+     * @private
+     */
+    this.m_contentBounds = new rune.geom.Rectangle();
+
+    /**
      * Currently selected button, or null when none is enabled.
      *
      * @type {rune.ui.Button}
@@ -467,40 +475,18 @@ rune.ui.ButtonGroup.prototype.onChange = function(func, scope) {
  * @ignore
  */
 rune.ui.ButtonGroup.prototype.m_updateSize = function() {
-    var left = 0;
-    var top = 0;
-    var right = 0;
-    var bottom = 0;
-    for (var i = 0; i < this.m_buttons.length; i++) {
-        var button = this.m_buttons[i];
-        var frame = button.getRenderFrame();
-        var angle = button['rotation'] * rune.util.Math.DEG_TO_RAD;
-        var cos = Math.cos(angle);
-        var sin = Math.sin(angle);
-        var px = button['pivotX'];
-        var py = button['pivotY'];
-        var fx = button['flippedX'] ? -1 : 1;
-        var fy = button['flippedY'] ? -1 : 1;
-        for (var corner = 0; corner < 4; corner++) {
-            var x = (corner % 2) * frame['width'] - px;
-            var y = Math.floor(corner / 2) * frame['height'] - py;
-            var tx = frame['x'] + px + fx * (cos * x - sin * y);
-            var ty = frame['y'] + py + fy * (sin * x + cos * y);
-            left = Math.min(left, tx);
-            top = Math.min(top, ty);
-            right = Math.max(right, tx);
-            bottom = Math.max(bottom, ty);
-        }
-    }
-    left = Math.floor(left);
-    top = Math.floor(top);
+    var bounds = this.getContentBounds(this.m_contentBounds);
+    var left = Math.floor(Math.min(0, bounds['x']));
+    var top = Math.floor(Math.min(0, bounds['y']));
+    var right = Math.ceil(Math.max(0, bounds['x'] + bounds['width']));
+    var bottom = Math.ceil(Math.max(0, bounds['y'] + bounds['height']));
     if (left !== this.m_contentX || top !== this.m_contentY) {
         this.m_contentX = left;
         this.m_contentY = top;
         this.breakCache();
     }
-    this['unscaledWidth'] = Math.ceil(right) - left;
-    this['unscaledHeight'] = Math.ceil(bottom) - top;
+    this['unscaledWidth'] = right - left;
+    this['unscaledHeight'] = bottom - top;
 };
 
 /**

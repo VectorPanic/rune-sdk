@@ -85,10 +85,11 @@ rune.debug.Histogram.prototype.update = function(step) {
  */
 rune.debug.Histogram.prototype.render = function() {
     if (this.m_cached == false) {
+        var version = this.m_cacheVersion;
         this.m_renderBackgroundColor();
         this.m_renderValues();
         
-        this.restoreCache();
+        this.restoreCache(version);
     }
 };
 

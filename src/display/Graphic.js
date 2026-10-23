@@ -99,13 +99,14 @@ rune.display.Graphic.prototype.dispose = function() {
  */
 rune.display.Graphic.prototype.render = function() {
 	if (this.m_cached == false) {
+		var version = this.m_cacheVersion;
 		this.m_renderBackgroundColor();
 		this.m_renderTexture();
 		this.m_renderChildren();
 		this.m_renderGraphics();
 		this.m_renderStates();
 		
-		this.restoreCache();
+		this.restoreCache(version);
 	}
 };
 

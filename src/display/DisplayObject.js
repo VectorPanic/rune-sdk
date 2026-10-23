@@ -75,6 +75,15 @@ rune.display.DisplayObject = function(x, y, width, height) {
      * @ignore
      */
     this.m_cached = false;
+
+    /**
+     * Revision incremented whenever the pixel cache is invalidated.
+     *
+     * @type {number}
+     * @protected
+     * @ignore
+     */
+    this.m_cacheVersion = 0;
     
     /**
      * Used to draw and store the graphical representation (ie bitmap data) 
@@ -1086,10 +1095,11 @@ rune.display.DisplayObject.prototype.init = function() {
  */
 rune.display.DisplayObject.prototype.render = function() {
     if (this.m_cached == false) {
+        var version = this.m_cacheVersion;
         this.m_renderBackgroundColor();
         this.m_renderStates();
         
-        this.restoreCache();
+        this.restoreCache(version);
     }
 };
 
@@ -1122,6 +1132,7 @@ rune.display.DisplayObject.prototype.fini = function() {
  */
 rune.display.DisplayObject.prototype.breakCache = function() {
     this.m_cached = false;
+    this.m_cacheVersion++;
     if (this.m_glitch != null) this.m_glitch.invalidate();
     if (this.m_parent != null) {
         this.m_parent.breakCache();
@@ -1188,17 +1199,19 @@ rune.display.DisplayObject.prototype.getRenderFrame = function() {
 };
 
 /**
- * Resets the cache of the current object, but not the remaining parent objects 
- * within the current display list hierarchy. Note that the method is internal, 
- * but there may be times when calls outside the display package may be 
- * justified.
+ * Marks the current pixel buffer as cached if no invalidation occurred during
+ * rendering. Renderers capture m_cacheVersion before drawing and pass it here.
+ * Omitting the revision restores the cache unconditionally for compatibility.
+ * Parent objects are not modified.
+ *
+ * @param {number} [version] Cache revision at the start of rendering.
  *
  * @return {undefined}
  * @package
  * @ignore
  */
-rune.display.DisplayObject.prototype.restoreCache = function() {
-    this.m_cached = true;
+rune.display.DisplayObject.prototype.restoreCache = function(version) {
+    this.m_cached = version == null || version === this.m_cacheVersion;
     if (this.m_glitch != null) this.m_glitch.invalidate();
 };
 

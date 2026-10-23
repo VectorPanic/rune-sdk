@@ -122,10 +122,11 @@ Object.defineProperty(rune.ui.Progressbar.prototype, "progress", {
  */
 rune.ui.Progressbar.prototype.render = function() {
     if (this.m_cached == false) {
+        var version = this.m_cacheVersion;
         this.m_renderBackgroundColor();
         this.m_renderProgress();
         
-        this.restoreCache();
+        this.restoreCache(version);
     }
 };
 

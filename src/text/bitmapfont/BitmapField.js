@@ -600,11 +600,12 @@ rune.text.BitmapField.prototype.update = function(step) {
  */
 rune.text.BitmapField.prototype.render = function() {
 	if (this.m_cached == false) {
+		var version = this.m_cacheVersion;
 		this.m_renderBackgroundColor();
 		this.m_renderText();
 		this.m_renderStates();
 		
-		this.restoreCache();
+		this.restoreCache(version);
 	}
 };
 

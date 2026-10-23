@@ -292,10 +292,11 @@ rune.display.NineSlice.prototype.setInsets = function(left, top, right, bottom) 
  */
 rune.display.NineSlice.prototype.render = function() {
     if (this.m_cached === false) {
+        var version = this.m_cacheVersion;
         this.m_renderBackgroundColor();
         this.m_renderTexture();
         this.m_renderStates();
-        this.restoreCache();
+        this.restoreCache(version);
     }
 };
 

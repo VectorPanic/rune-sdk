@@ -471,12 +471,13 @@ rune.display.DisplayObjectContainer.prototype.update = function(step) {
  */
 rune.display.DisplayObjectContainer.prototype.render = function() {
     if (this.m_cached == false) {
+        var version = this.m_cacheVersion;
         this.m_renderBackgroundColor();
         this.m_renderChildren();
         this.m_renderGraphics();
         this.m_renderStates();
         
-        this.restoreCache();
+        this.restoreCache(version);
     }
 };
 

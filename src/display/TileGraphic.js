@@ -301,6 +301,7 @@ rune.display.TileGraphic.prototype.dispose = function() {
  */
 rune.display.TileGraphic.prototype.render = function() {
     if (this.m_cached == false) {
+        var version = this.m_cacheVersion;
         if (this.m_canvas != null) this.m_canvas.clear();
         
         this.m_renderBackgroundColor();
@@ -309,7 +310,7 @@ rune.display.TileGraphic.prototype.render = function() {
         this.m_renderGraphics();
         this.m_renderStates();
         
-        this.restoreCache();
+        this.restoreCache(version);
     }
 };
 

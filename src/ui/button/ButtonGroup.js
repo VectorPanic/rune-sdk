@@ -293,7 +293,8 @@ rune.ui.ButtonGroup.prototype.render = function() {
 };
 
 /**
- * Includes the content offset when compositing the buffer into its parent.
+ * Transforms the content offset before compositing the buffer into its parent.
+ * Buffer padding must not move the group's rotation or reflection pivot.
  *
  * @return {rune.display.Frame} Reused render frame.
  * @suppress {accessControls}
@@ -303,8 +304,13 @@ rune.ui.ButtonGroup.prototype.render = function() {
 rune.ui.ButtonGroup.prototype.getRenderFrame = function() {
     this.m_updateSize();
     var frame = rune.display.DisplayObjectContainer.prototype.getRenderFrame.call(this);
-    frame['x'] += this.m_contentX * this['scaleX'];
-    frame['y'] += this.m_contentY * this['scaleY'];
+    var x = this.m_contentX * this['scaleX'];
+    var y = this.m_contentY * this['scaleY'];
+    var angle = this['rotation'] * rune.util.Math.DEG_TO_RAD;
+    var cos = Math.cos(angle);
+    var sin = Math.sin(angle);
+    frame['x'] += (this['flippedX'] ? -1 : 1) * (cos * x - sin * y);
+    frame['y'] += (this['flippedY'] ? -1 : 1) * (sin * x + cos * y);
     return frame;
 };
 

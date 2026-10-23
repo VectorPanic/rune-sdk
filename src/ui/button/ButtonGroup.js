@@ -23,7 +23,7 @@
  * Button focus is owned by the group while the button is a child.
  * The pixel buffer automatically fits the buttons, including negative positions,
  * scaling and rotation. Child coordinates remain relative to the group origin.
- * Size is refreshed after child changes, during update and before rendering.
+ * Inherited autoSize is enabled by default and can be disabled for manual sizing.
  */
 rune.ui.ButtonGroup = function(x, y) {
 
@@ -38,30 +38,6 @@ rune.ui.ButtonGroup = function(x, y) {
      * @private
      */
     this.m_buttons = [];
-
-    /**
-     * Left edge of the content buffer relative to the group origin.
-     *
-     * @type {number}
-     * @private
-     */
-    this.m_contentX = 0;
-
-    /**
-     * Top edge of the content buffer relative to the group origin.
-     *
-     * @type {number}
-     * @private
-     */
-    this.m_contentY = 0;
-
-    /**
-     * Reused rectangle for measuring the button content.
-     *
-     * @type {rune.geom.Rectangle}
-     * @private
-     */
-    this.m_contentBounds = new rune.geom.Rectangle();
 
     /**
      * Currently selected button, or null when none is enabled.
@@ -111,7 +87,20 @@ rune.ui.ButtonGroup = function(x, y) {
      * Extend rune.display.DisplayObjectContainer.
      */
     rune.display.DisplayObjectContainer.call(this, x, y, 0, 0);
+    
+    //--------------------------------------------------------------------------
+    // Override public properties
+    //--------------------------------------------------------------------------
+    
+    /**
+     * @inheritDoc
+     */
     this.immovable = true;
+    
+    /**
+     * @inheritDoc
+     */
+    this['autoSize'] = true;
 };
 
 //------------------------------------------------------------------------------
@@ -248,7 +237,6 @@ rune.ui.ButtonGroup.prototype.addChildAt = function(child, index) {
         this.m_buttons.push(button);
     }
     this.m_updateSelection();
-    this.m_updateSize();
     return child;
 };
 
@@ -274,7 +262,6 @@ rune.ui.ButtonGroup.prototype.removeChild = function(child, dispose) {
     var result = rune.display.DisplayObjectContainer.prototype.removeChild.call(this, child, dispose);
     if (selected) this.m_setSelection(this.m_findButton(index - 1, 1), /** @type {rune.ui.Button} */ (child));
     this.m_updateSelection();
-    this.m_updateSize();
     return result;
 };
 
@@ -289,37 +276,6 @@ rune.ui.ButtonGroup.prototype.update = function(step) {
     this.m_updateSelection();
     rune.display.DisplayObjectContainer.prototype.update.call(this, step);
     this.m_updateSelection();
-    this.m_updateSize();
-};
-
-/**
- * @inheritDoc
- */
-rune.ui.ButtonGroup.prototype.render = function() {
-    this.m_updateSize();
-    rune.display.DisplayObjectContainer.prototype.render.call(this);
-};
-
-/**
- * Transforms the content offset before compositing the buffer into its parent.
- * Buffer padding must not move the group's rotation or reflection pivot.
- *
- * @return {rune.display.Frame} Reused render frame.
- * @suppress {accessControls}
- * @package
- * @ignore
- */
-rune.ui.ButtonGroup.prototype.getRenderFrame = function() {
-    this.m_updateSize();
-    var frame = rune.display.DisplayObjectContainer.prototype.getRenderFrame.call(this);
-    var x = this.m_contentX * this['scaleX'];
-    var y = this.m_contentY * this['scaleY'];
-    var angle = this['rotation'] * rune.util.Math.DEG_TO_RAD;
-    var cos = Math.cos(angle);
-    var sin = Math.sin(angle);
-    frame['x'] += (this['flippedX'] ? -1 : 1) * (cos * x - sin * y);
-    frame['y'] += (this['flippedY'] ? -1 : 1) * (sin * x + cos * y);
-    return frame;
 };
 
 /**
@@ -464,51 +420,6 @@ rune.ui.ButtonGroup.prototype.onChange = function(func, scope) {
 //------------------------------------------------------------------------------
 // Protected prototype methods
 //------------------------------------------------------------------------------
-
-/**
- * Fits the buffer to the transformed button corners, retaining the origin.
- * Resizing only when needed preserves the existing pixel cache.
- *
- * @suppress {accessControls}
- * @return {undefined}
- * @protected
- * @ignore
- */
-rune.ui.ButtonGroup.prototype.m_updateSize = function() {
-    var bounds = this.getContentBounds(this.m_contentBounds);
-    var left = Math.floor(Math.min(0, bounds['x']));
-    var top = Math.floor(Math.min(0, bounds['y']));
-    var right = Math.ceil(Math.max(0, bounds['x'] + bounds['width']));
-    var bottom = Math.ceil(Math.max(0, bounds['y'] + bounds['height']));
-    if (left !== this.m_contentX || top !== this.m_contentY) {
-        this.m_contentX = left;
-        this.m_contentY = top;
-        this.breakCache();
-    }
-    this['unscaledWidth'] = right - left;
-    this['unscaledHeight'] = bottom - top;
-};
-
-/**
- * Draws children into the buffer without changing their local coordinates.
- *
- * @param {rune.display.DisplayObject} child Button to render.
- *
- * @return {undefined}
- * @protected
- * @ignore
- */
-rune.ui.ButtonGroup.prototype.m_renderChild = function(child) {
-    if (child == null || this.m_canvas == null) return;
-    if (child['visible'] === true) {
-        this.m_canvas.renderDisplayObject(child, this.m_contentX, this.m_contentY);
-    }
-    var context = this.m_canvas['context'];
-    context.save();
-    context.translate(-this.m_contentX, -this.m_contentY);
-    this.m_renderChildDebug(child);
-    context.restore();
-};
 
 /**
  * Restores a valid selection and ensures only its button has focus.

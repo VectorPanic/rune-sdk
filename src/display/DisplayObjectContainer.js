@@ -23,7 +23,8 @@
  * list. Each DisplayObjectContainer object has its own child list for 
  * organizing the z-order of the objects. The z-order is the front-to-back 
  * order that determines which object is drawn in front, which is behind, 
- * and so on.
+ * and so on. Set autoSize to true to fit the pixel buffer to child bounds,
+ * including negative positions, without changing local child coordinates.
  */
 rune.display.DisplayObjectContainer = function(x, y, width, height) {
     
@@ -63,6 +64,42 @@ rune.display.DisplayObjectContainer = function(x, y, width, height) {
      * @ignore
      */
     this.m_children = [];
+
+    /**
+     * Whether the buffer follows child bounds automatically.
+     *
+     * @type {boolean}
+     * @protected
+     * @ignore
+     */
+    this.m_autoSize = false;
+
+    /**
+     * Left edge of the buffer relative to the container origin.
+     *
+     * @type {number}
+     * @protected
+     * @ignore
+     */
+    this.m_contentX = 0;
+
+    /**
+     * Top edge of the buffer relative to the container origin.
+     *
+     * @type {number}
+     * @protected
+     * @ignore
+     */
+    this.m_contentY = 0;
+
+    /**
+     * Reused content bounds, allocated only when automatic sizing is used.
+     *
+     * @type {rune.geom.Rectangle}
+     * @protected
+     * @ignore
+     */
+    this.m_contentBounds = null;
     
     //--------------------------------------------------------------------------
     // Super call
@@ -84,6 +121,41 @@ rune.display.DisplayObjectContainer.prototype.constructor = rune.display.Display
 //------------------------------------------------------------------------------
 // Public getter and setter methods
 //------------------------------------------------------------------------------
+
+/**
+ * Fits the buffer to direct child bounds and the local origin. Defaults to
+ * false. Includes hidden children, rotation, reflection and scale; rounds
+ * outwards to whole pixels. Empty containers become zero-sized. The container's
+ * own background and drawing commands do not contribute to the size.
+ * Recalculates on enable, child insertion/removal, update and before compositing.
+ * Disabling retains the last size and buffer origin for subsequent manual sizing.
+ *
+ * @member {boolean} autoSize
+ * @memberof rune.display.DisplayObjectContainer
+ * @instance
+ * @default false
+ */
+Object.defineProperty(rune.display.DisplayObjectContainer.prototype, "autoSize", {
+    /**
+     * @this rune.display.DisplayObjectContainer
+     * @ignore
+     */
+    get : function() {
+        return this.m_autoSize;
+    },
+
+    /**
+     * @this rune.display.DisplayObjectContainer
+     * @ignore
+     */
+    set : function(value) {
+        value = Boolean(value);
+        if (this.m_autoSize != value) {
+            this.m_autoSize = value;
+            this.m_updateSize();
+        }
+    }
+});
 
 /**
  * Returns the number of children of this object.
@@ -174,6 +246,7 @@ rune.display.DisplayObjectContainer.prototype.addChildAt = function(child, index
     child.init();
 
     this.breakCache();
+    this.m_updateSize();
     
     return child;
 };
@@ -379,6 +452,7 @@ rune.display.DisplayObjectContainer.prototype.removeChild = function(child, disp
         }
         
         this.breakCache();
+        this.m_updateSize();
     }
     
     return (dispose) ? null : child;
@@ -519,12 +593,14 @@ rune.display.DisplayObjectContainer.prototype.swapChildren = function(a, b) {
 rune.display.DisplayObjectContainer.prototype.update = function(step) {
     rune.display.Artboard.prototype.update.call(this, step);
     this.m_updateChildren(step);
+    this.m_updateSize();
 };
 
 /**
  * @inheritDoc
  */
 rune.display.DisplayObjectContainer.prototype.render = function() {
+    this.m_updateSize();
     if (this.m_cached == false) {
         var version = this.m_cacheVersion;
         this.m_renderBackgroundColor();
@@ -537,16 +613,63 @@ rune.display.DisplayObjectContainer.prototype.render = function() {
 };
 
 /**
+ * Applies the transformed buffer offset without moving the container pivot.
+ *
+ * @return {rune.display.Frame} Reused render frame.
+ * @package
+ * @ignore
+ */
+rune.display.DisplayObjectContainer.prototype.getRenderFrame = function() {
+    this.m_updateSize();
+    var frame = rune.display.Artboard.prototype.getRenderFrame.call(this);
+    var x = this.m_contentX * this['scaleX'];
+    var y = this.m_contentY * this['scaleY'];
+    if (x != 0 || y != 0) {
+        var angle = this['rotation'] * rune.util.Math.DEG_TO_RAD;
+        var cos = Math.cos(angle);
+        var sin = Math.sin(angle);
+        frame['x'] += (this['flippedX'] ? -1 : 1) * (cos * x - sin * y);
+        frame['y'] += (this['flippedY'] ? -1 : 1) * (sin * x + cos * y);
+    }
+    return frame;
+};
+
+/**
  * @inheritDoc
  */
 rune.display.DisplayObjectContainer.prototype.dispose = function() {
     this.m_disposeChildren();
+    this.m_contentBounds = null;
     rune.display.Artboard.prototype.dispose.call(this);
 };
 
 //------------------------------------------------------------------------------
 // Protected prototype methods (ENGINE)
 //------------------------------------------------------------------------------
+
+/**
+ * Fits the buffer to content bounds while retaining the local origin.
+ *
+ * @return {undefined}
+ * @protected
+ * @ignore
+ */
+rune.display.DisplayObjectContainer.prototype.m_updateSize = function() {
+    if (this.m_autoSize == false || this.m_canvas == null) return;
+    if (this.m_contentBounds == null) this.m_contentBounds = new rune.geom.Rectangle();
+    var bounds = this.getContentBounds(this.m_contentBounds);
+    var left = Math.floor(Math.min(0, bounds['x']));
+    var top = Math.floor(Math.min(0, bounds['y']));
+    var right = Math.ceil(Math.max(0, bounds['x'] + bounds['width']));
+    var bottom = Math.ceil(Math.max(0, bounds['y'] + bounds['height']));
+    if (left != this.m_contentX || top != this.m_contentY) {
+        this.m_contentX = left;
+        this.m_contentY = top;
+        this.breakCache();
+    }
+    this['unscaledWidth'] = right - left;
+    this['unscaledHeight'] = bottom - top;
+};
 
 /**
  * Updates the internal logic for all child objects.
@@ -624,10 +747,18 @@ rune.display.DisplayObjectContainer.prototype.m_renderChild = function(child) {
     if (child == null) return;
 
     if (child['visible'] == true) {
-        this.m_canvas.renderDisplayObject(child);   
+        this.m_canvas.renderDisplayObject(child, this.m_contentX, this.m_contentY);
     }
     
-    this.m_renderChildDebug(child);
+    if (this.m_contentX != 0 || this.m_contentY != 0) {
+        var context = this.m_canvas['context'];
+        context.save();
+        context.translate(-this.m_contentX, -this.m_contentY);
+        this.m_renderChildDebug(child);
+        context.restore();
+    } else {
+        this.m_renderChildDebug(child);
+    }
 };
 
 /**

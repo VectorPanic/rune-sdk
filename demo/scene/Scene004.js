@@ -36,6 +36,14 @@ demo.scene.Scene004 = function() {
     this.m_controls;
 
     /**
+     * Direction buttons controlling the background scroll speed.
+     *
+     * @type {rune.ui.ButtonGroup}
+     * @private
+     */
+    this.m_buttons = null;
+
+    /**
      * Scroll speed.
      *
      * @type {rune.geom.Point}
@@ -79,6 +87,7 @@ demo.scene.Scene004.prototype.init = function() {
     rune.scene.Scene.prototype.init.call(this);
     this.m_initBackground();
     this.m_initControls();
+    this.m_initButtons();
 };
 
 /**
@@ -86,6 +95,7 @@ demo.scene.Scene004.prototype.init = function() {
  */
 demo.scene.Scene004.prototype.update = function(step) {
     rune.scene.Scene.prototype.update.call(this, step);
+    this.m_updateButtons();
     this.m_updateOffset(step);
     this.m_updateInput(step);
 };
@@ -94,6 +104,7 @@ demo.scene.Scene004.prototype.update = function(step) {
  * @inheritDoc
  */
 demo.scene.Scene004.prototype.dispose = function() {
+    this.m_disposeButtons();
     this.m_disposeControls();
     this.m_disposeBackground();
     rune.scene.Scene.prototype.dispose.call(this);
@@ -115,7 +126,7 @@ demo.scene.Scene004.prototype.m_initBackground = function() {
         0,
         this.application.width,
         this.application.height,
-        "rune_image_logo_text_64x32"
+        "demo_texture_checkered_16x16"
     );
 
     this.stage.addChild(this.m_background);
@@ -132,9 +143,12 @@ demo.scene.Scene004.prototype.m_initControls = function() {
     if (this.m_controls == null) {
         this.m_controls = new rune.text.BitmapField([
             "CONTROLS (H: SHOW / HIDE)",
-            "W / S : DECREASE / INCREASE Y SPEED",
-            "A / D : DECREASE / INCREASE X SPEED",
-            "EACH PRESS CHANGES SPEED BY 1",
+            "LEFT / A : PREVIOUS BUTTON",
+            "RIGHT / D: NEXT BUTTON",
+            "ENTER    : PRESS / RELEASE BUTTON",
+            "UP / DOWN BUTTONS CHANGE Y SPEED",
+            "LEFT / RIGHT BUTTONS CHANGE X SPEED",
+            "EACH ACTIVATION CHANGES SPEED BY 1",
             "SCROLLING CONTINUES AFTER RELEASE",
             "ESC   : MAIN MENU"
         ].join("\n"), rune.text.BitmapFormat.FONT_SMALL);
@@ -148,6 +162,64 @@ demo.scene.Scene004.prototype.m_initControls = function() {
 };
 
 /**
+ * Creates four direction buttons fixed to the camera.
+ * Activation changes the corresponding scroll speed by one step.
+ *
+ * @returns {undefined}
+ * @private
+ */
+demo.scene.Scene004.prototype.m_initButtons = function() {
+    this.m_buttons = new rune.ui.ButtonGroup(8, this.application.height - 24);
+    this.cameras.getCameraAt(0).addChild(this.m_buttons);
+
+    var left = new demo.ui.ButtonLeft(0, 0);
+    left.onActivate(function() {
+        this.m_speed.x -= this.m_speedStep;
+    }, this);
+
+    var up = new demo.ui.ButtonUp(20, 0);
+    up.onActivate(function() {
+        this.m_speed.y -= this.m_speedStep;
+    }, this);
+
+    var down = new demo.ui.ButtonDown(40, 0);
+    down.onActivate(function() {
+        this.m_speed.y += this.m_speedStep;
+    }, this);
+
+    var right = new demo.ui.ButtonRight(60, 0);
+    right.onActivate(function() {
+        this.m_speed.x += this.m_speedStep;
+    }, this);
+
+    this.m_buttons.addChild(left);
+    this.m_buttons.addChild(up);
+    this.m_buttons.addChild(down);
+    this.m_buttons.addChild(right);
+};
+
+/**
+ * Navigates the buttons and forwards Enter press and release events.
+ *
+ * @returns {undefined}
+ * @private
+ */
+demo.scene.Scene004.prototype.m_updateButtons = function() {
+    if (this.keyboard.justPressed("LEFT") || this.keyboard.justPressed("A")) {
+        this.m_buttons.previous();
+    }
+    if (this.keyboard.justPressed("RIGHT") || this.keyboard.justPressed("D")) {
+        this.m_buttons.next();
+    }
+    if (this.keyboard.justPressed("ENTER")) {
+        this.m_buttons.press();
+    }
+    if (this.keyboard.justReleased("ENTER")) {
+        this.m_buttons.release();
+    }
+};
+
+/**
  * Update background texture.
  *
  * @param {number} step Fixed time step.
@@ -156,22 +228,6 @@ demo.scene.Scene004.prototype.m_initControls = function() {
  * @private
  */
 demo.scene.Scene004.prototype.m_updateOffset = function(step) {
-    if (this.keyboard.justPressed("W")) {
-        this.m_speed.y -= this.m_speedStep;
-    }
-
-    if (this.keyboard.justPressed("S")) {
-        this.m_speed.y += this.m_speedStep;
-    }
-
-    if (this.keyboard.justPressed("A")) {
-        this.m_speed.x -= this.m_speedStep;
-    }
-
-    if (this.keyboard.justPressed("D")) {
-        this.m_speed.x += this.m_speedStep;
-    }
-
     this.m_background.offsetX += this.m_speed.x;
     this.m_background.offsetY += this.m_speed.y;
 };
@@ -202,6 +258,19 @@ demo.scene.Scene004.prototype.m_updateInput = function(step) {
  */
 demo.scene.Scene004.prototype.m_toggleControls = function() {
     this.m_controls.visible = !this.m_controls.visible;
+};
+
+/**
+ * Removes and destroys the direction buttons.
+ *
+ * @returns {undefined}
+ * @private
+ */
+demo.scene.Scene004.prototype.m_disposeButtons = function() {
+    if (this.m_buttons != null) {
+        this.m_buttons.parent.removeChild(this.m_buttons, true);
+        this.m_buttons = null;
+    }
 };
 
 /**

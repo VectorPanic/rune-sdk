@@ -21,6 +21,9 @@
  * Focus is reconciled during update(), selection queries and input calls, so
  * disabling the selected button moves focus to the next enabled button.
  * Button focus is owned by the group while the button is a child.
+ * The pixel buffer automatically fits the buttons, including negative positions,
+ * scaling and rotation. Child coordinates remain relative to the group origin.
+ * Size is refreshed after child changes, during update and before rendering.
  */
 rune.ui.ButtonGroup = function(x, y) {
 
@@ -35,6 +38,22 @@ rune.ui.ButtonGroup = function(x, y) {
      * @private
      */
     this.m_buttons = [];
+
+    /**
+     * Left edge of the content buffer relative to the group origin.
+     *
+     * @type {number}
+     * @private
+     */
+    this.m_contentX = 0;
+
+    /**
+     * Top edge of the content buffer relative to the group origin.
+     *
+     * @type {number}
+     * @private
+     */
+    this.m_contentY = 0;
 
     /**
      * Currently selected button, or null when none is enabled.
@@ -221,6 +240,7 @@ rune.ui.ButtonGroup.prototype.addChildAt = function(child, index) {
         this.m_buttons.push(button);
     }
     this.m_updateSelection();
+    this.m_updateSize();
     return child;
 };
 
@@ -246,6 +266,7 @@ rune.ui.ButtonGroup.prototype.removeChild = function(child, dispose) {
     var result = rune.display.DisplayObjectContainer.prototype.removeChild.call(this, child, dispose);
     if (selected) this.m_setSelection(this.m_findButton(index - 1, 1), /** @type {rune.ui.Button} */ (child));
     this.m_updateSelection();
+    this.m_updateSize();
     return result;
 };
 
@@ -260,6 +281,31 @@ rune.ui.ButtonGroup.prototype.update = function(step) {
     this.m_updateSelection();
     rune.display.DisplayObjectContainer.prototype.update.call(this, step);
     this.m_updateSelection();
+    this.m_updateSize();
+};
+
+/**
+ * @inheritDoc
+ */
+rune.ui.ButtonGroup.prototype.render = function() {
+    this.m_updateSize();
+    rune.display.DisplayObjectContainer.prototype.render.call(this);
+};
+
+/**
+ * Includes the content offset when compositing the buffer into its parent.
+ *
+ * @return {rune.display.Frame} Reused render frame.
+ * @suppress {accessControls}
+ * @package
+ * @ignore
+ */
+rune.ui.ButtonGroup.prototype.getRenderFrame = function() {
+    this.m_updateSize();
+    var frame = rune.display.DisplayObjectContainer.prototype.getRenderFrame.call(this);
+    frame['x'] += this.m_contentX * this['scaleX'];
+    frame['y'] += this.m_contentY * this['scaleY'];
+    return frame;
 };
 
 /**
@@ -403,6 +449,73 @@ rune.ui.ButtonGroup.prototype.onChange = function(func, scope) {
 //------------------------------------------------------------------------------
 // Protected prototype methods
 //------------------------------------------------------------------------------
+
+/**
+ * Fits the buffer to the transformed button corners, retaining the origin.
+ * Resizing only when needed preserves the existing pixel cache.
+ *
+ * @suppress {accessControls}
+ * @return {undefined}
+ * @protected
+ * @ignore
+ */
+rune.ui.ButtonGroup.prototype.m_updateSize = function() {
+    var left = 0;
+    var top = 0;
+    var right = 0;
+    var bottom = 0;
+    for (var i = 0; i < this.m_buttons.length; i++) {
+        var button = this.m_buttons[i];
+        var frame = button.getRenderFrame();
+        var angle = button['rotation'] * rune.util.Math.DEG_TO_RAD;
+        var cos = Math.cos(angle);
+        var sin = Math.sin(angle);
+        var px = button['pivotX'];
+        var py = button['pivotY'];
+        var fx = button['flippedX'] ? -1 : 1;
+        var fy = button['flippedY'] ? -1 : 1;
+        for (var corner = 0; corner < 4; corner++) {
+            var x = (corner % 2) * frame['width'] - px;
+            var y = Math.floor(corner / 2) * frame['height'] - py;
+            var tx = frame['x'] + px + fx * (cos * x - sin * y);
+            var ty = frame['y'] + py + fy * (sin * x + cos * y);
+            left = Math.min(left, tx);
+            top = Math.min(top, ty);
+            right = Math.max(right, tx);
+            bottom = Math.max(bottom, ty);
+        }
+    }
+    left = Math.floor(left);
+    top = Math.floor(top);
+    if (left !== this.m_contentX || top !== this.m_contentY) {
+        this.m_contentX = left;
+        this.m_contentY = top;
+        this.breakCache();
+    }
+    this['unscaledWidth'] = Math.ceil(right) - left;
+    this['unscaledHeight'] = Math.ceil(bottom) - top;
+};
+
+/**
+ * Draws children into the buffer without changing their local coordinates.
+ *
+ * @param {rune.display.DisplayObject} child Button to render.
+ *
+ * @return {undefined}
+ * @protected
+ * @ignore
+ */
+rune.ui.ButtonGroup.prototype.m_renderChild = function(child) {
+    if (child == null || this.m_canvas == null) return;
+    if (child['visible'] === true) {
+        this.m_canvas.renderDisplayObject(child, this.m_contentX, this.m_contentY);
+    }
+    var context = this.m_canvas['context'];
+    context.save();
+    context.translate(-this.m_contentX, -this.m_contentY);
+    this.m_renderChildDebug(child);
+    context.restore();
+};
 
 /**
  * Restores a valid selection and ensures only its button has focus.

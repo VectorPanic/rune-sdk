@@ -63,11 +63,16 @@ demo.data.Requests.prototype.m_construct = function() {
     this.add("demo_raycast_billboard_rat_16x16",                      "./../demo/asset/gif/demo_raycast_billboard_rat_16x16.gif");
     this.add("demo_raycast_billboard_plant_16x16",                    "./../demo/asset/gif/demo_raycast_billboard_plant_16x16.gif");
     this.add("demo_raycast_billboard_desk_16x16",                     "./../demo/asset/gif/demo_raycast_billboard_desk_16x16.gif");
-    this.add("demo_raycast_surface_signboard_16x16",                    "./../demo/asset/gif/demo_raycast_surface_signboard_16x16.gif");
+    this.add("demo_raycast_surface_signboard_16x16",                  "./../demo/asset/gif/demo_raycast_surface_signboard_16x16.gif");
     this.add("demo_raycast_walls_16x16",                              "./../demo/asset/gif/demo_raycast_walls_16x16.gif");
     this.add("demo_raycast_floor_16x16",                              "./../demo/asset/gif/demo_raycast_floor_16x16.gif");
     this.add("demo_raycast_ceiling_16x16",                            "./../demo/asset/gif/demo_raycast_ceiling_16x16.gif");
     this.add("demo_raycast_map",                                      "./../demo/asset/json/demo_raycast_map.json");
     this.add("demo_raycast_sky_128x32",                               "./../demo/asset/gif/demo_raycast_sky_128x32.gif");
     this.add("demo_raycast_door_16x16",                               "./../demo/asset/gif/demo_raycast_door_16x16.gif");
+    this.add("demo_texture_checkered_16x16",                          "./../demo/asset/gif/demo_texture_checkered_16x16.gif");
+    this.add("demo_button_up_16x16",                                  "./../demo/asset/gif/demo_button_up_16x16.gif");
+    this.add("demo_button_down_16x16",                                "./../demo/asset/gif/demo_button_down_16x16.gif");
+    this.add("demo_button_left_16x16",                                "./../demo/asset/gif/demo_button_left_16x16.gif");
+    this.add("demo_button_right_16x16",                               "./../demo/asset/gif/demo_button_right_16x16.gif");
 };

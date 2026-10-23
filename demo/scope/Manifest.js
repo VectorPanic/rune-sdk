@@ -65,6 +65,15 @@ var demo = function() {
      */
     m_this.system = {};
 
+    /**
+     * The demo.ui package contains the demo's directional button classes.
+     *
+     * @namespace ui
+     * @memberof demo
+     * @since 1.0
+     */
+    m_this.ui = {};
+
     //--------------------------------------------------------------------------
     // Return public scope object
     //--------------------------------------------------------------------------

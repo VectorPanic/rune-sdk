@@ -151,6 +151,26 @@ rune.timer.Timers.prototype.create = function(options, autoStart) {
 };
 
 /**
+ * Creates and starts a timer that invokes the callback once on completion.
+ * Uses the same duration handling as create(). The callback receives the timer
+ * and runs in the manager's scope unless another scope is supplied.
+ *
+ * @param {number} delay Delay in milliseconds.
+ * @param {Function} callback Function to invoke when the timer completes.
+ * @param {Object} [scope] Callback scope; defaults to the manager's scope.
+ *
+ * @returns {rune.timer.Timer} The new timer, which can be paused or removed.
+ */
+rune.timer.Timers.prototype.once = function(delay, callback, scope) {
+    return this.create({
+        duration: delay,
+        repeat: 0,
+        onComplete: callback,
+        scope: scope
+    });
+};
+
+/**
  * Removes the specified Timer object from the handler and activates the 
  * deallocation process for that object.
  *

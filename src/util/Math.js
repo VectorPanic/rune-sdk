@@ -103,16 +103,16 @@ rune.util.Math.ceil = function(n) {
 /**
  * Returns true based on a chance of n.
  *
- * @param {number} n Chance between 0 and 100.
+ * @param {number} [n=50] Chance between 0 and 100. Values outside this range are clamped.
  * 
  * @return {boolean} True or false, depending on the chance of n.
  */
 rune.util.Math.chance = function(n) {
-    n = n || 50;
+    n = n === undefined ? 50 : n;
     n = Math.min(n, 100);
     n = Math.max(n,   0);
 
-    return n >= Math.random() * 100;
+    return Math.random() * 100 < n;
 };
 
 /**

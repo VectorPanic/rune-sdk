@@ -44,6 +44,22 @@ rune.media.SoundChannel = function(shared) {
     this.m_gain = null;
 
     /**
+     * Whether channel output is muted without pausing playback.
+     *
+     * @type {boolean}
+     * @private
+     */
+    this.m_muted = false;
+
+    /**
+     * Configured volume, retained while channel output is muted.
+     *
+     * @type {number}
+     * @private
+     */
+    this.m_volume = 1.0;
+
+    /**
      * Stable channel input before volume control. Reuses the stereo panner
      * when available, otherwise a unity-gain node provides the same routing.
      *
@@ -166,6 +182,34 @@ Object.defineProperty(rune.media.SoundChannel.prototype, "length", {
 });
 
 /**
+ * Whether channel output is muted. Playback continues and the configured
+ * volume is retained. Volume changes and fades still apply while muted.
+ *
+ * @member {boolean} muted
+ * @memberof rune.media.SoundChannel
+ * @instance
+ * @default false
+ */
+Object.defineProperty(rune.media.SoundChannel.prototype, "muted", {
+    /**
+     * @this rune.media.SoundChannel
+     * @ignore
+     */
+    get : function() {
+        return this.m_muted;
+    },
+
+    /**
+     * @this rune.media.SoundChannel
+     * @ignore
+     */
+    set : function(value) {
+        this.m_muted = Boolean(value);
+        this.m_updateVolume();
+    }
+});
+
+/**
  * Whether all sounds in the sound channel are paused (true) or not (false).
  *
  * @member {boolean} paused
@@ -240,7 +284,8 @@ Object.defineProperty(rune.media.SoundChannel.prototype, "shared", {
 
 
 /**
- * The global sound level for all Sound objects requested by this channel.
+ * The configured sound level for all Sound objects requested by this channel.
+ * Retained while muted, even though the channel's output level is zero.
  *
  * @member {number} volume
  * @memberof rune.media.SoundChannel
@@ -252,7 +297,7 @@ Object.defineProperty(rune.media.SoundChannel.prototype, "volume", {
      * @ignore
      */
     get : function() {
-        return this.m_gain != null ? this.m_gain.gain.value : 0.0;
+        return this.m_gain != null ? this.m_volume : 0.0;
     },
 
     /**
@@ -261,7 +306,8 @@ Object.defineProperty(rune.media.SoundChannel.prototype, "volume", {
      */
     set : function(value) {
         if (this.m_gain != null) {
-            this.m_gain.gain.value = rune.util.Math.clamp(value, 0.0, 1.0);
+            this.m_volume = rune.util.Math.clamp(value, 0.0, 1.0);
+            this.m_updateVolume();
         }
     }
 });
@@ -524,6 +570,7 @@ rune.media.SoundChannel.prototype.m_constructGain = function() {
     this.m_disposeGain();
     if (this.m_gain == null && this.m_context != null) {
         this.m_gain = this.m_context.createGain();
+        this.m_updateVolume();
         this.m_gain.connect(this.m_context.destination);
     } else throw new Error();
 };
@@ -622,6 +669,18 @@ rune.media.SoundChannel.prototype.m_updateSounds = function(step) {
 rune.media.SoundChannel.prototype.m_updateTweens = function(step) {
     if (this.m_tweens) {
         this.m_tweens.update(step);
+    }
+};
+
+/**
+ * Applies the configured volume and mute state to the channel output.
+ *
+ * @returns {undefined}
+ * @private
+ */
+rune.media.SoundChannel.prototype.m_updateVolume = function() {
+    if (this.m_gain != null) {
+        this.m_gain.gain.value = this.m_muted ? 0.0 : this.m_volume;
     }
 };
 

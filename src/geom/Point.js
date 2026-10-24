@@ -96,8 +96,8 @@ rune.geom.Point.interpolate = function(x1, y1, x2, y2, f, o) {
     f = f || 0;
     o = o || new rune.geom.Point();
     
-    o['x'] = x1 + ((x2 - x1) * f);
-    o['y'] = y1 + ((y2 - y1) * f);
+    o['x'] = rune.util.Math.lerp(x1, x2, f);
+    o['y'] = rune.util.Math.lerp(y1, y2, f);
 
     return o;
 };

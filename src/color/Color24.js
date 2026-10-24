@@ -101,15 +101,30 @@ rune.color.Color24.fromHex = function(s) {
  * @throws {RangeError} If amount is not a finite number.
  */
 rune.color.Color24.lerp = function(start, target, amount, output) {
-    if (!(start instanceof rune.color.Color24) || !(target instanceof rune.color.Color24) ||
-        (output !== undefined && !(output instanceof rune.color.Color24))) throw new TypeError("Expected Color24 colors.");
-    if (typeof amount !== "number" || !isFinite(amount)) throw new RangeError("Invalid color blend amount.");
+    if (!(start instanceof rune.color.Color24) || !(target instanceof rune.color.Color24)) {
+        throw new TypeError("Expected Color24 colors.");
+    }
+
+    if (output !== undefined && !(output instanceof rune.color.Color24)) {
+        throw new TypeError("Expected Color24 colors.");
+    }
+
+    if (typeof amount !== "number" || !isFinite(amount)) {
+        throw new RangeError("Invalid color blend amount.");
+    }
+
     amount = rune.util.Math.clamp(amount, 0, 1);
-    var r = Math.round(start['r']['value'] + (target['r']['value'] - start['r']['value']) * amount);
-    var g = Math.round(start['g']['value'] + (target['g']['value'] - start['g']['value']) * amount);
-    var b = Math.round(start['b']['value'] + (target['b']['value'] - start['b']['value']) * amount);
-    output = output === undefined ? new rune.color.Color24() : output;
-    output.setRGB(r, g, b);
+
+    var red = rune.util.Math.lerp(start['r']['value'], target['r']['value'], amount);
+    var green = rune.util.Math.lerp(start['g']['value'], target['g']['value'], amount);
+    var blue = rune.util.Math.lerp(start['b']['value'], target['b']['value'], amount);
+
+    if (output === undefined) {
+        output = new rune.color.Color24();
+    }
+
+    output.setRGB(Math.round(red), Math.round(green), Math.round(blue));
+
     return output;
 };
 

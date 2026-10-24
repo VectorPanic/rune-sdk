@@ -700,8 +700,8 @@ rune.camera.Camera.prototype.m_updateTargets = function(step) {
         var tx = position['x'] - (automatic ? this.m_viewport['width'] / 2 : this.m_viewport['width'] >> 1);
         var ty = position['y'] - (automatic ? this.m_viewport['height'] / 2 : this.m_viewport['height'] >> 1);
         
-        this.m_viewport.x += (tx - this.m_viewport.x) * this.m_lag.x;
-        this.m_viewport.y += (ty - this.m_viewport.y) * this.m_lag.y;
+        this.m_viewport.x = rune.util.Math.lerp(this.m_viewport.x, tx, this.m_lag.x);
+        this.m_viewport.y = rune.util.Math.lerp(this.m_viewport.y, ty, this.m_lag.y);
     }
 };
 

@@ -102,14 +102,28 @@ rune.color.Color32.fromHex = function(s) {
  * @throws {RangeError} If amount is not a finite number.
  */
 rune.color.Color32.lerp = function(start, target, amount, output) {
-    if (!(start instanceof rune.color.Color32) || !(target instanceof rune.color.Color32) ||
-        (output !== undefined && !(output instanceof rune.color.Color32))) throw new TypeError("Expected Color32 colors.");
+    if (!(start instanceof rune.color.Color32) || !(target instanceof rune.color.Color32)) {
+        throw new TypeError("Expected Color32 colors.");
+    }
+
+    if (output !== undefined && !(output instanceof rune.color.Color32)) {
+        throw new TypeError("Expected Color32 colors.");
+    }
+
     var startAlpha = start['a']['value'];
     var targetAlpha = target['a']['value'];
-    output = output === undefined ? new rune.color.Color32() : output;
+
+    if (output === undefined) {
+        output = new rune.color.Color32();
+    }
+
     rune.color.Color24.lerp(start, target, amount, output);
+
     amount = rune.util.Math.clamp(amount, 0, 1);
-    output['a']['value'] = Math.round(startAlpha + (targetAlpha - startAlpha) * amount);
+    var alpha = rune.util.Math.lerp(startAlpha, targetAlpha, amount);
+
+    output['a']['value'] = Math.round(alpha);
+
     return output;
 };
 

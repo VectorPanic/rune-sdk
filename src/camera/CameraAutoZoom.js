@@ -227,25 +227,41 @@ Object.defineProperty(rune.camera.CameraAutoZoom.prototype, "position", {
  * @ignore
  */
 rune.camera.CameraAutoZoom.prototype.update = function(step) {
-    if (!this.enabled || this.m_camera == null || this.m_camera['targets']['length'] === 0) return;
+    if (!this.enabled || this.m_camera == null || this.m_camera['targets']['length'] === 0) {
+        return;
+    }
 
     var camera = this.m_camera;
     var bounds = camera['targets'].getBounds(this.m_bounds);
-    this.m_position['x'] = bounds['x'] + bounds['width'] / 2 -
-        (camera.input != null ? camera.input['globalX'] : 0);
-    this.m_position['y'] = bounds['y'] + bounds['height'] / 2 -
-        (camera.input != null ? camera.input['globalY'] : 0);
+    var inputX = camera.input != null ? camera.input['globalX'] : 0;
+    var inputY = camera.input != null ? camera.input['globalY'] : 0;
+
+    this.m_position['x'] = bounds['x'] + bounds['width'] / 2 - inputX;
+    this.m_position['y'] = bounds['y'] + bounds['height'] / 2 - inputY;
 
     var width = Math.max(1, bounds['width'] + this.m_padding * 2);
     var height = Math.max(1, bounds['height'] + this.m_padding * 2);
-    var desired = rune.util.Math.clamp(Math.min(camera['width'] / width,
-        camera['height'] / height), this.m_min, this.m_max);
+    var horizontalZoom = camera['width'] / width;
+    var verticalZoom = camera['height'] / height;
+    var targetZoom = rune.util.Math.clamp(Math.min(horizontalZoom, verticalZoom), this.m_min, this.m_max);
+
     var viewport = camera['viewport'];
-    var current = rune.util.Math.clamp(viewport['zoom'], this.m_min, this.m_max);
-    var zoom = this.m_smoothing > 0 ? current + (desired - current) *
-        (1 - Math.exp(-Math.max(0, step) / this.m_smoothing)) : desired;
-    if (Math.abs(desired - zoom) < 0.0001) zoom = desired;
-    if (zoom !== viewport['zoom']) viewport.zoomTo(zoom);
+    var zoom = targetZoom;
+
+    if (this.m_smoothing > 0) {
+        var currentZoom = rune.util.Math.clamp(viewport['zoom'], this.m_min, this.m_max);
+        var fraction = 1 - Math.exp(-Math.max(0, step) / this.m_smoothing);
+
+        zoom = rune.util.Math.lerp(currentZoom, targetZoom, fraction);
+    }
+
+    if (Math.abs(targetZoom - zoom) < 0.0001) {
+        zoom = targetZoom;
+    }
+
+    if (zoom !== viewport['zoom']) {
+        viewport.zoomTo(zoom);
+    }
 };
 
 /**

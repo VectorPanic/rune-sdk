@@ -297,6 +297,21 @@ rune.util.Math.isPowerOfTwo = function(n) {
 };
 
 /**
+ * Linearly interpolates between two numbers. A fraction of zero returns from,
+ * and a fraction of one returns to. The fraction is not clamped; values outside
+ * zero to one extrapolate beyond the endpoints.
+ *
+ * @param {number} from Starting value.
+ * @param {number} to Target value.
+ * @param {number} fraction Interpolation fraction.
+ *
+ * @return {number} The interpolated value.
+ */
+rune.util.Math.lerp = function(from, to, fraction) {
+    return from + (to - from) * fraction;
+};
+
+/**
  * Returns a random floating point number.
  *
  * @param {number} [min] Minimum number.

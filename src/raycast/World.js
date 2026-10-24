@@ -862,8 +862,7 @@ rune.raycast.World.prototype.m_isInFieldOfView = function(source, dx, dy, fov) {
         throw new RangeError("Observer angle must be finite radians.");
     }
     
-    var difference = Math.atan2(dy, dx) - angle;
-    difference = Math.atan2(Math.sin(difference), Math.cos(difference));
+    var difference = rune.util.Math.angleDifference(angle, Math.atan2(dy, dx));
     return Math.abs(difference) <= fov / 2 + 0.000000000001;
 };
 

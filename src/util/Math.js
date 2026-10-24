@@ -55,6 +55,23 @@ rune.util.Math.abs = function(n) {
 };
 
 /**
+ * Returns the shortest signed rotation from one angle to another, in radians.
+ * The result is between minus pi and pi. A positive result increases the angle;
+ * a negative result decreases it. For exactly opposite directions, either sign
+ * represents an equally short rotation.
+ *
+ * @param {number} from Starting angle in radians.
+ * @param {number} to Target angle in radians.
+ *
+ * @return {number} The shortest signed angle difference in radians.
+ */
+rune.util.Math.angleDifference = function(from, to) {
+    var difference = to - from;
+
+    return Math.atan2(Math.sin(difference), Math.cos(difference));
+};
+
+/**
  * Returns the mean of n.
  *
  * @param {Array} n A list of numbers. 
@@ -190,7 +207,7 @@ rune.util.Math.dampAngle = function(current, target, smoothing, step) {
         return current;
     }
 
-    var difference = Math.atan2(Math.sin(target - current), Math.cos(target - current));
+    var difference = rune.util.Math.angleDifference(current, target);
     return current + difference * (1 - Math.exp(-step / smoothing));
 };
 

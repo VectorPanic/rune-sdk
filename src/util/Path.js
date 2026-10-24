@@ -207,34 +207,37 @@ rune.util.Path.prototype.addPointAt = function(point, index, asReference) {
 /**
  * Compress a path by removing unnecessary nodes (points). A compressed path 
  * represents the same path as an uncompressed path, but with fewer nodes.
+ * Only points between their neighbors on the same straight segment are removed.
+ * Endpoints, corners and changes of direction are retained.
  *
  * @returns {undefined}
  */
 rune.util.Path.prototype.compress = function() {
-    var ap = this.m_nodes;
-    var dp;
-    var dn;
-    
-    var lp = ap[0];
-    var cp = null;
-    var pi = 1;
-    var pl = ap.length - 1;
-    
-    while (pi < pl) {
-        cp = ap[pi];
-        dp = (cp['x'] - lp['x']) / (cp['y'] - lp['y']);
-        dn = (cp['x'] - ap[pi + 1]['x']) / (cp['y'] - ap[pi + 1]['y']);
-        
-        if ((lp['x'] == ap[pi + 1]['x']) || (lp['y'] == ap[pi + 1]['y']) || (dp == dn)) {
-            ap[pi] = null;
-        } else {
-           lp = cp; 
-        }
-        
-        pi++;
+    var nodes = this.m_nodes;
+    if (nodes.length < 3) {
+        return;
     }
-    
-    this.m_nodes = ap.filter(Boolean);
+
+    var compressed = [nodes[0]];
+
+    for (var i = 1; i < nodes.length - 1; i++) {
+        var previous = compressed[compressed.length - 1];
+        var current = nodes[i];
+        var next = nodes[i + 1];
+        var dx = current['x'] - previous['x'];
+        var dy = current['y'] - previous['y'];
+        var nextX = next['x'] - current['x'];
+        var nextY = next['y'] - current['y'];
+        var cross = dx * nextY - dy * nextX;
+        var dot = dx * nextX + dy * nextY;
+
+        if (cross !== 0 || dot < 0) {
+            compressed.push(current);
+        }
+    }
+
+    compressed.push(nodes[nodes.length - 1]);
+    this.m_nodes = compressed;
 };
 
 /**

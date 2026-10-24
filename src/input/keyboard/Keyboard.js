@@ -63,6 +63,14 @@ rune.input.Keyboard = function(options) {
      * @private
      */
     this.m_onKeyUpHandler = null;
+
+    /**
+     * Reference to the window focus-loss handler.
+     *
+     * @type {Function}
+     * @private
+     */
+    this.m_onBlurHandler = null;
     
     /**
      * Settings for the current keyboard.
@@ -348,6 +356,26 @@ rune.input.Keyboard.prototype.m_constructEvent = function() {
     if (this.m_onKeyUpHandler == null) {
         this.m_constructEventKeyUp();
     }
+
+    if (this.m_onBlurHandler == null) {
+        this.m_constructEventBlur();
+    }
+};
+
+/**
+ * Resets keyboard state when the window loses focus, even with a custom target.
+ *
+ * @returns {undefined}
+ * @private
+ */
+rune.input.Keyboard.prototype.m_constructEventBlur = function() {
+    var keyboard = this;
+
+    this.m_onBlurHandler = function() {
+        keyboard.reset();
+    };
+
+    window.addEventListener("blur", this.m_onBlurHandler);
 };
 
 /**
@@ -408,8 +436,22 @@ rune.input.Keyboard.prototype.m_updateKeys = function() {
  */
 rune.input.Keyboard.prototype.m_disposeEvent = function() {
     this.reset();
+    this.m_disposeEventBlur();
     this.m_disposeEventKeyUp();
     this.m_disposeEventKeyDown();
+};
+
+/**
+ * Removes the window focus-loss listener.
+ *
+ * @returns {undefined}
+ * @private
+ */
+rune.input.Keyboard.prototype.m_disposeEventBlur = function() {
+    if (this.m_onBlurHandler != null) {
+        window.removeEventListener("blur", this.m_onBlurHandler);
+        this.m_onBlurHandler = null;
+    }
 };
 
 /**

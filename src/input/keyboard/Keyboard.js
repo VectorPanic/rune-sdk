@@ -145,6 +145,23 @@ Object.defineProperty(rune.input.Keyboard.prototype, "enabled", {
 //------------------------------------------------------------------------------
 
 /**
+ * Reads two keys as a directional axis. The negative key contributes -1 and
+ * the positive key contributes 1. Returns zero when both or neither are pressed.
+ * Unknown keys are treated as released, using the same lookup as pressed().
+ *
+ * @param {string} negativeKey Key for the negative direction, such as "LEFT".
+ * @param {string} positiveKey Key for the positive direction, such as "RIGHT".
+ *
+ * @returns {number} The axis value: -1, 0 or 1.
+ */
+rune.input.Keyboard.prototype.axis = function(negativeKey, positiveKey) {
+    var negative = this.pressed(negativeKey) ? 1 : 0;
+    var positive = this.pressed(positiveKey) ? 1 : 0;
+
+    return positive - negative;
+};
+
+/**
  * Checks if the specified key was just pressed.
  *
  * @param {string} key A valid key, such as "SPACE".

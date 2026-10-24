@@ -136,7 +136,7 @@ rune.timer.Timers.prototype.clear = function() {
 
 /**
  * Creates and registers a new Timer object according to the specified 
- * options object.
+ * options object. The supplied options are not modified.
  *
  * @param {Object} options Timer options.
  * @param {boolean} [autoStart=true] If the Timer object is to be started automatically.
@@ -144,9 +144,11 @@ rune.timer.Timers.prototype.clear = function() {
  * @returns {rune.timer.Timer} The new Timer object.
  */
 rune.timer.Timers.prototype.create = function(options, autoStart) {
-    options = options || {};
-    options.scope = options.scope || this.m_scope;
-    var timer = new rune.timer.Timer(options);
+    var settings = new rune.timer.TimerOptions(options);
+    settings.scope = settings.scope || this.m_scope;
+
+    var timer = new rune.timer.Timer(settings);
+
     return this.add(timer, autoStart);
 };
 

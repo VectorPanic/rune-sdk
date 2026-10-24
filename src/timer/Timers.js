@@ -56,7 +56,7 @@ rune.timer.Timers = function(scope) {
 
 /**
  * The number of Timer objects that are currently registered with the Timer 
- * instance.
+ * instance. Returns zero after disposal.
  *
  * @member {number} length
  * @memberof rune.timer.Timers
@@ -69,13 +69,14 @@ Object.defineProperty(rune.timer.Timers.prototype, "length", {
      * @ignore
      */
     get : function() {
-        return this.m_timers.length;
+        return this.m_timers != null ? this.m_timers.length : 0;
     }
 });
 
 /**
  * The number of registered Timer objects that are currently active. Stopped 
  * Timer objects are inactive, but paused are still considered active.
+ * Returns zero after disposal.
  *
  * @member {number} numActive
  * @memberof rune.timer.Timers
@@ -89,7 +90,7 @@ Object.defineProperty(rune.timer.Timers.prototype, "numActive", {
      */
     get : function() {
         var n = 0;
-        var i = this.m_timers.length;
+        var i = this.length;
         while (i--) {
             if (this.m_timers[i]['active'] == true) {
                 n++;
@@ -124,12 +125,12 @@ rune.timer.Timers.prototype.add = function(timer, autoStart) {
 };
 
 /**
- * Removes, and deallocates all registered Timer objects.
+ * Removes, and deallocates all registered Timer objects. Does nothing after disposal.
  *
  * @returns {undefined}
  */
 rune.timer.Timers.prototype.clear = function() {
-    while (this.m_timers.length > 0) {
+    while (this.m_timers != null && this.m_timers.length > 0) {
         this.remove(this.m_timers[0]);
     }
 };
@@ -181,6 +182,10 @@ rune.timer.Timers.prototype.once = function(delay, callback, scope) {
  * @returns {boolean}
  */
 rune.timer.Timers.prototype.remove = function(timer) {
+    if (this.m_timers == null) {
+        return false;
+    }
+
     var i = this.m_timers.indexOf(timer);
     if (i > -1) {
         this.m_timers[i].dispose();
@@ -200,6 +205,10 @@ rune.timer.Timers.prototype.remove = function(timer) {
  * @returns {undefined}
  */
 rune.timer.Timers.prototype.reset = function() {
+    if (this.m_timers == null) {
+        return;
+    }
+
     for (var i = 0; i < this.m_timers.length; i++) {
         if (this.m_timers[i].disposed) {
             this.m_timers.splice(i, 1);
@@ -248,7 +257,7 @@ rune.timer.Timers.prototype.update = function(step) {
  * @private
  */
 rune.timer.Timers.prototype.m_updateTimers = function(step) {
-    if (this.paused == true) {
+    if (this.paused == true || this.m_timers == null) {
         return;
     }
     
@@ -291,9 +300,7 @@ rune.timer.Timers.prototype.m_updateTimer = function(timer, step) {
  * @private
  */
 rune.timer.Timers.prototype.m_disposeTimers = function() {
-    while (this.m_timers.length > 0) {
-        this.remove(this.m_timers[0]);
-    }
+    this.clear();
     
     this.m_timers = null;
 };

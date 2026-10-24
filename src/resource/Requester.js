@@ -1,5 +1,5 @@
 //------------------------------------------------------------------------------
-// Constructor scope
+// CONSTRUCTOR SCOPE
 //------------------------------------------------------------------------------
 
 /**
@@ -51,7 +51,7 @@ rune.resource.Requester = function(resources) {
 };
 
 //------------------------------------------------------------------------------
-// Public prototype getter and setter methods
+// PUBLIC PROTOTYPE GETTER AND SETTER METHODS
 //------------------------------------------------------------------------------
 
 /**
@@ -78,7 +78,7 @@ Object.defineProperty(rune.resource.Requester.prototype, "progress", {
 });
 
 //------------------------------------------------------------------------------
-// Public prototype methods (API)
+// PUBLIC PROTOTYPE METHODS (API)
 //------------------------------------------------------------------------------
 
 /**
@@ -108,7 +108,7 @@ rune.resource.Requester.prototype.load = function(options) {
 };
 
 //------------------------------------------------------------------------------
-// Internal prototype methods
+// INTERNAL PROTOTYPE METHODS
 //------------------------------------------------------------------------------
 
 /**
@@ -126,7 +126,7 @@ rune.resource.Requester.prototype.dispose = function() {
 };
 
 //------------------------------------------------------------------------------
-// Private prototype methods
+// PRIVATE PROTOTYPE METHODS
 //------------------------------------------------------------------------------
 
 /**
@@ -188,6 +188,8 @@ rune.resource.Requester.prototype.m_disposeLoader = function() {
  * the callback is executed from the event loop. This is so that all callback 
  * calls are executed "asynchronously".
  *
+ * @throws {Error} If request options have not been initialized.
+ *
  * @returns {undefined}
  * @private
  */
@@ -213,13 +215,17 @@ rune.resource.Requester.prototype.m_processRequests = function() {
                 this.m_disposeArguments();
             }
         }
-    } else throw new Error();
+    } else {
+        throw new Error("Requester: Cannot process requests without initialized request options.");
+    }
 };
 
 /**
  * Processing a specific request.
  *
  * @param {rune.resource.Request} request Request to process.
+ *
+ * @throws {Error} If the URLLoader has not been initialized.
  *
  * @returns {undefined}
  * @private
@@ -256,7 +262,9 @@ rune.resource.Requester.prototype.m_processRequest = function(request) {
             },
             scope: this
         });   
-    } else throw new Error();
+    } else {
+        throw new Error("Requester: Cannot process a resource without an initialized URLLoader.");
+    }
 };
 
 /**

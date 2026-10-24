@@ -1,5 +1,5 @@
 //------------------------------------------------------------------------------
-// Constructor scope
+// CONSTRUCTOR SCOPE
 //------------------------------------------------------------------------------
 
 /** 
@@ -18,7 +18,7 @@
 rune.timer.Timers = function(scope) {
 
     //--------------------------------------------------------------------------
-    // Public properties
+    // PUBLIC PROPERTIES
     //--------------------------------------------------------------------------
 
     /**
@@ -30,7 +30,7 @@ rune.timer.Timers = function(scope) {
     this.paused = false;
 
     //--------------------------------------------------------------------------
-    // Private properties
+    // PRIVATE PROPERTIES
     //--------------------------------------------------------------------------
 
     /**
@@ -51,7 +51,7 @@ rune.timer.Timers = function(scope) {
 };
 
 //------------------------------------------------------------------------------
-// Public getter and setter methods
+// PUBLIC GETTER AND SETTER METHODS
 //------------------------------------------------------------------------------
 
 /**
@@ -101,7 +101,7 @@ Object.defineProperty(rune.timer.Timers.prototype, "numActive", {
 });
 
 //------------------------------------------------------------------------------
-// Public prototype methods (API)
+// PUBLIC PROTOTYPE METHODS (API)
 //------------------------------------------------------------------------------
 
 /**
@@ -210,7 +210,7 @@ rune.timer.Timers.prototype.reset = function() {
 };
 
 //------------------------------------------------------------------------------
-// Public prototype methods (ENGINE)
+// PUBLIC PROTOTYPE METHODS (ENGINE)
 //------------------------------------------------------------------------------
 
 /**
@@ -236,7 +236,7 @@ rune.timer.Timers.prototype.update = function(step) {
 };
 
 //------------------------------------------------------------------------------
-// Private prototype methods
+// PRIVATE PROTOTYPE METHODS
 //------------------------------------------------------------------------------
 
 /**
@@ -252,8 +252,8 @@ rune.timer.Timers.prototype.m_updateTimers = function(step) {
         return;
     }
     
-    // Callbacks may remove timers or dispose the manager. New timers wait
-    // until the next update, and each remaining timer is updated once.
+    // CALLBACKS MAY REMOVE TIMERS OR DISPOSE THE MANAGER. NEW TIMERS WAIT
+    // UNTIL THE NEXT UPDATE, AND EACH REMAINING TIMER IS UPDATED ONCE.
     var timers = this.m_timers.slice();
     for (var i = 0; i < timers.length; i++) {
         var timer = timers[i];

@@ -257,12 +257,12 @@ rune.util.Math.floor = function(n) {
  * bytes.
  *
  * @param {number} bytes Number of bytes.
- * @param {number} decimals Number of decimals.
+ * @param {number} [decimals=2] Maximum number of decimals. Zero rounds to a whole number.
  * 
  * @return {string} Human-friendly string representation.
  */
 rune.util.Math.formatBytes = function(bytes, decimals) {
-    decimals = decimals || 2;
+    decimals = decimals === undefined ? 2 : decimals;
 
     if (bytes === 0) return "0 Bytes";
 

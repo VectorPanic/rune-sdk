@@ -204,6 +204,73 @@ rune.util.Random.prototype.shuffle = function(array) {
     return array;
 };
 
+/**
+ * Selects an item using relative weights without modifying either array.
+ * Each weight must be finite and non-negative, and at least one must be positive.
+ * Zero weights exclude items. Weights need not add up to one or one hundred.
+ * If only one item has positive weight, the random sequence is not advanced.
+ * Probabilities are limited by floating-point precision and generator resolution.
+ *
+ * @param {Array} items Items to choose from.
+ * @param {Array.<number>} weights Relative weights, one per item.
+ *
+ * @returns {*} The selected item.
+ * @throws {TypeError} If either argument is not an Array.
+ * @throws {RangeError} If arrays are empty, lengths differ, weights are invalid,
+ * or all weights are zero.
+ */
+rune.util.Random.prototype.weightedPick = function(items, weights) {
+    if (!Array.isArray(items) || !Array.isArray(weights)) {
+        throw new TypeError("Random: Expected item and weight arrays.");
+    }
+
+    if (items.length === 0 || items.length !== weights.length) {
+        throw new RangeError("Random: Expected non-empty arrays of equal length.");
+    }
+
+    var maximum = 0;
+    var positive = 0;
+    var last = -1;
+
+    for (var i = 0; i < weights.length; i++) {
+        var weight = weights[i];
+        if (typeof weight !== "number" || !isFinite(weight) || weight < 0) {
+            throw new RangeError("Random: Expected finite, non-negative weights.");
+        }
+
+        if (weight > 0) {
+            maximum = Math.max(maximum, weight);
+            positive++;
+            last = i;
+        }
+    }
+
+    if (positive === 0) {
+        throw new RangeError("Random: At least one weight must be positive.");
+    }
+
+    if (positive === 1) {
+        return items[last];
+    }
+
+    var total = 0;
+    for (var j = 0; j < weights.length; j++) {
+        total += weights[j] / maximum;
+    }
+
+    var value = this.next() * total;
+    for (var k = 0; k < weights.length; k++) {
+        var fraction = weights[k] / maximum;
+        if (value < fraction) {
+            return items[k];
+        }
+
+        value -= fraction;
+    }
+
+    return items[last];
+};
+
 //------------------------------------------------------------------------------
 // PRIVATE PROTOTYPE METHODS
 //------------------------------------------------------------------------------

@@ -310,16 +310,15 @@ rune.util.Math.isEven = function(n) {
 };
 
 /**
- * Checks whether n is a number. The method does not consider 
- * "special values" like NaN or Infinity as numbers; they must be 
- * digit-based, either positive or negative.
- * 
- * @param {number|undefined} n A number.
- * 
- * @return {boolean} Whether n is an number.
+ * Checks whether n is a finite number, including integers and decimals.
+ * Numeric strings, boxed numbers, NaN and infinities are not accepted.
+ *
+ * @param {*} n Value to check.
+ *
+ * @return {boolean} Whether n is a finite number.
  */
 rune.util.Math.isNum = function(n) {
-    return /^[-]?\d+$/.test(n);
+    return typeof n === "number" && isFinite(n);
 };
 
 /**

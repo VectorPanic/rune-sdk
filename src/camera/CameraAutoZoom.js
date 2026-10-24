@@ -246,14 +246,8 @@ rune.camera.CameraAutoZoom.prototype.update = function(step) {
     var targetZoom = rune.util.Math.clamp(Math.min(horizontalZoom, verticalZoom), this.m_min, this.m_max);
 
     var viewport = camera['viewport'];
-    var zoom = targetZoom;
-
-    if (this.m_smoothing > 0) {
-        var currentZoom = rune.util.Math.clamp(viewport['zoom'], this.m_min, this.m_max);
-        var fraction = 1 - Math.exp(-Math.max(0, step) / this.m_smoothing);
-
-        zoom = rune.util.Math.lerp(currentZoom, targetZoom, fraction);
-    }
+    var currentZoom = rune.util.Math.clamp(viewport['zoom'], this.m_min, this.m_max);
+    var zoom = rune.util.Math.damp(currentZoom, targetZoom, this.m_smoothing, step);
 
     if (Math.abs(targetZoom - zoom) < 0.0001) {
         zoom = targetZoom;

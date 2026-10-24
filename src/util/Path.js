@@ -7,7 +7,7 @@
  *
  * @constructor
  *
- * @param {Array.<rune.geom.Point>} [points] A list of points to represent the path.
+ * @param {Array.<rune.geom.Point>} [points] Initial points. The array is copied; point objects are shared.
  *
  * @class
  * @classdesc
@@ -60,7 +60,7 @@ rune.util.Path = function(points) {
      * @protected
      * @ignore
      */
-    this.m_nodes = points || [];
+    this.m_nodes = points ? points.slice() : [];
 };
 
 //------------------------------------------------------------------------------

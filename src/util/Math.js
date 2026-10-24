@@ -370,6 +370,30 @@ rune.util.Math.lerp = function(from, to, fraction) {
 };
 
 /**
+ * Moves a value toward its target by at most amount, without passing it.
+ * An amount of zero or less leaves the current value unchanged.
+ *
+ * @param {number} current Current value.
+ * @param {number} target Target value.
+ * @param {number} amount Maximum change for this call, in the same units as current.
+ *
+ * @return {number} The new value, or the target if it is within reach.
+ */
+rune.util.Math.moveTowards = function(current, target, amount) {
+    if (amount <= 0) {
+        return current;
+    }
+
+    var difference = target - current;
+
+    if (Math.abs(difference) <= amount) {
+        return target;
+    }
+
+    return current + (difference > 0 ? amount : -amount);
+};
+
+/**
  * Returns a random floating point number.
  *
  * @param {number} [min] Minimum number.

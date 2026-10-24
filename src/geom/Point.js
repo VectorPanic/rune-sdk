@@ -161,6 +161,27 @@ Object.defineProperty(rune.geom.Point.prototype, "y", {
 //------------------------------------------------------------------------------
 
 /**
+ * Returns the direction from this point to a target in radians, between -pi
+ * and pi. Zero points along positive x. With screen coordinates, positive
+ * angles turn toward positive y. Neither point is modified.
+ * Returns zero when both points have the same coordinates.
+ *
+ * @param {rune.geom.Point} target Target point.
+ *
+ * @return {number} Direction to the target in radians.
+ */
+rune.geom.Point.prototype.angleTo = function(target) {
+    var dx = target['x'] - this['x'];
+    var dy = target['y'] - this['y'];
+
+    if (dx === 0 && dy === 0) {
+        return 0;
+    }
+
+    return Math.atan2(dy, dx);
+};
+
+/**
  * Copies the coordinates of the specified point to this point.
  *
  * @param {rune.geom.Point} point The point to copy coordinates from.

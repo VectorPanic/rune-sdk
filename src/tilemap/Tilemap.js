@@ -540,10 +540,14 @@ rune.tilemap.Tilemap.prototype.getTilePropertiesOf = function(v) {
  * so edits do not affect the resource or other map instances. Loading the
  * same resource again restores its original tile values. If loading fails,
  * the current layers, live tile edits and map properties are preserved.
+ * Width, height, tileWidth and tileHeight must be positive safe integers.
+ * The cell count must fit a JavaScript array, and pixel dimensions must remain
+ * safe integers.
  *
  * @param {string} name The name of the resource that represents the map data.
  *
- * @throws Error In case of corrupt map data.
+ * @throws {Error} In case of missing or corrupt map data.
+ * @throws {RangeError} If dimensions are invalid or exceed supported ranges.
  *
  * @returns {undefined}
  */
@@ -557,6 +561,24 @@ rune.tilemap.Tilemap.prototype.load = function(name) {
         throw new Error('Tilemap: Map resource "' + name + '" has no data.');
     }
     var map = resource['data'];
+    var dimensions = ['width', 'height', 'tileWidth', 'tileHeight'];
+
+    for (var i = 0; i < dimensions.length; i++) {
+        var dimension = dimensions[i];
+        var value = map[dimension];
+
+        if (typeof value !== "number" || !isFinite(value) || value <= 0 ||
+            Math.floor(value) !== value || value > 9007199254740991) {
+            throw new RangeError('Tilemap: Map resource "' + name + '" requires a positive safe integer for ' + dimension + '.');
+        }
+    }
+
+    if (map['width'] * map['height'] > 4294967295 ||
+        map['width'] * map['tileWidth'] > 9007199254740991 ||
+        map['height'] * map['tileHeight'] > 9007199254740991) {
+        throw new RangeError('Tilemap: Map resource "' + name + '" exceeds supported cell or pixel dimensions.');
+    }
+
     var previous = {
         data: this.m_data,
         name: this.m_name,
@@ -576,10 +598,10 @@ rune.tilemap.Tilemap.prototype.load = function(name) {
         this.m_data          = map;
         this.m_name          = map['name']       || name;
         this.m_texture       = map['texture']    || "";
-        this.m_heightInTiles = map['height']     || 0;
-        this.m_widthInTiles  = map['width']      || 0;
-        this.m_tileHeight    = map['tileHeight'] || 0;
-        this.m_tileWidth     = map['tileWidth']  || 0;
+        this.m_heightInTiles = map['height'];
+        this.m_widthInTiles  = map['width'];
+        this.m_tileHeight    = map['tileHeight'];
+        this.m_tileWidth     = map['tileWidth'];
         this.m_tiles         = map['tiles']      || {};
 
         back = new rune.tilemap.TilemapLayer(this, map['back']);

@@ -383,7 +383,8 @@ rune.util.Math.random = function(min, max) {
 };
 
 /**
- * Returns a random integer.
+ * Returns a random integer with equal probability for each integer in the
+ * inclusive range. The supplied bounds must be integers, with min <= max.
  *
  * @param {number} [min] Minimum number.
  * @param {number} [max] Maximum number.
@@ -394,7 +395,7 @@ rune.util.Math.randomInt = function(min, max) {
     min = (typeof min === "number") ? min : Number.MIN_VALUE;
     max = (typeof max === "number") ? max : Number.MAX_VALUE;
 
-    return Math.round((Math.random() * (max - min)) + min);
+    return Math.floor(Math.random() * (max - min + 1)) + min;
 };
 
 /**

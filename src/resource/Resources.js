@@ -126,6 +126,18 @@ rune.resource.Resources.prototype.get = function(name) {
 };
 
 /**
+ * Checks whether a resource exists in the library. Names are matched without
+ * regard to case, using the same lookup as get().
+ *
+ * @param {string} name Resource name (ID).
+ *
+ * @returns {boolean} Whether the resource exists.
+ */
+rune.resource.Resources.prototype.has = function(name) {
+	return this.get(name) != null;
+};
+
+/**
  * Deletes a specific resource from the resource library. Deleted resources 
  * are cleared from memory.
  *

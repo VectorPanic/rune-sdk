@@ -143,15 +143,15 @@ rune.util.Executable.prototype.dispose = function() {
  * @return {undefined}
  */
 rune.util.Executable.prototype.execute = function(args) {
-    args = this.m_args.concat(Array.prototype.slice.call(arguments));
+    var parameters = this.m_args.concat(Array.prototype.slice.call(arguments));
     if (typeof this.m_fn === "function") {
         if (this.m_async === true) {
             var m_this = this;
-            window.setTimeout(function(args) {
-                m_this.m_fn.apply(m_this.m_scope, args);
+            window.setTimeout(function() {
+                m_this.m_fn.apply(m_this.m_scope, parameters);
             }, 0);
         } else {
-            this.m_fn.apply(this.m_scope, args);   
+            this.m_fn.apply(this.m_scope, parameters);
         }
     } else throw new TypeError();
 };

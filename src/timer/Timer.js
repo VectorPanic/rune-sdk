@@ -327,8 +327,11 @@ rune.timer.Timer.prototype.update = function(step) {
  * @ignore
  */
 rune.timer.Timer.prototype.dispose = function() {
-    this.m_disposeTrigger();
-    this.m_disposeArguments();
+    try {
+        this.m_disposeTrigger();
+    } finally {
+        this.m_disposeArguments();
+    }
 };
 
 //------------------------------------------------------------------------------
@@ -411,19 +414,22 @@ rune.timer.Timer.prototype.m_updateComplete = function(step) {
 };
 
 /**
- * Calls the callback method when the object is aborted.
+ * Marks the timer as disposed before invoking onAbort, preventing recursive
+ * disposal from invoking the callback again.
  *
  * @returns {undefined}
  * @private
  */
 rune.timer.Timer.prototype.m_disposeTrigger = function() {
-    if (this.m_arguments != null && this['complete'] === false && this.m_disposed === false) {
-        this.m_arguments.onAbort.call(this.m_arguments.scope, this);
-    }
-    
+    var aborted = this.m_arguments != null && this['complete'] === false && this.m_disposed === false;
+
     this.m_active = false;
     this.m_paused = false;
     this.m_disposed = true;
+
+    if (aborted) {
+        this.m_arguments.onAbort.call(this.m_arguments.scope, this);
+    }
 };
 
 /**

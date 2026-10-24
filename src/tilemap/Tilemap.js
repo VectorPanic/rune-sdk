@@ -76,7 +76,8 @@ rune.tilemap.Tilemap = function() {
     this.m_texture = "";
     
     /**
-     * A collection of key-value pairs representing Tile properties.
+     * Map-owned tile definitions indexed by tile value. Grouped values share
+     * one definition within this map, but never with other map instances.
      *
      * @type {Object}
      * @private
@@ -158,6 +159,77 @@ rune.tilemap.Tilemap.BACK_BUFFER = 0;
  * @ignore
  */
 rune.tilemap.Tilemap.FRONT_BUFFER = 1;
+
+//------------------------------------------------------------------------------
+// PUBLIC STATIC METHODS (ENGINE)
+//------------------------------------------------------------------------------
+
+/**
+ * Validates and copies tile definitions into a lookup shared by Tilemap and
+ * TileGraphic. Accepts legacy value entries and grouped values entries.
+ * Each definition is copied once, including nested custom properties.
+ *
+ * @param {Object} tiles Source tile definitions, or null for an empty lookup.
+ * @param {string} name Resource name used in error messages.
+ *
+ * @returns {Object} Tile properties indexed by value.
+ * @throws {Error} If definitions are invalid, duplicated or not JSON-compatible.
+ * @ignore
+ */
+rune.tilemap.Tilemap.parseTileProperties = function(tiles, name) {
+    var properties = {};
+    if (tiles == null) {
+        return properties;
+    }
+
+    if (typeof tiles !== "object") {
+        throw new TypeError('Tilemap: Resource "' + name + '" requires a tile definition array or object.');
+    }
+
+    for (var key in tiles) {
+        if (!Object.prototype.hasOwnProperty.call(tiles, key)) {
+            continue;
+        }
+        
+        var definition = tiles[key];
+        var message = 'Tilemap: Invalid tile definition "' + key + '" in resource "' + name + '". ';
+        if (definition == null || typeof definition !== "object" || Array.isArray(definition)) {
+            throw new TypeError(message + 'Expected an object.');
+        }
+        
+        var hasValue = Object.prototype.hasOwnProperty.call(definition, 'value');
+        var hasValues = Object.prototype.hasOwnProperty.call(definition, 'values');
+        if (hasValue === hasValues) {
+            throw new Error(message + 'Use either value or values.');
+        }
+        
+        var values = hasValues ? definition['values'] : [definition['value']];
+        if (!Array.isArray(values) || values.length === 0) {
+            throw new TypeError(message + 'Expected a non-empty values array.');
+        }
+        
+        var copy = JSON.parse(JSON.stringify(definition));
+        for (var i = 0; i < values.length; i++) {
+            var value = values[i];
+            if (!hasValues && typeof value === "string" && value.trim().length > 0) {
+                value = Number(value);
+            }
+            
+            if (typeof value !== "number" || !isFinite(value) || value < 0 ||
+                Math.floor(value) !== value || value > 9007199254740991) {
+                throw new RangeError(message + 'Tile values must be non-negative safe integers.');
+            }
+            
+            if (Object.prototype.hasOwnProperty.call(properties, value)) {
+                throw new Error(message + 'Duplicate tile value ' + value + '.');
+            }
+            
+            properties[value] = copy;
+        }
+    }
+
+    return properties;
+};
 
 //------------------------------------------------------------------------------
 // Public getter and setter methods
@@ -515,24 +587,22 @@ rune.tilemap.Tilemap.prototype.getTileTextureRectOf = function(v) {
 };
 
 /**
- * Returns a key-value pair that describes the properties of a 
- * Tile, via the specified Tile value. The method returns 
- * null if the specified Tile value is not associated with 
- * properties in the map data.
+ * Returns the map-owned properties for a tile value, or null if undefined.
+ * Values in the same values group return the same object, so property edits
+ * affect the whole group. Definitions and nested properties are independent
+ * of the source resource and other map instances. Editing value or values
+ * does not change the lookup established when the map was loaded.
  *
- * @param {number} v Tile value.
+ * @param {number|string} v Tile value.
  *
- * @returns {Object}
+ * @returns {?Object} The shared group definition within this map, or null.
  */
 rune.tilemap.Tilemap.prototype.getTilePropertiesOf = function(v) {
-    var o = this.m_tiles;
-    for (var k in o) {
-        if (o[k]['value'] == v) {
-            return o[k];
-        }
+    if (typeof v === "string" && v.trim().length > 0) {
+        v = Number(v);
     }
-    
-    return null;
+
+    return Object.prototype.hasOwnProperty.call(this.m_tiles, v) ? this.m_tiles[v] : null;
 };
 
 /**
@@ -543,6 +613,10 @@ rune.tilemap.Tilemap.prototype.getTilePropertiesOf = function(v) {
  * Width, height, tileWidth and tileHeight must be positive safe integers.
  * The cell count must fit a JavaScript array, and pixel dimensions must remain
  * safe integers.
+ * Tile definitions accept either value or a non-empty values array. Each tile
+ * value must be a unique non-negative safe integer. Legacy value entries also
+ * accept numeric strings. Definitions are copied
+ * per map, while grouped values share one definition within the map.
  *
  * @param {string} name The name of the resource that represents the map data.
  *
@@ -579,6 +653,7 @@ rune.tilemap.Tilemap.prototype.load = function(name) {
         throw new RangeError('Tilemap: Map resource "' + name + '" exceeds supported cell or pixel dimensions.');
     }
 
+    var tiles = rune.tilemap.Tilemap.parseTileProperties(map['tiles'], name);
     var previous = {
         data: this.m_data,
         name: this.m_name,
@@ -589,12 +664,13 @@ rune.tilemap.Tilemap.prototype.load = function(name) {
         tileWidth: this.m_tileWidth,
         tiles: this.m_tiles
     };
+    
     var back = null;
     var front = null;
 
     try {
-        // Layer construction reads dimensions from this map. Keep the old
-        // layers alive while preparing replacements with the new dimensions.
+        // LAYER CONSTRUCTION READS DIMENSIONS FROM THIS MAP. KEEP THE OLD
+        // LAYERS ALIVE WHILE PREPARING REPLACEMENTS WITH THE NEW DIMENSIONS.
         this.m_data          = map;
         this.m_name          = map['name']       || name;
         this.m_texture       = map['texture']    || "";
@@ -602,7 +678,7 @@ rune.tilemap.Tilemap.prototype.load = function(name) {
         this.m_widthInTiles  = map['width'];
         this.m_tileHeight    = map['tileHeight'];
         this.m_tileWidth     = map['tileWidth'];
-        this.m_tiles         = map['tiles']      || {};
+        this.m_tiles         = tiles;
 
         back = new rune.tilemap.TilemapLayer(this, map['back']);
         front = new rune.tilemap.TilemapLayer(this, map['front']);

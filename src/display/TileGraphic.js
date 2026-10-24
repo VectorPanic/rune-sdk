@@ -71,7 +71,7 @@ rune.display.TileGraphic = function(x, y, resource) {
     this.m_texture = null;
 
     /**
-     * A collection of key-value pairs representing Tile properties.
+     * Map-owned tile definitions indexed by tile value.
      *
      * @type {Object}
      * @protected
@@ -338,10 +338,12 @@ rune.display.TileGraphic.prototype.load = function(resource) {
         throw new Error('TileGraphic: Map resource "' + resource + '" has no data.');
     }
 
+    var tiles = rune.tilemap.Tilemap.parseTileProperties(map['tiles'], resource);
+
     this.m_disposeBuffers();
     this.m_map = map;
     this.m_name = map['name'] || resource;
-    this.m_tiles = map['tiles'] || {};
+    this.m_tiles = tiles;
     this.m_resize(
         (map['width'] || 0) * (map['tileWidth'] || 0),
         (map['height'] || 0) * (map['tileHeight'] || 0)
@@ -354,21 +356,20 @@ rune.display.TileGraphic.prototype.load = function(resource) {
 };
 
 /**
- * Returns a key-value pair that describes the properties of a Tile.
+ * Returns map-owned tile properties. Values in the same values group share
+ * one object. Definitions are independent of the resource and other instances.
+ * Editing value or values does not change the lookup created during load().
  *
- * @param {number} value Tile value.
+ * @param {number|string} value Tile value.
  *
- * @returns {Object}
+ * @returns {?Object} The shared group definition, or null if undefined.
  */
 rune.display.TileGraphic.prototype.getTilePropertiesOf = function(value) {
-    var o = this.m_tiles;
-    for (var k in o) {
-        if (o[k]['value'] == value) {
-            return o[k];
-        }
+    if (typeof value === "string" && value.trim().length > 0) {
+        value = Number(value);
     }
 
-    return null;
+    return this.m_tiles != null && Object.prototype.hasOwnProperty.call(this.m_tiles, value) ? this.m_tiles[value] : null;
 };
 
 /**

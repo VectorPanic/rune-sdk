@@ -14,11 +14,7 @@
   },
   "tiles": [
     {
-      "value": 1,
-      "collision": "0x1111"
-    },
-    {
-      "value": 2,
+      "values": [1, 2],
       "collision": "0x1111"
     }
   ],

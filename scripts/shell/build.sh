@@ -12,6 +12,7 @@ npx google-closure-compiler \
 --js "./../../src/util/Palette.js" \
 --js "./../../src/util/Path.js" \
 --js "./../../src/util/Paths.js" \
+--js "./../../src/util/Random.js" \
 --js "./../../src/util/Stack.js" \
 --js "./../../src/util/URL.js" \
 --js "./../../src/net/URLResponse.js" \

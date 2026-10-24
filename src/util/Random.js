@@ -85,6 +85,28 @@ rune.util.Random.prototype.next = function() {
 };
 
 /**
+ * Selects an element without modifying the array. Empty arrays return undefined.
+ * Arrays with fewer than two elements do not advance the random sequence.
+ *
+ * @param {Array} array Elements to choose from.
+ *
+ * @returns {*} The selected element, or undefined if the array is empty.
+ * @throws {TypeError} If array is not an Array.
+ * @throws {RangeError} If the array contains more than 2147483646 elements.
+ */
+rune.util.Random.prototype.pick = function(array) {
+    if (!Array.isArray(array)) {
+        throw new TypeError("Random: Expected an array to pick from.");
+    }
+
+    if (array.length < 2) {
+        return array[0];
+    }
+
+    return array[this.randomInt(0, array.length - 1)];
+};
+
+/**
  * Returns a floating-point value in the specified range.
  *
  * @param {number} [min=0] Inclusive minimum.
@@ -153,6 +175,33 @@ rune.util.Random.prototype.reset = function(seed) {
 
     this.m_seed = seed;
     this.m_state = seed;
+};
+
+/**
+ * Shuffles an array in place using Fisher-Yates and returns the same array.
+ * Elements are not cloned. Arrays with fewer than two elements do not advance
+ * the random sequence. Copy the array first to preserve its original order.
+ *
+ * @param {Array} array Writable array to shuffle.
+ *
+ * @returns {Array} The supplied array in its new order.
+ * @throws {TypeError} If array is not an Array.
+ * @throws {RangeError} If the array contains more than 2147483646 elements.
+ */
+rune.util.Random.prototype.shuffle = function(array) {
+    if (!Array.isArray(array)) {
+        throw new TypeError("Random: Expected an array to shuffle.");
+    }
+
+    for (var i = array.length - 1; i > 0; i--) {
+        var index = this.randomInt(0, i);
+        var value = array[i];
+
+        array[i] = array[index];
+        array[index] = value;
+    }
+
+    return array;
 };
 
 //------------------------------------------------------------------------------

@@ -12,6 +12,8 @@
  *
  * The URL class offers static methods for handling a string according to the 
  * Uniform Resource Locator (URL) format.
+ * Relative URLs are resolved against the document's base URL. Components use
+ * the browser's normalized representation, including omission of default ports.
  */
 rune.util.URL = function() {
 	console.warn("This class is not meant to be instantiated; all content is static.");
@@ -37,7 +39,8 @@ rune.util.URL.fragment = function(url) {
 };
 
 /**
- * Returns the host section of a URL.
+ * Returns the hostname of a URL without its port. IPv6 addresses retain their
+ * surrounding brackets.
  * 
  * @param {string} url URL to process.
  * 
@@ -47,12 +50,12 @@ rune.util.URL.host = function(url) {
 	var a = document.createElement("a");
 		a.href = url;
 		
-	return a.host.split(":")[0];
+	return a.hostname;
 };
 
 /**
- * Returns the path of the URL for the location, which will be the empty 
- * string if there is no path.
+ * Returns the normalized pathname of a URL, excluding its query and fragment.
+ * For HTTP and HTTPS URLs, an empty path is represented as a slash.
  * 
  * @param {string} url URL to process.
  * 
@@ -66,15 +69,19 @@ rune.util.URL.path = function(url) {
 };
 
 /**
- * Returns the port number of the URL. If the URL does not contain an explicit 
- * port number, it will be set to -1.
+ * Returns the normalized port number of a URL, or -1 if its port is empty.
+ * Default protocol ports are normalized to an empty port by the browser.
+ * Relative URLs inherit their port from the document's base URL.
  * 
  * @param {string} url URL to process.
  * 
  * @returns {number}
  */
 rune.util.URL.port = function(url) {
-	return parseInt(url.split("/")[2].split(":")[1], 10) || -1;
+	var a = document.createElement("a");
+		a.href = url;
+
+	return a.port === "" ? -1 : parseInt(a.port, 10);
 };
 
 /**

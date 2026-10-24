@@ -668,17 +668,11 @@ rune.input.Gamepads.prototype.m_construct = function() {
 /**
  * Creates support for connected devices.
  *
- * @throws {Error} If there is no support for W3C Gamepad.
- *
  * @returns {undefined}
  * @private
  */
 rune.input.Gamepads.prototype.m_constructDevices = function() {
-    if (typeof navigator !== "undefined" && typeof navigator.getGamepads === "function") {
-        this.m_devices = window.navigator.getGamepads();
-    } else if (this.m_options.enable == false) {
-        this.m_devices = [];
-    } else throw new Error("Gamepads not supported at runtime.");
+    this.m_devices = this.m_readDevices();
 };
 
 /**
@@ -705,23 +699,39 @@ rune.input.Gamepads.prototype.m_constructGamepads = function() {
 /**
  * Updates the state of connected devices.
  *
- * @throws {Error} If the state could not be updated.
- *
  * @returns {undefined}
  * @private
  */
 rune.input.Gamepads.prototype.m_updateDevices = function() {
-    if (window.navigator != null && typeof window.navigator.getGamepads === "function") {
-        this.m_devices = window.navigator.getGamepads();
+    this.m_devices = this.m_readDevices();
 
-        var a = this['m_numDevices'];
-        var b = this['numGamepads'];
+    var a = this['m_numDevices'];
+    var b = this['numGamepads'];
 
-        if      (a > b) this.m_onDeviceConnected();
-        else if (a < b) this.m_onDeviceDisconnected();
-    } else if (this.m_options.enable == false) {
-        this.m_devices = [];
-    } else throw new Error();
+    if      (a > b) this.m_onDeviceConnected();
+    else if (a < b) this.m_onDeviceDisconnected();
+};
+
+/**
+ * Reads connected devices, or returns an empty list when access is unavailable.
+ *
+ * @returns {Array} Connected input devices.
+ * @private
+ */
+rune.input.Gamepads.prototype.m_readDevices = function() {
+    if (this.m_options.enable == false) {
+        return [];
+    }
+
+    try {
+        if (typeof navigator !== "undefined" && typeof navigator.getGamepads === "function") {
+            return navigator.getGamepads() || [];
+        }
+    } catch (error) {
+        return [];
+    }
+
+    return [];
 };
 
 /**

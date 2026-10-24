@@ -175,7 +175,8 @@ rune.timer.Timers.prototype.once = function(delay, callback, scope) {
 
 /**
  * Removes the specified Timer object from the handler and activates the 
- * deallocation process for that object.
+ * deallocation process for that object. The timer is removed before disposal,
+ * allowing its onAbort callback to safely modify the handler's timer list.
  *
  * @param {rune.timer.Timer} timer Timer to remove.
  *
@@ -188,9 +189,8 @@ rune.timer.Timers.prototype.remove = function(timer) {
 
     var i = this.m_timers.indexOf(timer);
     if (i > -1) {
-        this.m_timers[i].dispose();
-        this.m_timers[i] = null;
         this.m_timers.splice(i, 1);
+        timer.dispose();
         
         return true;
     }

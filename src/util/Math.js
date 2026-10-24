@@ -433,13 +433,24 @@ rune.util.Math.sin = function(n) {
 };
 
 /**
- * Returns a number within a specified range.
+ * Wraps an integer within an inclusive integer range. Both min and max are
+ * valid results, and the interval repeats every max - min + 1 units.
+ * The arguments must be finite integers, with min <= max.
  *
- * @param {number} num A number.
- * @param {number} min Minimum number.
- * @param {number} max Maximum number.
- * 
- * @return {number} A number between the minimum and maximum value.
+ * Intended for discrete values such as frame or item indices. This method
+ * does not normalize continuous values such as decimal positions or angles.
+ * Arguments are not rounded or validated.
+ *
+ * @example
+ * rune.util.Math.wrap(5, 0, 4);  // 0
+ * rune.util.Math.wrap(-1, 0, 4); // 4
+ * rune.util.Math.wrap(4, 0, 4);  // 4
+ *
+ * @param {number} num Integer to wrap.
+ * @param {number} min Inclusive minimum integer.
+ * @param {number} max Inclusive maximum integer.
+ *
+ * @return {number} The wrapped integer between min and max, inclusive.
  */
 rune.util.Math.wrap = function(num, min, max) {
     var range = max - min + 1;

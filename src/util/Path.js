@@ -241,15 +241,21 @@ rune.util.Path.prototype.compress = function() {
 };
 
 /**
- * Returns a point based on the specified index.
+ * Returns a point based on the specified index. Indices below zero select the
+ * first point, and indices above the last point select the last point.
+ * Returns null if the path is empty.
  *
- * @param {number} index Index of the point to be retuned.
+ * @param {number} index Integer index of the point to retrieve.
  *
- * @returns {rune.geom.Point}
+ * @returns {?rune.geom.Point}
  */
 rune.util.Path.prototype.getAt = function(index) {
-    if (index > this.m_nodes.length) {
-        index = this.m_nodes.length;
+    if (this.m_nodes.length === 0) {
+        return null;
+    }
+
+    if (index >= this.m_nodes.length) {
+        index = this.m_nodes.length - 1;
     }
     
     if (index < 0) {

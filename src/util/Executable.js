@@ -123,7 +123,8 @@ Object.defineProperty(rune.util.Executable.prototype, "scope", {
 
 /**
  * Resets the object's internal memory references. Note that this process 
- * frees up memory and renders the object unusable.
+ * frees up memory and renders the object unusable. Pending asynchronous
+ * callbacks are skipped when they reach the event loop.
  *
  * @return {undefined}
  */
@@ -148,7 +149,9 @@ rune.util.Executable.prototype.execute = function(args) {
         if (this.m_async === true) {
             var m_this = this;
             window.setTimeout(function() {
-                m_this.m_fn.apply(m_this.m_scope, parameters);
+                if (typeof m_this.m_fn === "function") {
+                    m_this.m_fn.apply(m_this.m_scope, parameters);
+                }
             }, 0);
         } else {
             this.m_fn.apply(this.m_scope, parameters);

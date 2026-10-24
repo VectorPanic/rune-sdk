@@ -146,15 +146,20 @@ rune.util.Path.prototype.add = function(x, y) {
 };
 
 /**
- * Adds a point to the path at a specified index.
+ * Adds a point to the path at a specified index. Indices are clamped between
+ * zero and the path length, allowing insertion at either end.
  *
  * @param {number} x The x-coordinate of the point.
  * @param {number} y The y-coordinate of the point.
- * @param {number} index Index where the point is to be stored.
+ * @param {number} index Integer index where the point is to be stored.
  *
  * @returns {undefined}
  */
 rune.util.Path.prototype.addAt = function(x, y, index) {
+    if (index < 0) {
+        index = 0;
+    }
+
     if (index > this.m_nodes.length) {
         index = this.m_nodes.length;
     }
@@ -182,15 +187,20 @@ rune.util.Path.prototype.addPoint = function(point, asReference) {
 };
 
 /**
- * Adds a point to the path at a specified index.
+ * Adds a point to the path at a specified index. Indices are clamped between
+ * zero and the path length, allowing insertion at either end.
  *
  * @param {rune.geom.Point} point Point to add.
- * @param {number} index Index where the point is to be stored.
+ * @param {number} index Integer index where the point is to be stored.
  * @param {boolean} [asReference=false] Whether the point should be added as a reference or a new object.
  *
  * @returns {undefined}
  */
 rune.util.Path.prototype.addPointAt = function(point, index, asReference) {
+    if (index < 0) {
+        index = 0;
+    }
+
     if (index > this.m_nodes.length) {
         index = this.m_nodes.length;
     }
@@ -280,15 +290,21 @@ rune.util.Path.prototype.remove = function(point) {
 };
 
 /**
- * Removes a point from the path. The removal is based on an index.
+ * Removes a point from the path. Indices below zero select the first point,
+ * and indices above the last point select the last point.
+ * Returns null if the path is empty.
  *
- * @param {number} index Index of the point to remove.
+ * @param {number} index Integer index of the point to remove.
  *
- * @returns {rune.geom.Point} Reference to the removed point.
+ * @returns {?rune.geom.Point} Reference to the removed point, or null for an empty path.
  */
 rune.util.Path.prototype.removeAt = function(index) {
     if (this.m_nodes.length <= 0) {
         return null;
+    }
+
+    if (index < 0) {
+        index = 0;
     }
         
     if (index >= this.m_nodes.length) {

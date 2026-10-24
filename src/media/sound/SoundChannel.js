@@ -100,6 +100,14 @@ rune.media.SoundChannel = function(shared) {
      */
     this.m_tweens = null;
 
+    /**
+     * User interaction handler used while audio playback is blocked.
+     *
+     * @type {Function}
+     * @private
+     */
+    this.m_unlock = null;
+
     //--------------------------------------------------------------------------
     // Constructor call
     //--------------------------------------------------------------------------
@@ -361,6 +369,8 @@ rune.media.SoundChannel.prototype.get = function(name, unique) {
  * @returns {undefined}
  */
 rune.media.SoundChannel.prototype.pause = function() {
+    this.m_disposeUnlock();
+
     if (this.m_context && this.m_context.state === "running") {
         this.m_context.suspend();
     }
@@ -399,7 +409,27 @@ rune.media.SoundChannel.prototype.remove = function(sound, dispose) {
  */
 rune.media.SoundChannel.prototype.resume = function() {
     if (this.m_context && this.m_context.state === "suspended") {
-        this.m_context.resume();
+        this.m_constructUnlock();
+
+        var channel = this;
+        var context = this.m_context;
+        var result = null;
+
+        try {
+            result = context.resume();
+        } catch (error) {
+            return;
+        }
+
+        if (result != null && typeof result.then === "function") {
+            result.then(function() {
+                if (channel.m_context === context && context.state === "running") {
+                    channel.m_disposeUnlock();
+                }
+            }, function() {});
+        } else if (context.state === "running") {
+            this.m_disposeUnlock();
+        }
     }
 };
 
@@ -431,6 +461,7 @@ rune.media.SoundChannel.prototype.update = function(step) {
  * @ignore
  */
 rune.media.SoundChannel.prototype.dispose = function() {
+    this.m_disposeUnlock();
     this.m_disposeTweens();
     this.m_disposeEcho();
     this.m_disposeSounds();
@@ -457,6 +488,7 @@ rune.media.SoundChannel.prototype.m_construct = function() {
     this.m_constructPanner();
     this.m_constructInput();
     this.m_constructTweens();
+    this.m_constructUnlock();
 };
 
 //------------------------------------------------------------------------------
@@ -542,6 +574,27 @@ rune.media.SoundChannel.prototype.m_constructTweens = function() {
 };
 
 /**
+ * Listens for user interaction until the suspended audio context can resume.
+ *
+ * @returns {undefined}
+ * @private
+ */
+rune.media.SoundChannel.prototype.m_constructUnlock = function() {
+    if (this.m_unlock != null || this.m_context == null || this.m_context.state !== "suspended") {
+        return;
+    }
+
+    var channel = this;
+    this.m_unlock = function() {
+        channel.resume();
+    };
+
+    window.addEventListener("keydown", this.m_unlock, true);
+    window.addEventListener("mousedown", this.m_unlock, true);
+    window.addEventListener("touchend", this.m_unlock, true);
+};
+
+/**
  * Updates Sound objects.
  *
  * @param {number} step Current time stamp.
@@ -582,6 +635,21 @@ rune.media.SoundChannel.prototype.m_disposeTweens = function() {
     if (this.m_tweens instanceof rune.tween.Tweens) {
         this.m_tweens.dispose();
         this.m_tweens = null;
+    }
+};
+
+/**
+ * Removes user interaction listeners after unlocking, pausing or disposal.
+ *
+ * @returns {undefined}
+ * @private
+ */
+rune.media.SoundChannel.prototype.m_disposeUnlock = function() {
+    if (this.m_unlock != null) {
+        window.removeEventListener("keydown", this.m_unlock, true);
+        window.removeEventListener("mousedown", this.m_unlock, true);
+        window.removeEventListener("touchend", this.m_unlock, true);
+        this.m_unlock = null;
     }
 };
 

@@ -232,33 +232,61 @@ rune.resource.Requester.prototype.m_processRequests = function() {
  */
 rune.resource.Requester.prototype.m_processRequest = function(request) {
     if (this.m_loader) {
+        var args = this.m_arguments;
+        var fail = function(error) {
+            if (this.m_arguments !== args || request == null) {
+                return;
+            }
+            
+            var failed = request;
+            request = null;
+            this.m_execRequestError(failed, error);
+        };
+        
         this.m_loader.load({
             url: request['path'],
             onComplete: function(response) {
+                if (this.m_arguments !== args || request == null) {
+                    return;
+                }
+                
                 try {
                     response.asEncodedResource(function(obj) {
-                        this.m_resources.add(request['name'], obj);
-                        this.m_arguments.exec("onProgress", [
-                            this['progress'],
-                            request['name'],
-                            response['size'],
-                            response['type'],
-                            obj
-                        ]);
+                        if (this.m_arguments !== args || request == null) {
+                            return;
+                        }
                         
-                        request.dispose();
+                        var completed = request;
                         request = null;
+                        try {
+                            this.m_resources.add(completed['name'], obj);
+                            args.exec("onProgress", [
+                                this['progress'],
+                                completed['name'],
+                                response['size'],
+                                response['type'],
+                                obj
+                            ]);
+                        } finally {
+                            completed.dispose();
+                        }
                         
-                        this.m_processRequests();
-                    }, this);
+                        if (this.m_arguments === args) {
+                            this.m_processRequests();
+                        }
+                    }, this, function(error) {
+                        fail.call(this, error);
+                    });
                 } catch (error) {
-                    this.m_execRequestError(request);
-                    request = null;
+                    if (request == null) {
+                        throw error;
+                    }
+                    
+                    fail.call(this, error);
                 }
             },
             onError: function() {
-                this.m_execRequestError(request);
-                request = null;
+                fail.call(this, null);
             },
             scope: this
         });   
@@ -271,19 +299,25 @@ rune.resource.Requester.prototype.m_processRequest = function(request) {
  * Executes request error handling.
  *
  * @param {rune.resource.Request} request Request that failed.
+ * @param {Error} [error] Network or decoding failure.
  *
  * @returns {undefined}
  * @private
  */
-rune.resource.Requester.prototype.m_execRequestError = function(request) {
-    if (this.m_arguments != null && request != null) {
-        this.m_arguments.exec("onError", [
-            request['name']
-        ]);
-
-        request.dispose();
+rune.resource.Requester.prototype.m_execRequestError = function(request, error) {
+    if (this.m_arguments == null || request == null) {
+        return;
     }
+
+    var name = request['name'];
+    var handler = this.m_arguments.onError;
+    var scope = this.m_arguments.scope;
 
     this.m_disposeLoader();
     this.m_disposeArguments();
+    request.dispose();
+
+    if (typeof handler === "function") {
+        handler.call(scope, name, error || new Error('Requester: Failed to load resource "' + name + '".'));
+    }
 };

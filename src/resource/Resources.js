@@ -165,6 +165,8 @@ rune.resource.Resources.prototype.remove = function(name) {
 
 /**
  * Request a set of files to load into the resource library during runtime.
+ * The options.onError callback receives the failed resource name and an Error
+ * for network or decoding failures. The failed batch is cleaned up first.
  *
  * @param {Object} options Request options.
  *

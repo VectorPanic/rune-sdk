@@ -29,6 +29,14 @@ rune.net.URLResponse = function(data) {
 	 * @private
 	 */
 	this.m_data = data || "";
+
+    /**
+     * Cleanup functions for pending media decoders.
+     *
+     * @type {Array.<Function>}
+     * @private
+     */
+    this.m_decoders = [];
 };
 
 //------------------------------------------------------------------------------
@@ -99,31 +107,33 @@ Object.defineProperty(rune.net.URLResponse.prototype, "size", {
 //------------------------------------------------------------------------------
 
 /**
- * Encodes response data into an Audio object.
+ * Encodes response data into an Audio object. Completion and failure are
+ * mutually exclusive. Without onError, decoding failures throw from the event.
  *
  * @param {Function} handler Called when the encoding is complete.
  * @param {Object} [scope] Scope of execution for the handler.
+ * @param {Function} [onError] Receives an Error in the same scope if decoding fails.
  *
  * @return {undefined}
  */
-rune.net.URLResponse.prototype.asAudio = function(handler, scope) {
-	var audio = new Audio(this.m_data);
-		audio.setAttribute("preload", "auto");
-		audio.oncanplaythrough = function() {
-			audio.oncanplaythrough = null;
-			handler.call(scope, audio);
-		};
+rune.net.URLResponse.prototype.asAudio = function(handler, scope, onError) {
+    var audio = new Audio();
+    audio.setAttribute("preload", "auto");
+
+    this.m_decodeMedia(audio, "oncanplaythrough", handler, scope, onError);
 };
 
 /**
- * Encodes response data according to response type.
+ * Encodes response data according to response type. Image and audio failures
+ * use onError when supplied; synchronous format errors are still thrown.
  *
  * @param {Function} handler Called when the encoding is complete.
  * @param {Object} [scope] Scope of execution for the handler.
+ * @param {Function} [onError] Receives an Error if image or audio decoding fails.
  *
  * @return {undefined}
  */
-rune.net.URLResponse.prototype.asEncodedResource = function(handler, scope) {
+rune.net.URLResponse.prototype.asEncodedResource = function(handler, scope, onError) {
     switch (this['type']) {
         case "application/json":
             this.asJSON(handler, scope);
@@ -132,13 +142,13 @@ rune.net.URLResponse.prototype.asEncodedResource = function(handler, scope) {
         case "audio/x-wav":
         case "audio/mpeg":
         case "audio/wav":
-            this.asAudio(handler, scope);
+            this.asAudio(handler, scope, onError);
             break;
                 
         case "image/jpeg":
         case "image/png":
         case "image/gif":
-            this.asImage(handler, scope);
+            this.asImage(handler, scope, onError);
             break;
             
         case "text/plain":
@@ -151,21 +161,20 @@ rune.net.URLResponse.prototype.asEncodedResource = function(handler, scope) {
 };
 
 /**
- * Encodes response data into an Image object.
+ * Encodes response data into an Image object. Completion and failure are
+ * mutually exclusive. Without onError, decoding failures throw from the event.
  *
  * @param {Function} handler Called when the encoding is complete.
  * @param {Object} [scope] Scope of execution for the handler.
+ * @param {Function} [onError] Receives an Error in the same scope if decoding fails.
  *
  * @return {undefined}
  */
-rune.net.URLResponse.prototype.asImage = function(handler, scope) {
-	var img = new Image();
-		img.src = this.m_data;
-        img.decoding = "async";
-		img.onload = function() {
-			img.onload = null;
-			handler.call(scope, img);
-		};
+rune.net.URLResponse.prototype.asImage = function(handler, scope, onError) {
+    var image = new Image();
+    image.decoding = "async";
+
+    this.m_decodeMedia(image, "onload", handler, scope, onError);
 };
 
 /**
@@ -202,6 +211,71 @@ rune.net.URLResponse.prototype.asText = function(handler, scope) {
 //------------------------------------------------------------------------------
 // Private prototype methods
 //------------------------------------------------------------------------------
+
+/**
+ * Installs completion and failure handlers before assigning the media source.
+ * A decoder settles once; disposal removes its pending handlers. Without an
+ * error callback, decoding failures throw a descriptive Error from the event.
+ *
+ * @param {Object} media Image or audio element.
+ * @param {string} ready Name of the successful load event property.
+ * @param {Function} handler Success callback receiving the decoded element.
+ * @param {Object} [scope] Callback scope.
+ * @param {Function} [onError] Error callback receiving an Error.
+ *
+ * @returns {undefined}
+ * @private
+ */
+rune.net.URLResponse.prototype.m_decodeMedia = function(media, ready, handler, scope, onError) {
+    var response = this;
+    var settled = false;
+    var type = this['type'];
+
+    var cleanup = function() {
+        if (settled) {
+            return false;
+        }
+
+        settled = true;
+        media[ready] = null;
+        media['onerror'] = null;
+        response.m_decoders.splice(response.m_decoders.indexOf(cleanup), 1);
+
+        return true;
+    };
+
+    var fail = function(error) {
+        if (cleanup()) {
+            if (typeof onError === "function") {
+                onError.call(scope, error);
+            } else {
+                throw error;
+            }
+        }
+    };
+
+    this.m_decoders.push(cleanup);
+
+    media[ready] = function() {
+        if (cleanup()) {
+            handler.call(scope, media);
+        }
+    };
+
+    media['onerror'] = function() {
+        fail(new Error('URLResponse: Failed to decode resource of type "' + type + '".'));
+    };
+
+    try {
+        media['src'] = this.m_data;
+    } catch (error) {
+        if (settled) {
+            throw error;
+        }
+
+        fail(error);
+    }
+};
 
 /**
  * Decodes UTF-8 text without changing the raw payload used for byte counts.
@@ -276,5 +350,9 @@ rune.net.URLResponse.prototype.m_isBase64 = function() {
  * @ignore
  */
 rune.net.URLResponse.prototype.dispose = function() {
+    while (this.m_decoders.length > 0) {
+        this.m_decoders[0]();
+    }
+
     this.m_data = "";
 };

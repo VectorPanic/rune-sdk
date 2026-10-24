@@ -58,7 +58,9 @@ rune.resource.RequesterOptions = function(data) {
     this.onComplete = data.onComplete || null;
     
     /**
-     * Executed when loading of a requested file fails.
+     * Executed when loading or decoding a requested file fails. Receives the
+     * resource name and an Error. The failed batch is cleaned up before this
+     * callback, allowing another load to be started safely.
      *
      * @type {Function}
      * @package

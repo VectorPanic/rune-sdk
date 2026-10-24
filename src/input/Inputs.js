@@ -37,6 +37,14 @@ rune.input.Inputs = function(options) {
      * @private
      */
     this.m_keyboard = null;
+
+    /**
+     * Action collections sampled after input devices and before scene logic.
+     *
+     * @type {Array.<rune.input.Actions>}
+     * @private
+     */
+    this.m_actions = [];
     
     /**
      * Input settings.
@@ -103,6 +111,33 @@ Object.defineProperty(rune.input.Inputs.prototype, "keyboard", {
 //------------------------------------------------------------------------------
 
 /**
+ * Creates an automatically updated action collection using this keyboard.
+ * Dispose the collection when its owner is removed; it is then unregistered
+ * on the next input update. Collections may select different gamepads and keys
+ * for separate players. Direct device access remains available.
+ *
+ * @param {rune.input.Gamepad} [gamepad] Player's gamepad. Defaults to slot zero;
+ * pass null for keyboard-only input.
+ *
+ * @returns {rune.input.Actions} The new action collection.
+ * @throws {Error} If this input subsystem is disposed.
+ */
+rune.input.Inputs.prototype.createActions = function(gamepad) {
+    if (this.m_actions == null) {
+        throw new Error("Inputs: Cannot create actions after disposal.");
+    }
+
+    if (gamepad === undefined) {
+        gamepad = this.m_gamepads.get(0);
+    }
+
+    var actions = new rune.input.Actions(this.m_keyboard, gamepad);
+    this.m_actions.push(actions);
+
+    return actions;
+};
+
+/**
  * Resets the state of all input devices.
  *
  * @returns {undefined}
@@ -110,6 +145,11 @@ Object.defineProperty(rune.input.Inputs.prototype, "keyboard", {
 rune.input.Inputs.prototype.reset = function() {
     if (this.m_keyboard != null) this.m_keyboard.reset();
     if (this.m_gamepads != null) this.m_gamepads.reset();
+    if (this.m_actions != null) {
+        for (var i = 0; i < this.m_actions.length; i++) {
+            this.m_actions[i].reset();
+        }
+    }
 };
 
 //------------------------------------------------------------------------------
@@ -127,6 +167,7 @@ rune.input.Inputs.prototype.reset = function() {
 rune.input.Inputs.prototype.update = function(step) {
     this.m_updateKeyboard(step);
     this.m_updateGamepads(step);
+    this.m_updateActions();
 };
 
 /**
@@ -137,6 +178,7 @@ rune.input.Inputs.prototype.update = function(step) {
  * @ignore
  */
 rune.input.Inputs.prototype.dispose = function() {
+    this.m_disposeActions();
     this.m_disposeGamepads();
     this.m_disposeKeyboard();
 };
@@ -221,6 +263,45 @@ rune.input.Inputs.prototype.m_updateKeyboard = function(step) {
 rune.input.Inputs.prototype.m_updateGamepads = function(step) {
     if (this.m_gamepads != null) {
         this.m_gamepads.update();
+    }
+};
+
+/**
+ * Updates action collections and removes disposed collections from the registry.
+ *
+ * @returns {undefined}
+ * @protected
+ * @ignore
+ */
+rune.input.Inputs.prototype.m_updateActions = function() {
+    if (this.m_actions == null) {
+        return;
+    }
+
+    for (var i = 0; i < this.m_actions.length; i++) {
+        if (this.m_actions[i]['disposed']) {
+            this.m_actions.splice(i, 1);
+            i--;
+        } else {
+            this.m_actions[i].update();
+        }
+    }
+};
+
+/**
+ * Removes action collections before their borrowed input devices are disposed.
+ *
+ * @returns {undefined}
+ * @protected
+ * @ignore
+ */
+rune.input.Inputs.prototype.m_disposeActions = function() {
+    if (this.m_actions != null) {
+        while (this.m_actions.length > 0) {
+            this.m_actions.pop().dispose();
+        }
+        
+        this.m_actions = null;
     }
 };
 

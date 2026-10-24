@@ -132,7 +132,7 @@ Object.defineProperty(rune.display.Canvas.prototype, "height", {
 	 */
 	set : function(value) {
 		if (this.m_canvas != null) {
-			this.m_canvas.height = value;
+			this.resize(this.width, value);
 		}
 	}
 });
@@ -153,7 +153,7 @@ Object.defineProperty(rune.display.Canvas.prototype, "smoothing", {
 	 * @ignore
 	 */
 	get : function() {
-		return (this.m_canvas != null && this.m_canvas.style.imageRendering == "pixelated") ? false : true;
+		return this.m_context != null ? this.m_context.imageSmoothingEnabled : true;
 	},
 	
 	/**
@@ -195,7 +195,7 @@ Object.defineProperty(rune.display.Canvas.prototype, "width", {
 	 */
 	set : function(value) {
 		if (this.m_canvas != null) {
-			this.m_canvas.width = value;
+			this.resize(value, this.height);
 		}
 	}
 });
@@ -618,8 +618,18 @@ rune.display.Canvas.prototype.renderTiles = function(map, rect, buffer) {
  */
 rune.display.Canvas.prototype.resize = function(width, height) {
 	if (this.m_canvas != null) {
+		
+		var smoothing = this.smoothing;
+		var quality = this.m_context != null ? this.m_context.imageSmoothingQuality : "low";
+
 		this.m_canvas.width = width;
 		this.m_canvas.height = height;
+
+		this.smoothing = smoothing;
+
+		if (this.m_context != null) {
+			this.m_context.imageSmoothingQuality = quality;
+		}
 	}
 };
 

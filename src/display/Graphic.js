@@ -161,12 +161,18 @@ rune.display.Graphic.prototype.m_disposeTexture = function() {
  * @param {number} [h=1] New texture height.
  *
  * @return {rune.display.Texture}
+ * @throws {Error} If the named image resource cannot be found.
  * @private
  */
 rune.display.Graphic.prototype.m_getTexture = function(resource, w, h) {
 	var data = null;
 	if(typeof resource === "string") {
-		data = this['application']['resources'].get(resource)['data'];
+		var entry = this['application']['resources'].get(resource);
+		if (entry == null) {
+			throw new Error('Graphic: Image resource "' + resource + '" was not found.');
+		}
+
+		data = entry['data'];
 	} else if(resource instanceof HTMLImageElement) {
 		data = resource;
 	} else {

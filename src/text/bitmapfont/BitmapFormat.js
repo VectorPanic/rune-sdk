@@ -229,10 +229,14 @@ rune.text.BitmapFormat.prototype.m_disposeChars = function() {
  * @param {string} [resource] Name of resource.
  *
  * @return {HTMLImageElement}
+ * @throws {Error} If the named image resource cannot be found.
  * @private
  */
 rune.text.BitmapFormat.prototype.getTexture = function(resource) {
     var texture = rune.system.Application['instance']['resources'].get(resource);
-    if (texture) return texture['data'];
-    else throw new Error();
+    if (texture == null) {
+        throw new Error('BitmapFormat: Image resource "' + resource + '" was not found.');
+    }
+
+    return texture['data'];
 };

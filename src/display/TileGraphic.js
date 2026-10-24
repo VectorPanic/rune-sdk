@@ -329,10 +329,14 @@ rune.display.TileGraphic.prototype.render = function() {
  */
 rune.display.TileGraphic.prototype.load = function(resource) {
     var map = this['application']['resources'].get(resource);
-    if (!map) throw new Error("Invalid map");
+    if (!map) {
+        throw new Error('TileGraphic: Map resource "' + resource + '" was not found.');
+    }
 
     map = map['data'];
-    if (!map) throw new Error("Invalid map");
+    if (!map) {
+        throw new Error('TileGraphic: Map resource "' + resource + '" has no data.');
+    }
 
     this.m_disposeBuffers();
     this.m_map = map;
@@ -515,7 +519,9 @@ rune.display.TileGraphic.prototype.m_constructTexture = function(resource) {
 
     if (resource) {
         texture = this['application']['resources'].get(resource);
-        if (!texture) throw new Error("Invalid texture");
+        if (!texture) {
+            throw new Error('TileGraphic: Image resource "' + resource + '" was not found.');
+        }
         
         this.m_texture = new rune.display.Texture(this, texture['data']);
     }

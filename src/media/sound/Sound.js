@@ -598,7 +598,11 @@ rune.media.Sound.prototype.m_constructSource = function() {
     this.m_disposeSource();
     if (this.m_source == null && this.m_channel != null) {
         var resource = rune.system.Application['instance']['resources'].get(this.m_resource);
-        if (resource == null || resource['data'] == null || typeof resource['data'].cloneNode !== "function") {
+        if (resource == null) {
+            throw new Error('Sound: Audio resource "' + this.m_resource + '" was not found.');
+        }
+
+        if (resource['data'] == null || typeof resource['data'].cloneNode !== "function") {
             throw new Error("Invalid sound resource: " + this.m_resource);
         }
 

@@ -92,7 +92,11 @@ rune.display.NineSlice = function(x, y, width, height, resource, left, top, righ
     var image = resource;
     if (typeof resource === "string") {
         var entry = this['application']['resources'].get(resource);
-        image = entry != null ? entry['data'] : null;
+        if (entry == null) {
+            throw new Error('NineSlice: Image resource "' + resource + '" was not found.');
+        }
+
+        image = entry['data'];
     }
     if (!(image instanceof HTMLImageElement) || image.width <= 0 || image.height <= 0 ||
         (typeof image.naturalWidth === "number" && image.naturalWidth <= 0)) {

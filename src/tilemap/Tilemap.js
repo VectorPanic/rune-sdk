@@ -549,8 +549,12 @@ rune.tilemap.Tilemap.prototype.getTilePropertiesOf = function(v) {
  */
 rune.tilemap.Tilemap.prototype.load = function(name) {
     var resource = this['application']['resources'].get(name);
-    if (!resource || !resource['data']) {
-        throw new Error("Invalid map");
+    if (!resource) {
+        throw new Error('Tilemap: Map resource "' + name + '" was not found.');
+    }
+
+    if (!resource['data']) {
+        throw new Error('Tilemap: Map resource "' + name + '" has no data.');
     }
     var map = resource['data'];
     var previous = {

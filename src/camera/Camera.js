@@ -394,9 +394,10 @@ rune.camera.Camera.prototype.update = function(step) {
 };
 
 /**
- * @inheritDoc
  * Keeps ancestor buffers uncached because camera input and effects can change
  * independently of the display list containing the camera.
+ *
+ * @inheritDoc
  * @suppress {accessControls}
  */
 rune.camera.Camera.prototype.render = function() {

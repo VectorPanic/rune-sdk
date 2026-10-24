@@ -68,14 +68,14 @@ rune.raycast.Camera.prototype.constructor = rune.raycast.Camera;
 //------------------------------------------------------------------------------
 
 /**
- * Turns clockwise by the supplied angle.
+ * Turns clockwise by the supplied angle, keeping the heading within [0, 2 pi).
  *
  * @param {number} angle Angle in radians.
  *
  * @returns {undefined}
  */
 rune.raycast.Camera.prototype.turn = function(angle) {
-    this.angle = (this.angle + angle) % (Math.PI * 2);
+    this.angle = rune.util.Math.normalizeAngle(this.angle + angle);
 };
 
 /**

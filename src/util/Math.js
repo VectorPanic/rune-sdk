@@ -394,6 +394,29 @@ rune.util.Math.moveTowards = function(current, target, amount) {
 };
 
 /**
+ * Normalizes an angle in radians to the interval [0, 2 * Math.PI).
+ * Negative angles wrap around, and whole turns return zero, including -0.
+ *
+ * @param {number} angle Angle in radians.
+ *
+ * @return {number} The normalized angle, or NaN for non-finite input.
+ */
+rune.util.Math.normalizeAngle = function(angle) {
+    var turn = Math.PI * 2;
+    var normalized = angle % turn;
+
+    if (normalized < 0) {
+        normalized += turn;
+    }
+
+    if (normalized === 0 || normalized === turn) {
+        return 0;
+    }
+
+    return normalized;
+};
+
+/**
  * Returns a random floating point number.
  *
  * @param {number} [min] Minimum number.

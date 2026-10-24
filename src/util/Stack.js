@@ -133,6 +133,9 @@ rune.util.Stack.prototype.dispose = function() {
 
 /**
  * Executes all objects in the current stack.
+ * Callbacks removed before their turn are skipped. Callbacks added during
+ * execution wait until the next call. Clearing or disposing the stack stops
+ * execution of its remaining callbacks.
  *
  * @param {...*} args Functional arguments.
  *
@@ -140,10 +143,24 @@ rune.util.Stack.prototype.dispose = function() {
  */
 rune.util.Stack.prototype.execute = function(args) {
     var timestamp = performance.now();
-    for (var i = 0, l = this.m_execs.length; i < l; i++) {
-        this.m_execs[i].execute.apply(this.m_execs[i], arguments);
+
+    if (this.m_execs == null) {
+        return;
     }
-    
+
+    var execs = this.m_execs.slice();
+
+    for (var i = 0; i < execs.length; i++) {
+        if (this.m_execs == null) {
+            break;
+        }
+
+        var exec = execs[i];
+        if (this.m_execs.indexOf(exec) !== -1) {
+            exec.execute.apply(exec, arguments);
+        }
+    }
+
     this.m_duration = performance.now() - timestamp;
 };
 

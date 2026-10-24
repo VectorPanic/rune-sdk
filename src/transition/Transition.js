@@ -19,6 +19,14 @@
  * is required. Effects are initialized once and disposed when finished/cancelled.
  */
 rune.transition.Transition = function(options) {
+    
+    //--------------------------------------------------------------------------
+    // DEFAULT ARGUMENTS
+    //--------------------------------------------------------------------------
+
+    /**
+     * @ignore
+     */
     options = options || {};
 
     //--------------------------------------------------------------------------

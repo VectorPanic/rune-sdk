@@ -16,6 +16,15 @@
  * Fades the old image over the new image using two canvas image draws.
  */
 rune.transition.Crossfade = function(options) {
+    
+    //--------------------------------------------------------------------------
+    // DEFAULT ARGUMENTS
+    //--------------------------------------------------------------------------
+
+    /**
+     * @ignore
+     */
+    options = options || {};
 
     //--------------------------------------------------------------------------
     // SUPER CALL

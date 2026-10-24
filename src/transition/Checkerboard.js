@@ -16,6 +16,14 @@
  * Shrinks alternating tiles of the old image to reveal the new image.
  */
 rune.transition.Checkerboard = function(options) {
+    
+    //--------------------------------------------------------------------------
+    // Default arguments
+    //--------------------------------------------------------------------------
+    
+    /**
+     * @ignore
+     */
     options = options || {};
 
     //--------------------------------------------------------------------------

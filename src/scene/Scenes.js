@@ -16,6 +16,20 @@
  * memory until a new batch is loaded.
  */
 rune.scene.Scenes = function() {
+
+    //--------------------------------------------------------------------------
+    // PUBLIC PROPERTIES
+    //--------------------------------------------------------------------------
+
+    /**
+     * Pauses updates for all scenes, including persistent scenes. Rendering and
+     * lifecycle callbacks continue. Input and screen objects remain active, so
+     * pause controls must run outside the paused scene updates.
+     *
+     * @type {boolean}
+     * @default false
+     */
+    this.paused = false;
     
     //--------------------------------------------------------------------------
     // Private properties
@@ -241,6 +255,7 @@ rune.scene.Scenes.prototype.select = function(index) {
 
 /**
  * Processes requested lifecycle changes and optionally updates scene logic.
+ * Pausing skips scene updates entirely; it does not pass a zero time step.
  *
  * @param {number} step Current time step.
  * @param {boolean} [active=true] Whether scene updates should run after lifecycle processing.
@@ -251,7 +266,9 @@ rune.scene.Scenes.prototype.select = function(index) {
 rune.scene.Scenes.prototype.update = function(step, active) {
     this.m_updateBatch(step);
     this.m_updateSelection(step);
-    if (active !== false) this.m_updateScenes(step);
+    if (active !== false && this.paused !== true) {
+        this.m_updateScenes(step);
+    }
 };
 
 /**
@@ -436,7 +453,7 @@ rune.scene.Scenes.prototype.m_updateSelection = function(step) {
 
 /**
  * Updates active scenes while the same batch remains current.
- * Stops if a scene callback disposes or replaces the batch.
+ * Stops if a scene callback pauses the manager, disposes or replaces the batch.
  *
  * @param {number} step Current time step.
  *
@@ -447,7 +464,7 @@ rune.scene.Scenes.prototype.m_updateScenes = function(step) {
     var batch = this.m_cb;
     if (batch == null) return;
 
-    for (var i = 0; this.m_cb === batch && i < batch.length; i++) {
+    for (var i = 0; this.m_cb === batch && this.paused !== true && i < batch.length; i++) {
         var scene = batch[i];
         if (i == this.m_cs || scene.persistent == true) {
             scene.update(step);

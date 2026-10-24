@@ -237,7 +237,7 @@ rune.util.Random.prototype.weightedPick = function(items, weights) {
         if (typeof weight !== "number" || !isFinite(weight) || weight < 0) {
             throw new RangeError("Random: Expected finite, non-negative weights.");
         }
-
+        
         if (weight > 0) {
             maximum = Math.max(maximum, weight);
             positive++;

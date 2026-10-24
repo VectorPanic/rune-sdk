@@ -598,6 +598,7 @@ rune.raycast.World.prototype.move = function(object, dx, dy, radius) {
  *
  * @throws {RangeError} If positions or distance are invalid.
  * @returns {boolean} Whether the actor changed position.
+ * @suppress {checkTypes}
  */
 rune.raycast.World.prototype.moveTowards = function(actor, destination, distance, radius) {
     if (actor == null || destination == null || typeof distance !== "number" ||

@@ -233,6 +233,37 @@ rune.geom.Point.prototype.interpolate = function(point, fraction, output) {
 };
 
 /**
+ * Moves this point toward a target by at most the specified distance without
+ * passing it. The target is not modified. A distance of zero or less leaves
+ * this point unchanged. All coordinates and the distance use the same units.
+ *
+ * @param {rune.geom.Point} target Target point.
+ * @param {number} distance Maximum distance to move for this call.
+ *
+ * @return {rune.geom.Point} This point.
+ */
+rune.geom.Point.prototype.moveTowards = function(target, distance) {
+    if (distance <= 0) {
+        return this;
+    }
+
+    var dx = target['x'] - this['x'];
+    var dy = target['y'] - this['y'];
+    var length = Math.sqrt(dx * dx + dy * dy);
+
+    if (length <= distance) {
+        return this.set(target['x'], target['y']);
+    }
+
+    var fraction = distance / length;
+
+    this['x'] += dx * fraction;
+    this['y'] += dy * fraction;
+
+    return this;
+};
+
+/**
  * Sets the horizontal and vertical coordinates of this point.
  *
  * @param {number} x The horizontal coordinate.

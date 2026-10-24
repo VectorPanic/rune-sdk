@@ -82,7 +82,9 @@ Object.defineProperty(rune.util.Stack.prototype, "length", {
 //------------------------------------------------------------------------------
 
 /**
- * Adds a function to the stack.
+ * Adds a function to the stack unless the same function, scope and argument
+ * list are already registered. Omitted, null and empty argument lists are
+ * equivalent. Non-empty argument lists are compared by reference.
  *
  * @param {Function} fn Function to add.
  * @param {Object} [scope=null] The scope of the function call.
@@ -95,9 +97,13 @@ Object.defineProperty(rune.util.Stack.prototype, "length", {
 rune.util.Stack.prototype.add = function(fn, scope, args) {
     if (typeof fn === "function") {
         scope = scope || null;
+        args = args || [];
+        
         for (var i = 0; i < this.m_execs.length; i++) {
             var exec = this.m_execs[i];
-            if (exec["fn"] === fn && exec["scope"] === scope && exec["args"] === args) {
+            var sameArgs = exec["args"] === args || (exec["args"].length === 0 && args.length === 0);
+            
+            if (exec["fn"] === fn && exec["scope"] === scope && sameArgs) {
                 return;
             }
         }

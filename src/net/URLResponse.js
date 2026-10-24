@@ -169,7 +169,7 @@ rune.net.URLResponse.prototype.asImage = function(handler, scope) {
 };
 
 /**
- * Encodes response data into an JSON object.
+ * Decodes UTF-8 response text into a JSON object.
  *
  * @param {Function} handler Called when the encoding is complete.
  * @param {Object} [scope] Scope of execution for the handler.
@@ -177,7 +177,7 @@ rune.net.URLResponse.prototype.asImage = function(handler, scope) {
  * @return {undefined}
  */
 rune.net.URLResponse.prototype.asJSON = function(handler, scope) {
-	var obj = JSON.parse(this.m_decodePayload());
+	var obj = JSON.parse(this.m_decodeText());
 	
     window.setTimeout(function() {
         handler.call(scope, obj);
@@ -185,7 +185,7 @@ rune.net.URLResponse.prototype.asJSON = function(handler, scope) {
 };
 
 /**
- * Encodes response data into a plain text string.
+ * Decodes response data into a UTF-8 text string.
  *
  * @param {Function} handler Called when the encoding is complete.
  * @param {Object} [scope] Scope of execution for the handler.
@@ -195,13 +195,37 @@ rune.net.URLResponse.prototype.asJSON = function(handler, scope) {
 rune.net.URLResponse.prototype.asText = function(handler, scope) {
     var m_this = this;
     window.setTimeout(function() {
-        handler.call(scope, m_this.m_decodePayload());
+        handler.call(scope, m_this.m_decodeText());
     }, 0);
 };
 
 //------------------------------------------------------------------------------
 // Private prototype methods
 //------------------------------------------------------------------------------
+
+/**
+ * Decodes UTF-8 text without changing the raw payload used for byte counts.
+ * Percent-encoded text is already decoded by decodeURIComponent(). Base64
+ * payloads require their decoded bytes to be interpreted as UTF-8 separately.
+ *
+ * @returns {string} Decoded text.
+ * @throws {URIError} If the text contains invalid UTF-8.
+ * @private
+ */
+rune.net.URLResponse.prototype.m_decodeText = function() {
+    var data = this.m_decodePayload();
+    if (!this.m_isBase64()) {
+        return data;
+    }
+
+    var encoded = [];
+    for (var i = 0; i < data.length; i++) {
+        var byte = data.charCodeAt(i).toString(16);
+        encoded.push('%' + ('0' + byte).slice(-2));
+    }
+
+    return decodeURIComponent(encoded.join(''));
+};
 
 /**
  * Decodes the data payload from the Data URL.

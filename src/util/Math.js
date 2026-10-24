@@ -333,14 +333,23 @@ rune.util.Math.isOdd = function(n) {
 };
 
 /**
- * Returns whether a number is power of two (true) or not (false).
+ * Checks whether n is a positive integer power of two, including values beyond
+ * the 32-bit range. Only finite numbers are accepted; no type conversion occurs.
  * 
- * @param {number} n A number.
+ * @param {*} n Value to check.
  * 
- * @return {boolean} Whether a given number is power of two.
+ * @return {boolean} Whether n is a positive integer power of two.
  */
 rune.util.Math.isPowerOfTwo = function(n) {
-    return (n & (n - 1)) === 0;
+    if (typeof n !== "number" || !isFinite(n) || n < 1 || Math.floor(n) !== n) {
+        return false;
+    }
+
+    while (n > 1 && n % 2 === 0) {
+        n /= 2;
+    }
+
+    return n === 1;
 };
 
 /**

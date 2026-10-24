@@ -299,14 +299,15 @@ rune.util.Math.percentInc = function(num, max) {
 };
 
 /**
- * Returns whether n is an even number (true) or not (false).
+ * Checks whether n is a finite, even integer. Other types and non-integer
+ * values return false; no type conversion occurs.
  * 
- * @param {number} n A number.
+ * @param {*} n Value to check.
  * 
- * @return {boolean} Whether a given number is even.
+ * @return {boolean} Whether n is an even integer.
  */
 rune.util.Math.isEven = function(n) {
-    return (parseInt(n, 10) & 1) === 0;
+    return typeof n === "number" && isFinite(n) && Math.floor(n) === n && n % 2 === 0;
 };
 
 /**
@@ -322,14 +323,15 @@ rune.util.Math.isNum = function(n) {
 };
 
 /**
- * Returns whether n is an odd number (true) or not (false).
+ * Checks whether n is a finite, odd integer. Other types and non-integer
+ * values return false; no type conversion occurs.
  *
- * @param {number} n A number.
+ * @param {*} n Value to check.
  * 
- * @return {boolean} Whether a given number is odd.
+ * @return {boolean} Whether n is an odd integer.
  */
 rune.util.Math.isOdd = function(n) {
-    return (parseInt(n, 10) & 1) !== 0;
+    return typeof n === "number" && isFinite(n) && Math.floor(n) === n && n % 2 !== 0;
 };
 
 /**

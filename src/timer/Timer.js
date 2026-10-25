@@ -395,7 +395,7 @@ rune.timer.Timer.prototype.m_updateElapsed = function(step) {
 rune.timer.Timer.prototype.m_updateComplete = function(step) {
     if (this.m_arguments != null) {
         var repeats = Math.min(
-            parseInt(this.m_elapsed / this.m_arguments.duration, 10),
+            Math.floor(this.m_elapsed / this.m_arguments.duration),
             this.m_arguments.repeat + 1
         );
         

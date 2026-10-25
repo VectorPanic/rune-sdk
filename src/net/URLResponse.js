@@ -235,12 +235,12 @@ rune.net.URLResponse.prototype.m_decodeMedia = function(media, ready, handler, s
         if (settled) {
             return false;
         }
-
+        
         settled = true;
         media[ready] = null;
         media['onerror'] = null;
         response.m_decoders.splice(response.m_decoders.indexOf(cleanup), 1);
-
+        
         return true;
     };
 
@@ -272,7 +272,7 @@ rune.net.URLResponse.prototype.m_decodeMedia = function(media, ready, handler, s
         if (settled) {
             throw error;
         }
-
+        
         fail(error);
     }
 };

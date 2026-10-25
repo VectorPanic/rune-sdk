@@ -208,7 +208,7 @@ rune.util.Math.dampAngle = function(current, target, smoothing, step) {
     }
 
     var difference = rune.util.Math.angleDifference(current, target);
-    return current + difference * (1 - Math.exp(-step / smoothing));
+    return current + rune.util.Math.damp(0, difference, smoothing, step);
 };
 
 /**

@@ -154,9 +154,19 @@ rune.raycast.Billboard.prototype.faceTowards = function(target) {
         return;
     }
     
-    var angle = Math.atan2(dy, dx);
-    this.m_facingDirection.x = Math.cos(angle);
-    this.m_facingDirection.y = Math.sin(angle);
+    var scale = Math.max(Math.abs(dx), Math.abs(dy));
+    if (!isFinite(scale)) {
+        dx = target.x / 2 - this.x / 2;
+        dy = target.y / 2 - this.y / 2;
+        scale = Math.max(Math.abs(dx), Math.abs(dy));
+    }
+
+    dx /= scale;
+    dy /= scale;
+
+    var length = Math.sqrt(dx * dx + dy * dy);
+    this.m_facingDirection.x = dx / length;
+    this.m_facingDirection.y = dy / length;
     this.direction = this.m_facingDirection;
 };
 

@@ -56,10 +56,7 @@ rune.geom.Point = function(x, y) {
  * @return {number}
  */
 rune.geom.Point.distance = function(x1, y1, x2, y2) {
-    var x = x1 - x2;
-    var y = y1 - y2;
-    
-    return Math.sqrt(x * x + y * y);
+    return rune.util.Math.distance(x1, y1, x2, y2);
 };
 
 /**

@@ -99,6 +99,40 @@ rune.geom.Point.interpolate = function(x1, y1, x2, y2, f, o) {
     return o;
 };
 
+/**
+ * Moves toward a target by at most distance without passing it. Coordinates and
+ * distance use the same units. A non-positive distance preserves the start.
+ * Supply output to reuse a point without allocating. Output may be the source
+ * or target point because all input coordinates are read before writing.
+ *
+ * @param {number} x1 Start x coordinate.
+ * @param {number} y1 Start y coordinate.
+ * @param {number} x2 Target x coordinate.
+ * @param {number} y2 Target y coordinate.
+ * @param {number} distance Maximum travel distance.
+ * @param {rune.geom.Point} [output] Point to overwrite.
+ *
+ * @return {rune.geom.Point} The resulting point, or the supplied output.
+ */
+rune.geom.Point.moveTowards = function(x1, y1, x2, y2, distance, output) {
+    output = output || new rune.geom.Point();
+
+    var dx = x2 - x1;
+    var dy = y2 - y1;
+    var length = rune.geom.Point.distance(x1, y1, x2, y2);
+
+    if (distance <= 0 || length === 0) {
+        return output.set(x1, y1);
+    }
+
+    if (length <= distance) {
+        return output.set(x2, y2);
+    }
+
+    var fraction = distance / length;
+    return output.set(x1 + dx * fraction, y1 + dy * fraction);
+};
+
 //------------------------------------------------------------------------------
 // Public getter and setter methods
 //------------------------------------------------------------------------------
@@ -261,24 +295,9 @@ rune.geom.Point.prototype.interpolate = function(point, fraction, output) {
  * @return {rune.geom.Point} This point.
  */
 rune.geom.Point.prototype.moveTowards = function(target, distance) {
-    if (distance <= 0) {
-        return this;
-    }
-
-    var dx = target['x'] - this['x'];
-    var dy = target['y'] - this['y'];
-    var length = Math.sqrt(dx * dx + dy * dy);
-
-    if (length <= distance) {
-        return this.set(target['x'], target['y']);
-    }
-
-    var fraction = distance / length;
-
-    this['x'] += dx * fraction;
-    this['y'] += dy * fraction;
-
-    return this;
+    return rune.geom.Point.moveTowards(
+        this['x'], this['y'], target['x'], target['y'], distance, this
+    );
 };
 
 /**

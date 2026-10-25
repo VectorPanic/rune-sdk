@@ -46,6 +46,18 @@ rune.raycast.World = function(map, layer) {
     this.ceilingEnabled = map.getProperty("ceilingEnabled", true) !== false;
 
     //--------------------------------------------------------------------------
+    // PRIVATE PROPERTIES
+    //--------------------------------------------------------------------------
+
+    /**
+     * Reusable destination for collision-aware movement.
+     *
+     * @type {rune.geom.Point}
+     * @private
+     */
+    this.m_movement = new rune.geom.Point();
+
+    //--------------------------------------------------------------------------
     // Super call
     //--------------------------------------------------------------------------
 
@@ -608,16 +620,17 @@ rune.raycast.World.prototype.moveTowards = function(actor, destination, distance
         !isFinite(actor.x) || !isFinite(actor.y) || !isFinite(destination.x) || !isFinite(destination.y)) {
         throw new RangeError("Movement requires finite positions and a non-negative distance.");
     }
-    var dx = destination.x - actor.x;
-    var dy = destination.y - actor.y;
-    var length = Math.sqrt(dx * dx + dy * dy);
-    if (length === 0 || distance === 0) {
-        return false;
-    }
-    var scale = Math.min(distance / length, 1);
     var previousX = actor.x;
     var previousY = actor.y;
-    this.move(actor, dx * scale, dy * scale, radius);
+    var position = rune.geom.Point.moveTowards(
+        previousX, previousY, destination.x, destination.y, distance, this.m_movement
+    );
+
+    if (position.x === previousX && position.y === previousY) {
+        return false;
+    }
+
+    this.move(actor, position.x - previousX, position.y - previousY, radius);
     return actor.x !== previousX || actor.y !== previousY;
 };
 

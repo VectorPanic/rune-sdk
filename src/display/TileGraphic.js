@@ -550,31 +550,17 @@ rune.display.TileGraphic.prototype.m_disposeTexture = function() {
  * @private
  */
 rune.display.TileGraphic.prototype.m_getTileTextureRect = function(value) {
-    var texture = this.m_texture;
-    var tw = this['tileWidth'];
-    var th = this['tileHeight'];
-    var cols = 0;
-    var max = 0;
-
-    this.m_tmpRect.x = 0;
-    this.m_tmpRect.y = 0;
-    this.m_tmpRect.width  = tw;
-    this.m_tmpRect.height = th;
-
-    if (texture == null || texture['data'] == null || tw <= 0 || th <= 0) {
-        return this.m_tmpRect;
+    if (value > 0) {
+        value -= 1;
     }
 
-    if (value > 0) value -= 1;
-
-    cols = Math.floor(texture['width'] / tw) || 1;
-    max = cols * (Math.floor(texture['height'] / th) || 1) - 1;
-    value = rune.util.Math.clamp(parseInt(value, 10) || 0, 0, max);
-
-    this.m_tmpRect.x = (value % cols) * tw;
-    this.m_tmpRect.y = Math.floor(value / cols) * th;
-
-    return this.m_tmpRect;
+    return rune.tilemap.Tilemap.getFrameRect(
+        this.m_texture,
+        value,
+        this['tileWidth'],
+        this['tileHeight'],
+        this.m_tmpRect
+    );
 };
 
 /**

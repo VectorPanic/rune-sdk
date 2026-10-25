@@ -36,22 +36,20 @@ rune.tilemap.Block = function(map, value) {
      * @ignore
      */
     this.m_map = map;
-    
+
     /**
-     * The value of the Tile that the Block object should imitate.
+     * The zero-based animation frame used to represent the tile value.
      *
      * @type {number}
      * @private
      * @ignore
      */
-    var texture = map['texture'];
-    var tw = map['tileWidth'];
-    var th = map['tileHeight'];
-    var cols = texture && tw > 0 ? Math.floor(texture.width / tw) : 0;
-    var rows = texture && th > 0 ? Math.floor(texture.height / th) : 0;
-    var max = Math.max(cols * rows - 1, 0);
-
-    this.m_value = rune.util.Math.clamp((parseInt(value, 10) || 0) - 1, 0, max);
+    this.m_value = rune.tilemap.Tilemap.clampFrameIndex(
+        map['texture'],
+        (parseInt(value, 10) || 0) - 1,
+        map['tileWidth'],
+        map['tileHeight']
+    );
     
     //--------------------------------------------------------------------------
     // Super call

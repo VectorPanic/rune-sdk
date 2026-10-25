@@ -165,6 +165,69 @@ rune.tilemap.Tilemap.FRONT_BUFFER = 1;
 //------------------------------------------------------------------------------
 
 /**
+ * Clamps a zero-based frame index to the complete cells of a regular atlas.
+ * Partial cells at the texture edges are ignored. Returns zero if there are
+ * no complete frames. The texture may be an image, canvas or Rune Texture.
+ *
+ * @param {Object} texture Texture with pixel width and height, or null.
+ * @param {number} index Zero-based integer frame index.
+ * @param {number} frameWidth Frame width in pixels.
+ * @param {number} frameHeight Frame height in pixels.
+ *
+ * @return {number} The clamped index, or zero for an empty atlas.
+ * @ignore
+ */
+rune.tilemap.Tilemap.clampFrameIndex = function(texture, index, frameWidth, frameHeight) {
+    var columns = texture != null && frameWidth > 0 ? Math.floor(texture['width'] / frameWidth) : 0;
+    var rows = texture != null && frameHeight > 0 ? Math.floor(texture['height'] / frameHeight) : 0;
+
+    if (!isFinite(columns) || !isFinite(rows) || columns <= 0 || rows <= 0) {
+        return 0;
+    }
+
+    return rune.util.Math.clamp(parseInt(index, 10) || 0, 0, columns * rows - 1);
+};
+
+/**
+ * Gets a frame rectangle from a regular, tightly packed atlas in row-major order.
+ * Uses a zero-based index clamped to complete frames. Partial edge cells are
+ * ignored. Returns an empty rectangle if no complete frame is available.
+ *
+ * @param {Object} texture Image, canvas or Rune Texture with pixel dimensions.
+ * @param {number} index Zero-based integer frame index.
+ * @param {number} frameWidth Frame width in pixels.
+ * @param {number} frameHeight Frame height in pixels.
+ * @param {rune.geom.Rectangle} [output] Rectangle to overwrite instead of allocating.
+ *
+ * @return {rune.geom.Rectangle} The frame rectangle, or the supplied output.
+ * @ignore
+ */
+rune.tilemap.Tilemap.getFrameRect = function(texture, index, frameWidth, frameHeight, output) {
+    output = output || new rune.geom.Rectangle();
+    output['x'] = 0;
+    output['y'] = 0;
+    output['width'] = 0;
+    output['height'] = 0;
+
+    if (texture == null || frameWidth <= 0 || frameHeight <= 0 ||
+        !isFinite(frameWidth) || !isFinite(frameHeight) ||
+        !isFinite(texture['width']) || !isFinite(texture['height']) ||
+        texture['width'] < frameWidth || texture['height'] < frameHeight) {
+        return output;
+    }
+
+    var columns = Math.floor(texture['width'] / frameWidth);
+    var frame = rune.tilemap.Tilemap.clampFrameIndex(texture, index, frameWidth, frameHeight);
+
+    output['x'] = (frame % columns) * frameWidth;
+    output['y'] = Math.floor(frame / columns) * frameHeight;
+    output['width'] = frameWidth;
+    output['height'] = frameHeight;
+
+    return output;
+};
+
+/**
  * Validates and copies tile definitions into a lookup shared by Tilemap and
  * TileGraphic. Accepts legacy value entries and grouped values entries.
  * Each definition is copied once, including nested custom properties.
@@ -557,33 +620,17 @@ rune.tilemap.Tilemap.prototype.getProperty = function(name, defaultValue) {
  * @see rune.geom.Rectangle.copy
  */
 rune.tilemap.Tilemap.prototype.getTileTextureRectOf = function(v) {
-    var texture = this['texture'];
-    var tw = this['tileWidth'];
-    var th = this['tileHeight'];
-
-    this.m_tmpRect.x = 0;
-    this.m_tmpRect.y = 0;
-    this.m_tmpRect.width  = 0;
-    this.m_tmpRect.height = 0;
-
-    if (texture == null || tw <= 0 || th <= 0) {
-        return this.m_tmpRect;
+    if (v > 0) {
+        v -= 1;
     }
 
-    if (v > 0) v -= 1; //@note: Offset tile atlas
-    
-    var cols = Math.floor(texture.width / tw) || 1;
-    var rows = Math.floor(texture.height / th) || 1;
-    var max = cols * rows - 1;
-
-    v = rune.util.Math.clamp(parseInt(v, 10) || 0, 0, max);
-
-    this.m_tmpRect.x = (v % cols) * tw;
-    this.m_tmpRect.y = Math.floor(v / cols) * th;
-    this.m_tmpRect.width  = tw;
-    this.m_tmpRect.height = th;
-    
-    return this.m_tmpRect;
+    return rune.tilemap.Tilemap.getFrameRect(
+        this['texture'],
+        v,
+        this['tileWidth'],
+        this['tileHeight'],
+        this.m_tmpRect
+    );
 };
 
 /**

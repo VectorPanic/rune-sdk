@@ -443,7 +443,7 @@ rune.raycast.Navigator.prototype.dispose = function() {
  */
 rune.raycast.Navigator.prototype.m_updateFollowing = function(world, travelBudget) {
     var actor = this.actor;
-    var distance = Math.sqrt(rune.geom.Point.distanceSquared(actor.x, actor.y, this.target.x, this.target.y));
+    var distance = rune.geom.Point.distance(actor.x, actor.y, this.target.x, this.target.y);
     if (this.m_path == null && this.m_pathTime === 0) {
         this.m_path = world.getPathBetweenPoints(actor, this.target);
         this.m_pathIndex = 0;

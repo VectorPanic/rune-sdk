@@ -59,6 +59,14 @@ demo.scene.Scene005 = function() {
      */
     this.m_controls = null;
 
+    /**
+     * Named movement actions and analog axes, updated by the input subsystem.
+     *
+     * @type {rune.input.Actions}
+     * @private
+     */
+    this.m_input = null;
+
     //--------------------------------------------------------------------------
     // Super call
     //--------------------------------------------------------------------------
@@ -85,6 +93,7 @@ demo.scene.Scene005.prototype.constructor = demo.scene.Scene005;
  */
 demo.scene.Scene005.prototype.init = function() {
     rune.scene.Scene.prototype.init.call(this);
+    this.m_initInput();
     this.m_initWorld();
     this.m_initObserver();
     this.m_initActors();
@@ -108,6 +117,7 @@ demo.scene.Scene005.prototype.update = function(step) {
  */
 demo.scene.Scene005.prototype.dispose = function() {
     this.m_disposeControls();
+    this.m_disposeInput();
     rune.scene.Scene.prototype.dispose.call(this);
     this.m_disposeWorld();
 };
@@ -115,6 +125,32 @@ demo.scene.Scene005.prototype.dispose = function() {
 //------------------------------------------------------------------------------
 // Private prototype methods
 //------------------------------------------------------------------------------
+
+/**
+ * Binds keyboard actions and gamepad sticks to the movement axes.
+ *
+ * @returns {undefined}
+ * @private
+ */
+demo.scene.Scene005.prototype.m_initInput = function() {
+    this.m_input = this.application.inputs.createActions();
+    this.m_input.bindKey("FORWARD", "W");
+    this.m_input.bindKey("BACKWARD", "S");
+    this.m_input.bindKey("STRAFE_LEFT", "A");
+    this.m_input.bindKey("STRAFE_RIGHT", "D");
+    this.m_input.bindKey("TURN_LEFT", "LEFT");
+    this.m_input.bindKey("TURN_RIGHT", "RIGHT");
+
+    this.m_input.createAxis("MOVE_Y")
+        .bindActions("FORWARD", "BACKWARD")
+        .bindStick("left", "y");
+    this.m_input.createAxis("MOVE_X")
+        .bindActions("STRAFE_LEFT", "STRAFE_RIGHT")
+        .bindStick("left", "x");
+    this.m_input.createAxis("TURN")
+        .bindActions("TURN_LEFT", "TURN_RIGHT")
+        .bindStick("right", "x");
+};
 
 /**
  * Loads the map and puts the world in a single update hierarchy.
@@ -255,18 +291,10 @@ demo.scene.Scene005.prototype.m_initControls = function() {
  * @private
  */
 demo.scene.Scene005.prototype.m_updateMovement = function(step) {
-    var keys = this.keyboard;
-    var pad = this.gamepads.get(0);
-    var forward = (keys.pressed("W") ? 1 : 0) - (keys.pressed("S") ? 1 : 0);
-    var strafe = (keys.pressed("D") ? 1 : 0) - (keys.pressed("A") ? 1 : 0);
-    var turn = (keys.pressed("RIGHT") ? 1 : 0) - (keys.pressed("LEFT") ? 1 : 0);
-    
-    if (pad) {
-        forward += (pad.stickLeftUp ? 1 : 0) - (pad.stickLeftDown ? 1 : 0);
-        strafe += (pad.stickLeftRight ? 1 : 0) - (pad.stickLeftLeft ? 1 : 0);
-        turn += (pad.stickRightRight ? 1 : 0) - (pad.stickRightLeft ? 1 : 0);
-    }
-    
+    var forward = -this.m_input.getAxis("MOVE_Y").value;
+    var strafe = this.m_input.getAxis("MOVE_X").value;
+    var turn = this.m_input.getAxis("TURN").value;
+
     this.m_observer.turn(turn * 2 * step / 1000);
     this.m_observer.move(this.m_world, strafe, forward, 2 * step / 1000);
 };
@@ -324,6 +352,19 @@ demo.scene.Scene005.prototype.m_interact = function() {
  */
 demo.scene.Scene005.prototype.m_toggleControls = function() {
     this.m_controls.visible = !this.m_controls.visible;
+};
+
+/**
+ * Releases movement bindings without disposing the shared input devices.
+ *
+ * @returns {undefined}
+ * @private
+ */
+demo.scene.Scene005.prototype.m_disposeInput = function() {
+    if (this.m_input != null) {
+        this.m_input.dispose();
+        this.m_input = null;
+    }
 };
 
 /**

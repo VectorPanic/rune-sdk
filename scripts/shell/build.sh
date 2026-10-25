@@ -47,6 +47,7 @@ npx google-closure-compiler \
 --js "./../../src/input/gamepad/Gamepad.js" \
 --js "./../../src/input/gamepad/Gamepads.js" \
 --js "./../../src/input/Action.js" \
+--js "./../../src/input/Axis.js" \
 --js "./../../src/input/Actions.js" \
 --js "./../../src/input/Inputs.js" \
 --js "./../../src/resource/Request.js" \

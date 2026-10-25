@@ -3,7 +3,7 @@
 //------------------------------------------------------------------------------
 
 /**
- * Creates a collection of named digital input actions.
+ * Creates a collection of named input actions and analog axes.
  *
  * @constructor
  * @param {rune.input.Keyboard} [keyboard] Keyboard to read.
@@ -48,6 +48,14 @@ rune.input.Actions = function(keyboard, gamepad) {
     this.m_actions = [];
 
     /**
+     * Registered analog axes, sampled after digital actions.
+     *
+     * @type {Array.<rune.input.Axis>}
+     * @private
+     */
+    this.m_axes = [];
+
+    /**
      * Whether action states should be sampled.
      *
      * @type {boolean}
@@ -61,7 +69,7 @@ rune.input.Actions = function(keyboard, gamepad) {
 //------------------------------------------------------------------------------
 
 /**
- * Whether actions are sampled. Disabling clears states and retains bindings.
+ * Whether actions and axes are sampled. Disabling resets both and retains bindings.
  *
  * @member {boolean} enabled
  * @memberof rune.input.Actions
@@ -155,6 +163,74 @@ rune.input.Actions.prototype.get = function(name) {
 };
 
 /**
+ * Creates an analog axis, or returns the existing axis with the same name.
+ * Axis names and action names occupy separate namespaces.
+ *
+ * @example
+ * controls.bindKey("LEFT", "A");
+ * controls.bindKey("RIGHT", "D");
+ * controls.createAxis("MOVE_X")
+ *     .bindActions("LEFT", "RIGHT")
+ *     .bindStick("left", "x");
+ * var movement = controls.getAxis("MOVE_X").value;
+ *
+ * @param {string} name Non-empty axis name.
+ * @returns {rune.input.Axis} The registered axis.
+ * @throws {Error} If the name is invalid or the collection is disposed.
+ */
+rune.input.Actions.prototype.createAxis = function(name) {
+    if (this['disposed']) {
+        throw new Error("Actions: Cannot create an axis after disposal.");
+    }
+
+    var axis = this.getAxis(name);
+    if (axis == null) {
+        axis = new rune.input.Axis(name);
+        this.m_axes.push(axis);
+    }
+
+    return axis;
+};
+
+/**
+ * Finds an axis without creating it. Names are matched without regard to case.
+ *
+ * @param {string} name Axis name.
+ * @returns {?rune.input.Axis} The axis, or null if missing or disposed.
+ */
+rune.input.Actions.prototype.getAxis = function(name) {
+    if (this['disposed'] || typeof name !== "string") {
+        return null;
+    }
+
+    name = name.toUpperCase();
+    for (var i = 0; i < this.m_axes.length; i++) {
+        if (this.m_axes[i]['name'] === name) {
+            return this.m_axes[i];
+        }
+    }
+
+    return null;
+};
+
+/**
+ * Removes and disposes a named axis, leaving actions and devices unchanged.
+ *
+ * @param {string} name Axis name.
+ * @returns {boolean} Whether an axis was removed.
+ */
+rune.input.Actions.prototype.removeAxis = function(name) {
+    var axis = this.getAxis(name);
+    if (axis == null) {
+        return false;
+    }
+
+    this.m_axes.splice(this.m_axes.indexOf(axis), 1);
+    axis.dispose();
+    return true;
+};
+
+/**
  * Adds a key binding, creating the action if needed.
  *
  * @param {string} name Action name.
@@ -243,12 +319,16 @@ rune.input.Actions.prototype.remove = function(name) {
 };
 
 /**
- * Removes all actions and their bindings.
+ * Removes all actions, axes and their bindings.
  *
  * @returns {undefined}
  */
 rune.input.Actions.prototype.clear = function() {
     if (!this['disposed']) {
+        while (this.m_axes.length > 0) {
+            this.m_axes.pop().dispose();
+        }
+
         while (this.m_actions.length > 0) {
             this.m_actions.pop().dispose();
         }
@@ -265,6 +345,10 @@ rune.input.Actions.prototype.reset = function() {
         for (var i = 0; i < this.m_actions.length; i++) {
             this.m_actions[i].reset();
         }
+
+        for (var j = 0; j < this.m_axes.length; j++) {
+            this.m_axes[j].reset();
+        }
     }
 };
 
@@ -273,7 +357,7 @@ rune.input.Actions.prototype.reset = function() {
 //------------------------------------------------------------------------------
 
 /**
- * Samples actions once per update, after keyboard and gamepad updates.
+ * Samples actions and then axes once per update, after device updates.
  *
  * @returns {undefined}
  * @package
@@ -287,10 +371,14 @@ rune.input.Actions.prototype.update = function() {
     for (var i = 0; i < this.m_actions.length; i++) {
         this.m_actions[i].update(this.keyboard, this.gamepad);
     }
+
+    for (var j = 0; j < this.m_axes.length; j++) {
+        this.m_axes[j].update(this);
+    }
 };
 
 /**
- * Releases actions and device references. Safe to call repeatedly.
+ * Releases actions, axes and device references. Safe to call repeatedly.
  *
  * @returns {undefined}
  * @package
@@ -299,6 +387,7 @@ rune.input.Actions.prototype.update = function() {
 rune.input.Actions.prototype.dispose = function() {
     this.clear();
     this.m_actions = null;
+    this.m_axes = null;
     this.m_enabled = false;
     this.keyboard = null;
     this.gamepad = null;

@@ -205,6 +205,16 @@ rune.util.Random.prototype.shuffle = function(array) {
 };
 
 /**
+ * Returns -1 or 1 with equal probability using the seeded sequence.
+ * Each call advances the sequence once.
+ *
+ * @returns {number} A pseudo-random sign.
+ */
+rune.util.Random.prototype.sign = function() {
+    return this.randomInt(0, 1) === 0 ? -1 : 1;
+};
+
+/**
  * Selects an item using relative weights without modifying either array.
  * Each weight must be finite and non-negative, and at least one must be positive.
  * Zero weights exclude items. Weights need not add up to one or one hundred.

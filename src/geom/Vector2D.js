@@ -263,6 +263,41 @@ rune.geom.Vector2D.prototype.round = function(n) {
 };
 
 /**
+ * Sets this vector from an angle in radians and a magnitude. Zero radians
+ * points right; positive angles turn clockwise in screen coordinates.
+ * A negative magnitude reverses the direction. No new object is allocated.
+ *
+ * @param {number} angle Direction in radians.
+ * @param {number} speed Magnitude in the vector's existing units.
+ *
+ * @returns {rune.geom.Vector2D} This vector.
+ */
+rune.geom.Vector2D.prototype.setFromAngle = function(angle, speed) {
+    this['x'] = Math.cos(angle) * speed;
+    this['y'] = Math.sin(angle) * speed;
+
+    return this;
+};
+
+/**
+ * Sets this vector toward a target from a source position, with the specified
+ * magnitude. Coincident positions produce a zero vector. A negative magnitude
+ * points away from the target. No new object is allocated or position moved.
+ * Read both positions before writing so either may also be this vector.
+ *
+ * @param {rune.geom.Point} source Starting position.
+ * @param {rune.geom.Point} target Target position.
+ * @param {number} speed Magnitude in the vector's existing units.
+ *
+ * @returns {rune.geom.Vector2D} This vector.
+ */
+rune.geom.Vector2D.prototype.setTowards = function(source, target, speed) {
+    this.set(target['x'] - source['x'], target['y'] - source['y']);
+
+    return this.normalize(speed);
+};
+
+/**
  * Subtracts the argument vector from this vector.
  *
  * @param {rune.geom.Vector2D} vector The second vector.

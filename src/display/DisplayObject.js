@@ -1056,6 +1056,56 @@ rune.display.DisplayObject.prototype.dispose = function() {
 //------------------------------------------------------------------------------
 
 /**
+ * Centers the rendered rectangle within bounds, once, without resizing it.
+ * Accounts for scale, pivot, rotation, reflection and container buffer offsets.
+ * Transparent pixels inside the rendered rectangle are included.
+ *
+ * Bounds must use the same coordinate system as this object's position, normally
+ * its parent's local coordinates. For a child centered inside its own parent,
+ * pass a rectangle at (0, 0) with the parent's local width and height. Passing a
+ * sibling uses that sibling's x, y, width and height without its rotation.
+ * Larger objects extend equally beyond opposite edges. Disabled axes retain
+ * their positions. Call again after changes that should affect the placement.
+ *
+ * @param {rune.geom.Rectangle} bounds Area in parent coordinates.
+ * @param {boolean} [horizontal=true] Whether to center horizontally.
+ * @param {boolean} [vertical=true] Whether to center vertically.
+ *
+ * @returns {rune.display.DisplayObject} This object.
+ */
+rune.display.DisplayObject.prototype.centerIn = function(bounds, horizontal, vertical) {
+    horizontal = horizontal === undefined ? true : horizontal;
+    vertical = vertical === undefined ? true : vertical;
+
+    if (!horizontal && !vertical) {
+        return this;
+    }
+
+    var centerX = bounds['x'] + bounds['width'] / 2;
+    var centerY = bounds['y'] + bounds['height'] / 2;
+    var frame = this.getRenderFrame();
+    var px = this['pivotX'];
+    var py = this['pivotY'];
+    var x = frame['width'] / 2 - px;
+    var y = frame['height'] / 2 - py;
+    var angle = this['rotation'] * rune.util.Math.DEG_TO_RAD;
+    var cos = Math.cos(angle);
+    var sin = Math.sin(angle);
+
+    if (horizontal) {
+        this['x'] += centerX - (frame['x'] + px +
+            (this['flippedX'] ? -1 : 1) * (cos * x - sin * y));
+    }
+
+    if (vertical) {
+        this['y'] += centerY - (frame['y'] + py +
+            (this['flippedY'] ? -1 : 1) * (sin * x + cos * y));
+    }
+
+    return this;
+};
+
+/**
  * Creates a Rectangle object that represents the display object with absolute 
  * coordinates, ie coordinates that are relative to the stage and not the 
  * parent of the display object. This is useful if, for example, you want to 

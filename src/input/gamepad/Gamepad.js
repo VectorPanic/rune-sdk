@@ -55,6 +55,22 @@ rune.input.Gamepad = function() {
     this.m_active = true;
 
     /**
+     * Invalidates pending asynchronous vibration fallbacks.
+     *
+     * @type {number}
+     * @private
+     */
+    this.m_vibrationID = 0;
+
+    /**
+     * Pending delay for legacy pulse actuators.
+     *
+     * @type {number}
+     * @private
+     */
+    this.m_vibrationTimer = 0;
+
+    /**
      * Input from the left analog stick.
      *
      * @type {rune.geom.Point}
@@ -124,7 +140,7 @@ Object.defineProperty(rune.input.Gamepad.prototype, "active", {
  * Gamepad object represents. Note that this value is set by the manufacturer 
  * of the current physical device.
  *
- * @member {number} id
+ * @member {string} id
  * @memberof rune.input.Gamepad
  * @instance
  * @readonly
@@ -159,11 +175,10 @@ Object.defineProperty(rune.input.Gamepad.prototype, "index", {
 });
 
 /**
- * Indicates whether the Gamepad object is connected (true) or not (false). 
- * Generally, this value should never be false as long as the Gamepad object 
- * exists.
+ * Indicates whether a physical device is connected to this Gamepad object.
+ * Returns false when no device state is available.
  *
- * @member {booelan} connected
+ * @member {boolean} connected
  * @memberof rune.input.Gamepad
  * @instance
  * @readonly
@@ -220,7 +235,7 @@ Object.defineProperty(rune.input.Gamepad.prototype, "stickLeft", {
 /**
  * If the left analog stick of the Gamepad object is facing up.
  *
- * @member {booelan} stickLeftUp
+ * @member {boolean} stickLeftUp
  * @memberof rune.input.Gamepad
  * @instance 
  * @readonly
@@ -238,7 +253,7 @@ Object.defineProperty(rune.input.Gamepad.prototype, "stickLeftUp", {
 /**
  * If the left analog stick of the Gamepad object was just facing up.
  *
- * @member {booelan} stickLeftJustUp
+ * @member {boolean} stickLeftJustUp
  * @memberof rune.input.Gamepad
  * @instance 
  * @readonly
@@ -260,7 +275,7 @@ Object.defineProperty(rune.input.Gamepad.prototype, "stickLeftJustUp", {
 /**
  * If the left analog stick of the Gamepad object is facing down.
  *
- * @member {booelan} stickLeftDown
+ * @member {boolean} stickLeftDown
  * @memberof rune.input.Gamepad
  * @instance 
  * @readonly
@@ -278,7 +293,7 @@ Object.defineProperty(rune.input.Gamepad.prototype, "stickLeftDown", {
 /**
  * If the left analog stick of the Gamepad object was just facing down.
  *
- * @member {booelan} stickLeftJustDown
+ * @member {boolean} stickLeftJustDown
  * @memberof rune.input.Gamepad
  * @instance 
  * @readonly
@@ -300,7 +315,7 @@ Object.defineProperty(rune.input.Gamepad.prototype, "stickLeftJustDown", {
 /**
  * If the left analog stick of the Gamepad object is facing left.
  *
- * @member {booelan} stickLeftLeft
+ * @member {boolean} stickLeftLeft
  * @memberof rune.input.Gamepad
  * @instance 
  * @readonly
@@ -318,7 +333,7 @@ Object.defineProperty(rune.input.Gamepad.prototype, "stickLeftLeft", {
 /**
  * If the left analog stick of the Gamepad object was just facing left.
  *
- * @member {booelan} stickLeftJustLeft
+ * @member {boolean} stickLeftJustLeft
  * @memberof rune.input.Gamepad
  * @instance 
  * @readonly
@@ -340,7 +355,7 @@ Object.defineProperty(rune.input.Gamepad.prototype, "stickLeftJustLeft", {
 /**
  * If the left analog stick of the Gamepad object is facing right.
  *
- * @member {booelan} stickLeftRight
+ * @member {boolean} stickLeftRight
  * @memberof rune.input.Gamepad
  * @instance 
  * @readonly
@@ -358,7 +373,7 @@ Object.defineProperty(rune.input.Gamepad.prototype, "stickLeftRight", {
 /**
  * If the left analog stick of the Gamepad object was just facing right.
  *
- * @member {booelan} stickLeftJustRight
+ * @member {boolean} stickLeftJustRight
  * @memberof rune.input.Gamepad
  * @instance 
  * @readonly
@@ -400,7 +415,7 @@ Object.defineProperty(rune.input.Gamepad.prototype, "stickRight", {
 /**
  * If the right analog stick of the Gamepad object is facing up.
  *
- * @member {booelan} stickRightUp
+ * @member {boolean} stickRightUp
  * @memberof rune.input.Gamepad
  * @instance 
  * @readonly
@@ -418,7 +433,7 @@ Object.defineProperty(rune.input.Gamepad.prototype, "stickRightUp", {
 /**
  * If the right analog stick of the Gamepad object was just facing up.
  *
- * @member {booelan} stickRightJustUp
+ * @member {boolean} stickRightJustUp
  * @memberof rune.input.Gamepad
  * @instance 
  * @readonly
@@ -440,7 +455,7 @@ Object.defineProperty(rune.input.Gamepad.prototype, "stickRightJustUp", {
 /**
  * If the right analog stick of the Gamepad object is facing down.
  *
- * @member {booelan} stickRightDown
+ * @member {boolean} stickRightDown
  * @memberof rune.input.Gamepad
  * @instance 
  * @readonly
@@ -458,7 +473,7 @@ Object.defineProperty(rune.input.Gamepad.prototype, "stickRightDown", {
 /**
  * If the right analog stick of the Gamepad object was just facing down.
  *
- * @member {booelan} stickRightJustDown
+ * @member {boolean} stickRightJustDown
  * @memberof rune.input.Gamepad
  * @instance 
  * @readonly
@@ -480,7 +495,7 @@ Object.defineProperty(rune.input.Gamepad.prototype, "stickRightJustDown", {
 /**
  * If the right analog stick of the Gamepad object is facing left.
  *
- * @member {booelan} stickRightLeft
+ * @member {boolean} stickRightLeft
  * @memberof rune.input.Gamepad
  * @instance 
  * @readonly
@@ -498,7 +513,7 @@ Object.defineProperty(rune.input.Gamepad.prototype, "stickRightLeft", {
 /**
  * If the right analog stick of the Gamepad object was just facing left.
  *
- * @member {booelan} stickRightJustLeft
+ * @member {boolean} stickRightJustLeft
  * @memberof rune.input.Gamepad
  * @instance 
  * @readonly
@@ -520,7 +535,7 @@ Object.defineProperty(rune.input.Gamepad.prototype, "stickRightJustLeft", {
 /**
  * If the right analog stick of the Gamepad object is facing right.
  *
- * @member {booelan} stickRightRight
+ * @member {boolean} stickRightRight
  * @memberof rune.input.Gamepad
  * @instance
  * @readonly
@@ -538,7 +553,7 @@ Object.defineProperty(rune.input.Gamepad.prototype, "stickRightRight", {
 /**
  * If the right analog stick of the Gamepad object was just facing right.
  *
- * @member {booelan} stickRightJustRight
+ * @member {boolean} stickRightJustRight
  * @memberof rune.input.Gamepad
  * @instance
  * @readonly
@@ -608,36 +623,158 @@ rune.input.Gamepad.prototype.pressed = function(button) {
  * @returns {undefined}
  */
 rune.input.Gamepad.prototype.reset = function() {
+    this.vibrate(0);
     this.m_disposeState();
     this.m_resetAxes();
 };
 
 /**
- * Triggers the gamepad vibration using the specified effect type.
+ * Triggers vibration using playEffect, falling back to legacy hapticActuators
+ * and pulse for dual-rumble. Unsupported devices and rejected effects are safe
+ * no-ops. A new call, reset or disconnect cancels pending fallback work.
  *
- * @param {number} [duration=250] The duration of the vibration in milliseconds.
- * @param {number} [delay=0] The delay before the vibration starts, in milliseconds.
- * @param {number} [weak=1.0] The intensity of the weak (low-frequency) vibration, ranging from 0.0 to 1.0.
- * @param {number} [strong=1.0] The intensity of the strong (high-frequency) vibration, ranging from 0.0 to 1.0.
- * @param {string} [type="dual-rumble"] The type of vibration effect to use (e.g., "dual-rumble").
+ * @param {number} [duration=250] Duration in milliseconds. Zero or less stops
+ *     vibration and cancels pending requests.
+ * @param {number} [delay=0] Delay before vibration starts, in milliseconds.
+ * @param {number} [weak=1.0] High-frequency motor intensity, clamped to 0.0–1.0.
+ * @param {number} [strong=1.0] Low-frequency motor intensity, clamped to 0.0–1.0.
+ * @param {string} [type="dual-rumble"] The vibration effect type.
  * 
  * @returns {undefined}
  */
 rune.input.Gamepad.prototype.vibrate = function(duration, delay, weak, strong, type) {
-    if (this.m_sc != null && this.m_sc.vibrationActuator) {
-        duration = rune.util.Math.isNum(duration) ? duration : 250;
-        if (duration > 0) {
-            this.m_sc.vibrationActuator.playEffect(
-                type || "dual-rumble", {
-                    startDelay: delay || 0,
-                    duration: duration,
-                    weakMagnitude: (typeof weak === "number") ? weak : 1.0,
-                    strongMagnitude: (typeof strong === "number") ? strong : 1.0,
-                }
-            );
-        } else {
-            this.m_sc.vibrationActuator.reset();
+    var id = ++this.m_vibrationID;
+    if (this.m_vibrationTimer) {
+        window.clearTimeout(this.m_vibrationTimer);
+        this.m_vibrationTimer = 0;
+    }
+    
+    var actuators = this.m_getVibrationActuators();
+    duration = typeof duration === "number" && isFinite(duration) ? duration : 250;
+    if (duration <= 0) {
+        for (var i = 0; i < actuators.length; i++) {
+            try {
+                var result = typeof actuators[i].reset === "function" ? actuators[i].reset() :
+                    (typeof actuators[i]["pulse"] === "function" ? actuators[i]["pulse"](0, 0) : null);
+                if (result && typeof result.then === "function") result.then(null, function() {});
+            } catch (error) {
+                // Unsupported hardware must not interrupt input or disposal.
+            }
         }
+        return;
+    }
+    
+    if (!this.m_active || this.m_sc == null || this.m_sc.connected === false) return;
+    delay = typeof delay === "number" && isFinite(delay) ? Math.max(0, delay) : 0;
+    weak = typeof weak === "number" && isFinite(weak) ? Math.max(0, Math.min(1, weak)) : 1;
+    strong = typeof strong === "number" && isFinite(strong) ? Math.max(0, Math.min(1, strong)) : 1;
+    
+    this.m_playVibration(actuators, 0, type || "dual-rumble", {
+        startDelay: delay,
+        duration: duration,
+        weakMagnitude: weak,
+        strongMagnitude: strong
+    }, id);
+};
+
+/**
+ * Collects the current device's vibration actuators without duplicates.
+ * Native actuator references are preserved so their methods retain the
+ * original receiver.
+ *
+ * @returns {Array.<Object>}
+ * @private
+ */
+rune.input.Gamepad.prototype.m_getVibrationActuators = function() {
+    var result = [];
+    if (this.m_sc == null) return result;
+    if (this.m_sc.vibrationActuator) result.push(this.m_sc.vibrationActuator);
+    var legacy = this.m_sc.hapticActuators || [];
+    for (var i = 0; i < legacy.length; i++) {
+        if (legacy[i] && result.indexOf(legacy[i]) === -1) result.push(legacy[i]);
+    }
+    return result;
+};
+
+/**
+ * Attempts to play a vibration effect using the selected actuator. Falls back
+ * to a legacy pulse or the next actuator if the effect is unavailable or fails.
+ * Requests superseded by another vibration call are ignored.
+ *
+ * @param {Array.<Object>} actuators Available device actuators.
+ * @param {number} index Index of the actuator to try.
+ * @param {string} type The vibration effect type.
+ * @param {Object} settings Duration, delay and motor strengths for the effect.
+ * @param {number} id Identifier of the current vibration request.
+ *
+ * @returns {undefined}
+ * @private
+ */
+rune.input.Gamepad.prototype.m_playVibration = function(actuators, index, type, settings, id) {
+    if (id !== this.m_vibrationID || index >= actuators.length) return;
+    var gamepad = this;
+    var actuator = actuators[index];
+    var fallback = function() {
+        gamepad.m_pulseVibration(actuators, index, type, settings, id);
+    };
+    try {
+        if (typeof actuator.playEffect === "function" &&
+            (!actuator.effects || Array.prototype.indexOf.call(actuator.effects, type) !== -1)) {
+            var result = actuator.playEffect(type, settings);
+            if (result && typeof result.then === "function") {
+                result.then(function(value) { if (value === false) fallback(); }, fallback);
+            } else if (result === false) fallback();
+            return;
+        }
+    } catch (error) {
+        // Some implementations throw synchronously instead of rejecting a Promise.
+    }
+    fallback();
+};
+
+/**
+ * Attempts a legacy pulse for dual-rumble effects, preserving the requested
+ * delay. Tries the next actuator if the pulse is unavailable or fails.
+ * Requests superseded by another vibration call are ignored.
+ *
+ * @param {Array.<Object>} actuators Available device actuators.
+ * @param {number} index Index of the actuator to try.
+ * @param {string} type The vibration effect type.
+ * @param {Object} settings Duration, delay and motor strengths for the effect.
+ * @param {number} id Identifier of the current vibration request.
+ *
+ * @returns {undefined}
+ * @private
+ */
+rune.input.Gamepad.prototype.m_pulseVibration = function(actuators, index, type, settings, id) {
+    if (id !== this.m_vibrationID) return;
+    var gamepad = this;
+    var actuator = actuators[index];
+    var next = function() {
+        gamepad.m_playVibration(actuators, index + 1, type, settings, id);
+    };
+    if (type !== "dual-rumble" || typeof actuator["pulse"] !== "function") {
+        next();
+        return;
+    }
+    var pulse = function() {
+        if (id !== gamepad.m_vibrationID) return;
+        gamepad.m_vibrationTimer = 0;
+        try {
+            var result = actuator["pulse"](
+                Math.max(settings.weakMagnitude, settings.strongMagnitude), settings.duration
+            );
+            if (result && typeof result.then === "function") {
+                result.then(function(value) { if (value === false) next(); }, next);
+            } else if (result === false) next();
+        } catch (error) {
+            next();
+        }
+    };
+    if (settings.startDelay > 0) {
+        this.m_vibrationTimer = window.setTimeout(pulse, settings.startDelay);
+    } else {
+        pulse();
     }
 };
 
@@ -686,6 +823,7 @@ rune.input.Gamepad.prototype.update = function(state) {
  * @private
  */
 rune.input.Gamepad.prototype.m_updateState = function(state) {
+    if (this.m_sc != null && (state == null || state.connected === false)) this.vibrate(0);
     this.m_so = this.m_sc;
     this.m_sc = (state != null) ? this.m_clone(state) : null;
 };
@@ -768,7 +906,8 @@ rune.input.Gamepad.prototype.m_isButtonInvalid = function(button) {
 };
 
 /**
- * Creates a (fast) shallow clone of an object.
+ * Recursively copies the device state while preserving native vibration
+ * actuator references. Actuator getters are also read when non-enumerable.
  *
  * @param {Object} obj Object to clone.
  *
@@ -780,9 +919,13 @@ rune.input.Gamepad.prototype.m_clone = function(obj) {
     
     var clone = {};
     for (var i in obj) {
-        if (obj[i] && typeof obj[i] === "object" && i !== "vibrationActuator") clone[i] = this.m_clone(obj[i]);
+        if (obj[i] && typeof obj[i] === "object" && i !== "vibrationActuator" && i !== "hapticActuators") clone[i] = this.m_clone(obj[i]);
         else clone[i] = obj[i];
     }
 
+    // Native handles may use non-enumerable getters and require their original receiver.
+    if (obj.vibrationActuator) clone.vibrationActuator = obj.vibrationActuator;
+    if (obj.hapticActuators) clone.hapticActuators = obj.hapticActuators;
+    
     return clone;
 };

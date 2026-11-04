@@ -56,6 +56,14 @@ rune.display.Screen = function(options) {
      */
     this.m_screenshot = null;
 
+    /**
+     * Whether the primary canvas is borrowed from the active Rune-OS host.
+     *
+     * @type {boolean}
+     * @private
+     */
+    this.m_hosted = false;
+
     //--------------------------------------------------------------------------
     // Super call
     //--------------------------------------------------------------------------
@@ -207,6 +215,24 @@ Object.defineProperty(rune.display.Screen.prototype, "y", {
 //------------------------------------------------------------------------------
 
 /**
+ * Whether Rune-OS owns the primary canvas and drives application frames.
+ *
+ * @member {boolean} hosted
+ * @memberof rune.display.Screen
+ * @instance
+ * @readonly
+ */
+Object.defineProperty(rune.display.Screen.prototype, "hosted", {
+    /**
+     * @this rune.display.Screen
+     * @ignore
+     */
+    get : function() {
+        return this.m_hosted;
+    }
+});
+
+/**
  * Developer console. Use this to activate shortcuts within the current 
  * application.
  *
@@ -334,6 +360,29 @@ rune.display.Screen.prototype.m_construct = function() {
     this.m_constructScreenMode();
     this.m_constructDebugger();
     this.m_constructConsole();
+};
+
+/**
+ * Uses the Rune-OS screen element when hosted, retaining the SDK canvas wrapper.
+ * Legacy hosts exposing only m_screen.m_canvas remain supported.
+ *
+ * @param {number} [width] Initial output width.
+ * @param {number} [height] Initial output height.
+ *
+ * @returns {undefined}
+ * @protected
+ * @ignore
+ */
+rune.display.Screen.prototype.m_constructCanvas = function(width, height) {
+    rune.display.DisplayObjectContainer.prototype.m_constructCanvas.call(this, width, height);
+    var host = typeof window !== "undefined" && window.runeos && window.runeos.instance;
+    var screen = host && (host.screen || host.m_screen);
+    var canvas = screen && (screen.canvas ? screen.canvas.element : screen.m_canvas);
+    if (canvas instanceof HTMLCanvasElement) {
+        this.m_canvas.swap(canvas);
+        this.m_canvas.resize(this.m_config.screenResolutionX, this.m_config.screenResolutionY);
+        this.m_hosted = true;
+    }
 };
 
 //------------------------------------------------------------------------------

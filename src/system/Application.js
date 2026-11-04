@@ -452,6 +452,9 @@ Object.defineProperty(rune.system.Application.prototype, "target", {
  * @return {undefined}
  */
 rune.system.Application.prototype.setTarget = function(target) {
+    if (this.m_screen != null && this.m_screen['hosted']) {
+        throw new Error("Rune-OS owns the application canvas target.");
+    }
     var element = this.m_getCanvasTarget(target);
     
     this.m_config.target = target;
@@ -459,6 +462,17 @@ rune.system.Application.prototype.setTarget = function(target) {
     if (this.m_screen != null) {
         this.m_screen["canvas"].attach(element);
     }
+};
+
+/**
+ * Advances the externally driven application once when embedded in Rune-OS.
+ * Safe before initialization and after stop; standalone applications retain
+ * their own animation-frame loop.
+ *
+ * @returns {undefined}
+ */
+rune.system.Application.prototype.tick = function() {
+    if (this.m_time != null) this.m_time.tick();
 };
 
 /**
@@ -687,7 +701,9 @@ rune.system.Application.prototype.m_initScreen = function() {
     this.m_disposeScreen();
     if (this.m_screen == null) {
         this.m_screen = new rune.display.Screen(this.m_config);
-        this.m_screen["canvas"].attach(this.m_getCanvasTarget(this.m_config.target));
+        if (!this.m_screen['hosted']) {
+            this.m_screen["canvas"].attach(this.m_getCanvasTarget(this.m_config.target));
+        }
     } else throw new Error();
 };
 
@@ -732,7 +748,7 @@ rune.system.Application.prototype.m_getCanvasTarget = function(target) {
 rune.system.Application.prototype.m_initTime = function() {
     this.m_disposeTime();
     if (this.m_time == null) {
-        this.m_time = new rune.system.Time(this.m_config.framerate);
+        this.m_time = new rune.system.Time(this.m_config.framerate, this.m_screen["hosted"]);
         this.m_time['update'].add(this.m_update, this);
         this.m_time['render'].add(this.m_render, this);
         this.m_time.start();

@@ -41,6 +41,16 @@ rune.display.Canvas = function(width, height) {
 	 * @ignore
 	 */
 	this.m_context = null;
+
+    /**
+     * Whether this wrapper owns the element and may detach it during disposal.
+     * Externally supplied canvases are borrowed by default.
+     *
+     * @type {boolean}
+     * @protected
+     * @ignore
+     */
+    this.m_ownsElement = true;
 	
 	/**
 	 * The height of the pixel buffer.
@@ -203,6 +213,34 @@ Object.defineProperty(rune.display.Canvas.prototype, "width", {
 //------------------------------------------------------------------------------
 // Public prototype methods (API)
 //------------------------------------------------------------------------------
+
+/**
+ * Replaces the backing canvas at runtime. The incoming element keeps its pixel
+ * dimensions; call resize() separately to apply a different resolution.
+ * Borrowed elements remain attached when this wrapper is disposed.
+ * An invalid element or unavailable 2D context leaves the old canvas intact.
+ *
+ * @param {HTMLCanvasElement} element Replacement canvas.
+ * @param {boolean} [owned=false] Whether disposal may detach the replacement.
+ *
+ * @returns {undefined}
+ * @throws {TypeError} If element is not a canvas with an available 2D context.
+ */
+rune.display.Canvas.prototype.swap = function(element, owned) {
+    if (!(element instanceof HTMLCanvasElement)) throw new TypeError("Expected a canvas element.");
+    var context = element.getContext("2d");
+    if (context == null) throw new TypeError("Canvas has no available 2D context.");
+    if (element === this.m_canvas) return;
+
+    var smoothing = this.m_canvas != null ? this.smoothing : false;
+    this.dispose();
+    this.m_canvas = element;
+    this.m_context = context;
+    this.m_ownsElement = owned === true;
+    this.m_width = element.width;
+    this.m_height = element.height;
+    this.smoothing = smoothing;
+};
 
 /**
  * Appends the HTMLCanvasElement to the specified DOMElement.
@@ -661,6 +699,7 @@ rune.display.Canvas.prototype.m_construct = function() {
 rune.display.Canvas.prototype.m_constructCanvas = function() {
 	this.m_disposeCanvas();
 	if (this.m_canvas === null) {
+		this.m_ownsElement = true;
 		this.m_canvas = document.createElement('canvas');
 		this.m_canvas.width  = this.m_width;
 		this.m_canvas.height = this.m_height;
@@ -710,7 +749,7 @@ rune.display.Canvas.prototype.m_disposeContext = function() {
  */
 rune.display.Canvas.prototype.m_disposeCanvas = function() {
 	if (this.m_canvas instanceof HTMLCanvasElement) {
-		if (this.m_canvas.parentNode != null) {
+		if (this.m_ownsElement && this.m_canvas.parentNode != null) {
 			this.m_canvas.parentNode.removeChild(this.m_canvas);
 		}
 		

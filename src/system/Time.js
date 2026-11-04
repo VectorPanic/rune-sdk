@@ -8,6 +8,7 @@
  * @constructor
  *
  * @param {number} [framerate=60] Target framerate.
+ * @param {boolean} [external=false] Whether a host drives tick() instead of requestAnimationFrame.
  * 
  * @class
  * @classdesc
@@ -15,7 +16,7 @@
  * The Time class is used to calculate the elapsed time within an application. 
  * Calculated time is used to run the application's update and rendering loop.
  */
-rune.system.Time = function(framerate) {
+rune.system.Time = function(framerate, external) {
     
     //--------------------------------------------------------------------------
     // Private properties
@@ -72,6 +73,14 @@ rune.system.Time = function(framerate) {
      * @private
      */
     this.m_running = false;
+
+    /**
+     * Whether scheduling belongs to the embedding host.
+     *
+     * @type {boolean}
+     * @private
+     */
+    this.m_external = external === true;
     
     /**
      * Describes the theoretical length of a frame in milliseconds.
@@ -406,6 +415,16 @@ rune.system.Time.prototype.start = function() {
 };
 
 /**
+ * Advances an externally driven clock once. Standalone clocks keep their own
+ * scheduling and ignore this method to prevent accidental double updates.
+ *
+ * @returns {undefined}
+ */
+rune.system.Time.prototype.tick = function() {
+    if (this.m_external) this.m_tick();
+};
+
+/**
  * Stops the update and rendering loop.
  *
  * @param {boolean} [clear=false] Whether the update and render stacks should be emptied or not.
@@ -447,6 +466,10 @@ rune.system.Time.prototype.dispose = function() {
  * @private
  */
 rune.system.Time.prototype.m_initTimeLoop = function() {
+    if (this.m_external) {
+        this.m_running = true;
+        return;
+    }
     if (window.requestAnimationFrame !== undefined) {
         this.m_running = true;
         this.m_timeLoopID = window.requestAnimationFrame(this.m_tick);
@@ -509,7 +532,7 @@ rune.system.Time.prototype.m_tick = function() {
         }
     }
     
-    if (this.m_running === true) {
+    if (this.m_running === true && !this.m_external) {
         this.m_timeLoopID = window.requestAnimationFrame(this.m_tick);
     }
 };
@@ -551,6 +574,12 @@ rune.system.Time.prototype.m_execRenderStack = function() {
  * @private
  */
 rune.system.Time.prototype.m_disposeTimeLoop = function() {
+    if (this.m_external) {
+        this.m_running = false;
+        this.m_timeLoopID = 0;
+        return;
+    }
+    
     if (window.cancelAnimationFrame !== undefined) {
         this.m_running = false;
         window.cancelAnimationFrame(this.m_timeLoopID);

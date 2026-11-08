@@ -84,12 +84,23 @@ rune.system.Config = function(options) {
     this.framerate = option("framerate", 60);
     
     /**
-     * Refers to the Scene to be used to load the application's resources. 
+     * Whether to show the Rune startup presentation outside debug mode.
+     * Disabling is intended for rune-os and approved distributions; this setting
+     * does not verify permission. Explicit custom loaders take precedence.
+     *
+     * @type {boolean}
+     * @default true
+     */
+    this.splashScreen = Boolean(option("splashScreen", true));
+
+    /**
+     * Scene used to load resources outside debug mode. Defaults to Loader when
+     * splashScreen is enabled, otherwise LoaderSilent. Debug uses LoaderDebug.
      *
      * @type {Function}
-     * @default null
+     * @default rune.data.Loader
      */
-    this.loader = options.loader || rune.data.Loader;
+    this.loader = options.loader || (this.splashScreen ? rune.data.Loader : rune.data.LoaderSilent);
     
     /**
      * The number of places on the highscore list.

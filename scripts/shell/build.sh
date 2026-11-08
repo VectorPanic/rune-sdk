@@ -160,6 +160,7 @@ npx google-closure-compiler \
 --js "./../../src/data/resource/Requests.js" \
 --js "./../../src/data/scene/Loader.js" \
 --js "./../../src/data/scene/LoaderDebug.js" \
+--js "./../../src/data/scene/LoaderSilent.js" \
 --js "./../../src/system/Time.js" \
 --js "./../../src/system/Config.js" \
 --js "./../../src/system/Application.js" \

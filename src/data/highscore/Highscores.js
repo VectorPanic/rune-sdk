@@ -137,6 +137,28 @@ rune.data.Highscores.prototype.get = function(ranking, table) {
 };
 
 /**
+ * Reloads highscore data from LocalStorage without replacing the current data
+ * when storage is unavailable or contains invalid data.
+ *
+ * @return {boolean} True if valid data was loaded.
+ */
+rune.data.Highscores.prototype.reload = function() {
+    var data;
+    try {
+        var stored = window.localStorage.getItem(this['key']);
+        if (stored == null) return false;
+        data = JSON.parse(stored);
+    } catch (error) {
+        return false;
+    }
+
+    if (!Array.isArray(data)) return false;
+    if (this.m_validate(data) == false) return false;
+    this.m_data = data;
+    return true;
+};
+
+/**
  * Saves all high-score data in the device's LocalStorage. The method is 
  * called automatically when new data is added to the object. There is thus 
  * no reason to include the method in the public documentation.

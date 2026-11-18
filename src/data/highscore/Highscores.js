@@ -137,6 +137,53 @@ rune.data.Highscores.prototype.get = function(ranking, table) {
 };
 
 /**
+ * Returns an independent copy of all highscore tables.
+ *
+ * @return {Array.<Object>} Highscore tables.
+ */
+rune.data.Highscores.prototype.export = function() {
+    var data = [];
+    for (var i = 0; i < this.m_data.length; i++) {
+        var table = [];
+        for (var j = 0; j < this.m_data[i].length; j++) {
+            var entry = this.m_data[i][j];
+            table.push({name: entry.name, score: entry.score, date: entry.date});
+        }
+        data.push(table);
+    }
+    return data;
+};
+
+/**
+ * Replaces and saves all tables when the data matches this configuration.
+ * Entries must be sorted by score in descending order.
+ *
+ * @param {Array.<Object>} data Highscore tables to import.
+ * @return {boolean} True if the data was imported.
+ */
+rune.data.Highscores.prototype.import = function(data) {
+    if (this.m_validate(data) == false) return false;
+    for (var i = 0; i < data.length; i++) {
+        for (var j = 1; j < data[i].length; j++) {
+            if (data[i][j - 1].score < data[i][j].score) return false;
+        }
+    }
+
+    var copy = [];
+    for (var k = 0; k < data.length; k++) {
+        var table = [];
+        for (var n = 0; n < data[k].length; n++) {
+            var entry = data[k][n];
+            table.push({name: entry.name, score: entry.score, date: entry.date});
+        }
+        copy.push(table);
+    }
+    this.m_data = copy;
+    this.save();
+    return true;
+};
+
+/**
  * Reloads highscore data from LocalStorage without replacing the current data
  * when storage is unavailable or contains invalid data.
  *

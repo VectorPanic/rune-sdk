@@ -58,6 +58,13 @@ rune.data.Highscores = function(id, length, tables) {
      */
     this.m_tables = Math.max(1, parseInt(tables, 10) || 1);
     
+    /**
+     * Pending synchronization cancellation functions.
+     * @type {Array.<Function>}
+     * @private
+     */
+    this.m_syncCancels = [];
+    
     //--------------------------------------------------------------------------
     // Private constants
     //--------------------------------------------------------------------------
@@ -69,6 +76,13 @@ rune.data.Highscores = function(id, length, tables) {
      * @private
      */
     this.SUFFIX = ".highscores";
+
+    /**
+     * Maximum time to wait for synchronization, in milliseconds.
+     * @const {number}
+     * @private
+     */
+    this.SYNC_TIMEOUT = 5000;
     
     //--------------------------------------------------------------------------
     // Constructor call
@@ -206,6 +220,64 @@ rune.data.Highscores.prototype.reload = function() {
 };
 
 /**
+ * Requests highscore synchronization from the host, if available. The callback
+ * is always invoked asynchronously with success and updated boolean properties.
+ * The local list remains available when synchronization cannot be performed.
+ * Pending callbacks are cancelled when this object is disposed.
+ *
+ * @param {Function} [callback] Called when synchronization finishes.
+ * @return {undefined}
+ */
+rune.data.Highscores.prototype.sync = function(callback) {
+    var host = window['runeos'];
+    var owner = this;
+    var finished = false;
+    var cancelled = false;
+    var timeout;
+    var callbackTimeout;
+    var remove = function() {
+        var index = owner.m_syncCancels.indexOf(cancel);
+        if (index != -1) owner.m_syncCancels.splice(index, 1);
+    };
+    var cancel = function() {
+        cancelled = true;
+        window.clearTimeout(timeout);
+        window.clearTimeout(callbackTimeout);
+        remove();
+    };
+    var complete = function(result) {
+        if (finished || cancelled) return;
+        finished = true;
+        window.clearTimeout(timeout);
+        var success = !!(result && result['success']);
+        var updated = success && !!result['updated'];
+        if (typeof callback == "function") {
+            callbackTimeout = window.setTimeout(function() {
+                remove();
+                if (!cancelled) callback({success: success, updated: updated});
+            }, 0);
+        } else {
+            remove();
+        }
+    };
+    this.m_syncCancels.push(cancel);
+
+    if (!host || typeof host['syncHighscores'] != "function") {
+        complete(null);
+        return;
+    }
+
+    timeout = window.setTimeout(function() {
+        complete(null);
+    }, this.SYNC_TIMEOUT);
+    try {
+        host['syncHighscores'](this.m_id, this, complete);
+    } catch (error) {
+        complete(null);
+    }
+};
+
+/**
  * Saves all high-score data in the device's LocalStorage. The method is 
  * called automatically when new data is added to the object. There is thus 
  * no reason to include the method in the public documentation.
@@ -289,6 +361,7 @@ rune.data.Highscores.prototype.send = function(score, name, table) {
  * @return {undefined}
  */
 rune.data.Highscores.prototype.dispose = function() {
+    while (this.m_syncCancels.length) this.m_syncCancels[0]();
     this.m_data = null;
 };
 

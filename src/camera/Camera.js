@@ -232,7 +232,10 @@ Object.defineProperty(rune.camera.Camera.prototype, "flash", {
  * @readonly
  */
 Object.defineProperty(rune.camera.Camera.prototype, "glitch", {
-    /** @this rune.camera.Camera @ignore */
+    /**
+     * @this rune.camera.Camera
+     * @ignore
+     */
     get : function() {
         return this.m_glitch;
     }
